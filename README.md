@@ -28,6 +28,14 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 - `$fable-design-options`: design alternatives with tradeoffs and migration notes
 - `$fable-sweep`: repo-wide change workflow with discovery, implementation, and verification
 
+## Subagents
+
+Fable-5 audits now report a visible `Workflow Trace` every time. Codex subagents are opt-in: ask for them explicitly, and the audit skill will use them when the runtime exposes a subagent tool. Without explicit subagent permission, the skill runs as `single-agent multi-lens` and says so instead of implying independent parallel review happened.
+
+```text
+Use $fable-audit with subagents. Scope: src/billing. Focus: money math, idempotency, integration wiring, and docs-vs-reality.
+```
+
 ## Benchmark Snapshot
 
 <p align="center">

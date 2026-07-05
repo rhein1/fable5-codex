@@ -11,6 +11,18 @@ Fable-5 for Codex is a local Codex plugin that packages evidence-first workflows
 
 The plugin is intentionally conservative. It asks Codex to map the target, inspect callers/importers, preserve rejected candidates, cite file and command evidence, and separate target-system failures from runner/tool failures.
 
+## Subagents
+
+Codex subagents are opt-in. The `$fable-audit` skill runs a visible multi-lens workflow every time, but it only spawns subagents when the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool.
+
+Use this form when you want the multi-agent path:
+
+```text
+Use $fable-audit with subagents. Scope: src/billing. Focus: money math, idempotency, integration wiring, and docs-vs-reality.
+```
+
+The packaged `custom-agents/` files are role templates. They are not automatically loaded as named Codex subagents by the plugin manifest.
+
 ## Example Prompts
 
 ```text
@@ -44,4 +56,3 @@ Bash:
 ```
 
 The wrappers call `codex exec` in read-only mode by default. Pass the write flag only for controlled edits.
-

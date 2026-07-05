@@ -24,7 +24,30 @@ Run an evidence-first audit. Default to read-only unless the user explicitly ask
 7. Preserve rejected or uncertain candidates in a short "Not Reported" or "Unknowns" section when they materially affect confidence.
 8. Report findings first, ordered by severity. Keep summary secondary.
 
-Use subagents only when available and useful. Do not claim independent review happened unless it did.
+## Subagents And Workflow Visibility
+
+Every audit must make the workflow visible. In the final report, include a short `Workflow Trace` section after findings that states:
+
+- mode: `multi-agent` or `single-agent multi-lens`
+- subagents used, their assigned lenses, or the concrete reason no subagents were used
+- lenses covered
+- verification method
+- coverage gaps and unknowns
+
+Codex subagents are allowed only when the user explicitly asks for subagents, delegation, or parallel agent work and a subagent tool is available. If that condition is met, use this orchestration pattern unless the scope is too small to justify it:
+
+1. Keep the main agent as orchestrator and synthesizer.
+2. Do the initial scope/read-order check locally so delegated work is well bounded.
+3. Spawn independent read-only finder subagents for disjoint lenses, such as:
+   - correctness, edge cases, and integration contracts
+   - security, privacy, authn/authz, and secret handling
+   - data consistency, persistence, idempotency, and migrations
+   - operations, startup, observability, tests, and docs-vs-reality
+4. Ask each subagent for candidate findings with exact evidence, failure scenario, refutation conditions, and unknowns.
+5. Verify high-impact candidates locally or with a separate verifier subagent when that can run in parallel without blocking the orchestrator.
+6. Synthesize only verified findings. Keep refuted or uncertain candidates in `Not Reported` or `Unknowns` when they affect confidence.
+
+If the user did not explicitly ask for subagents, or the runtime does not expose a subagent tool, still run the same independent lenses locally and report `single-agent multi-lens` in `Workflow Trace`. Do not claim independent review, parallel review, or subagent work happened unless it actually did.
 
 ## Evidence Safety
 
