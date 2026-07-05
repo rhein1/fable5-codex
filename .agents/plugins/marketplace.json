@@ -1,0 +1,20 @@
+{
+  "name": "fable5-local",
+  "interface": {
+    "displayName": "Fable-5 Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "fable5-codex",
+      "source": {
+        "source": "local",
+        "path": "./plugins/fable5-codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

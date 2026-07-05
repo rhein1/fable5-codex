@@ -1,0 +1,24 @@
+# Fable-5 Codex Workflow Snippet
+
+Use this snippet in a repo `AGENTS.md` only when the repo wants Fable-5 behavior as standing policy. If this conflicts with the repo's existing instructions, constitution, safety policy, or owner-scoped rules, the repo instructions win.
+
+## Fable-5 Workflows
+
+Use Fable-5 when the task needs high-confidence analysis, broad coverage, or source-backed conclusions:
+
+- Use `$fable-understand` for behavior questions and architecture mapping.
+- Use `$fable-audit` for bug, risk, security, integration, and docs-vs-reality audits.
+- Use `$fable-deep-review` for PR, branch, or diff review.
+- Use `$fable-fact-check` for status docs, launch claims, changelogs, and "done/tested/working" assertions.
+- Use `$fable-design-options` for technical options, migrations, and tradeoff analysis.
+- Use `$fable-sweep` for repo-wide renames, migrations, and consistency passes.
+
+Required reporting style:
+
+- Cite exact files, lines, commands, and outputs for every substantive claim.
+- Preserve unknowns and unverifiable areas explicitly.
+- Separate target-system failures from runner/tool/environment failures.
+- Do not claim subagent, test, browser, deploy, or runtime verification happened unless it did.
+- For audits and reviews, list findings first by severity; keep summaries secondary.
+- For write tasks, keep edits scoped and verify with the narrowest meaningful commands.
+

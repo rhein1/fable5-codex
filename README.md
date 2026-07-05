@@ -1,0 +1,70 @@
+# Fable-5 for Codex
+
+Fable-5 for Codex is a Codex plugin that packages evidence-first engineering workflows as reusable skills. It is built for audits, deep reviews, fact checks, codebase understanding, design choices, and repo-wide sweeps where source-backed proof matters.
+
+## What This Repo Contains
+
+- `plugins/fable5-codex/`: installable Codex plugin
+- `.agents/plugins/marketplace.json`: repo-local marketplace catalog
+- `examples/`: prompt calls, toy repo, and expected report examples
+- `evals/`: fixtures for fact-check, audit, and sweep validation
+- `docs/`: method, install, architecture, and schema notes
+- `scripts/validate-package.ps1`: local package validation
+- `scripts/sync-personal-plugin.ps1`: copy the canonical repo plugin into the personal plugin location
+
+## Skills
+
+- `$fable-audit`: ranked bug, risk, and integration audit
+- `$fable-deep-review`: PR or branch review with verification passes
+- `$fable-fact-check`: claim-by-claim verification against source/runtime evidence
+- `$fable-understand`: source-grounded explanation of how a system works
+- `$fable-design-options`: design alternatives with tradeoffs and migration notes
+- `$fable-sweep`: repo-wide change workflow with discovery, implementation, and verification
+
+## Install From This Repo
+
+Open this repository in Codex, restart Codex if needed, then open **Plugins** and choose the **Fable-5 Local Plugins** marketplace source. Install `fable5-codex`, start a new thread, and call a skill directly:
+
+```text
+Use $fable-understand. Scope: this repository. Question: what files define the Fable-5 Codex plugin, and what are the six installed skills? Include file citations and an UNKNOWNS section.
+```
+
+The repo-local marketplace entry intentionally uses a relative source path:
+
+```json
+"path": "./plugins/fable5-codex"
+```
+
+That lets someone clone the repo without depending on a personal Windows path.
+
+## Smoke Tests
+
+After installing the plugin in Codex, run these:
+
+```text
+Use $fable-understand. Scope: C:\projects\fable5-codex. Question: what does this plugin provide, how is it installed, and what unknowns remain? Include exact file citations.
+```
+
+```text
+Use $fable-fact-check. Doc: C:\projects\fable5-codex\README.md. Check every installed, supported, validated, and works claim against the files on disk.
+```
+
+```text
+Use $fable-audit. Scope: C:\projects\fable5-codex. Focus: Codex plugin compatibility, path assumptions, Windows compatibility, overbroad promises, missing install steps, and schema/reporting gaps.
+```
+
+For file-only package validation:
+
+```powershell
+.\scripts\validate-package.ps1
+```
+
+If you maintain a personal install on the same machine, treat `plugins/fable5-codex/` in this repo as canonical and sync the personal copy from it:
+
+```powershell
+.\scripts\sync-personal-plugin.ps1
+```
+
+## Status
+
+This is a v0.2 repo-scoped package candidate. It has file-level validation and fixtures, but it should not be called production-ready until the three Codex-in-app smoke tests above pass in a fresh thread.

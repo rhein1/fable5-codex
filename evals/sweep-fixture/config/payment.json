@@ -1,0 +1,5 @@
+{
+  "eventType": "FooPaymentAttempt",
+  "handler": "serializeFooPaymentAttempt"
+}
+

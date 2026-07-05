@@ -1,0 +1,24 @@
+{
+  "name": "fable5-codex",
+  "version": "0.1.0",
+  "description": "Fable-5 evidence-first review, audit, fact-check, understanding, design, and sweep workflows for Codex.",
+  "author": {
+    "name": "Local developer"
+  },
+  "homepage": "https://agoragentic.com",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Fable-5 for Codex",
+    "shortDescription": "Evidence-first multi-pass workflows for serious codebase work.",
+    "longDescription": "Fable-5 for Codex provides reusable skills for audits, deep reviews, fact checks, codebase understanding, design options, and repo-wide sweeps. Each workflow emphasizes source-grounded mapping, independent lenses, verified findings, rejected-candidate preservation, coverage notes, and explicit unknowns.",
+    "developerName": "Local developer",
+    "category": "Developer Tools",
+    "websiteURL": "https://agoragentic.com",
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": [
+      "Use $fable-audit on this repo.",
+      "Use $fable-fact-check on STATUS.md.",
+      "Use $fable-understand to explain boot flow."
+    ]
+  }
+}

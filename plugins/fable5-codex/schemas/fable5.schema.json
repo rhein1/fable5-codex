@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/fable5.schema.json",
+  "title": "Fable-5 Evidence Ledger",
+  "type": "object",
+  "required": ["run", "coverage", "findings", "unknowns"],
+  "properties": {
+    "run": {
+      "type": "object",
+      "required": ["id", "kind", "scope", "status", "promptVersion"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": ["audit", "deep-review", "fact-check", "understand", "design-options", "sweep"]
+        },
+        "scope": { "type": "string" },
+        "focus": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["queued", "running", "needs-approval", "completed", "failed"]
+        },
+        "promptVersion": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/coverageArea" }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "rejectedCandidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rejectedCandidate" }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unknown" }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "required": ["kind", "source", "summary"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["file", "command", "runtime", "artifact", "external"]
+        },
+        "source": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "summary": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": ["id", "title", "severity", "failureScenario", "evidence"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"]
+        },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "failureScenario": { "type": "string" },
+        "suggestedFix": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evidence" }
+        },
+        "judgeVotes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/judgeVote" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "judgeVote": {
+      "type": "object",
+      "required": ["judge", "refuted", "reason"],
+      "properties": {
+        "judge": { "type": "string" },
+        "refuted": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "coverageArea": {
+      "type": "object",
+      "required": ["name", "path", "status"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["read", "partial", "unread", "unverifiable"]
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "rejectedCandidate": {
+      "type": "object",
+      "required": ["title", "reason", "evidence"],
+      "properties": {
+        "title": { "type": "string" },
+        "reason": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["question", "whyItMatters"],
+      "properties": {
+        "question": { "type": "string" },
+        "whyItMatters": { "type": "string" },
+        "nextProbe": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
