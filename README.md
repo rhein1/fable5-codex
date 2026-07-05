@@ -9,6 +9,8 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 ## What This Repo Contains
 
 - `assets/brand/`: README and repository brand images
+- `assets/benchmarks/`: benchmark chart images generated from measured runs
+- `benchmarks/`: reproducible baseline-vs-plugin benchmark harness and raw outputs
 - `plugins/fable5-codex/`: installable Codex plugin
 - `.agents/plugins/marketplace.json`: repo-local marketplace catalog
 - `examples/`: prompt calls, toy repo, and expected report examples
@@ -25,6 +27,20 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 - `$fable-understand`: source-grounded explanation of how a system works
 - `$fable-design-options`: design alternatives with tradeoffs and migration notes
 - `$fable-sweep`: repo-wide change workflow with discovery, implementation, and verification
+
+## Benchmark Snapshot
+
+<p align="center">
+  <img src="assets/benchmarks/fable5-benchmark-summary.png" alt="Fable-5 benchmark composite score by fixture" width="920">
+</p>
+
+<p align="center">
+  <img src="assets/benchmarks/fable5-benchmark-metrics.png" alt="Fable-5 benchmark metric subscores" width="920">
+</p>
+
+Latest measured run: `20260705T182614Z`, `gpt-5.5`, matched `xhigh` reasoning effort. On these intentionally tiny fixtures, normal `gpt-5.5` already found the expected issues; Fable-5's measured lift was mainly explicit unknowns and coverage discipline, moving average composite score from `95.3` to `98.7`.
+
+See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw outputs.
 
 ## Brand Assets
 
