@@ -1,9 +1,14 @@
 # Fable-5 for Codex
 
+<p align="center">
+  <img src="assets/brand/fable5-hero.png" alt="Fable-5 evidence-first review workflow" width="920">
+</p>
+
 Fable-5 for Codex is a Codex plugin that packages evidence-first engineering workflows as reusable skills. It is built for audits, deep reviews, fact checks, codebase understanding, design choices, and repo-wide sweeps where source-backed proof matters.
 
 ## What This Repo Contains
 
+- `assets/brand/`: README and repository brand images
 - `plugins/fable5-codex/`: installable Codex plugin
 - `.agents/plugins/marketplace.json`: repo-local marketplace catalog
 - `examples/`: prompt calls, toy repo, and expected report examples
@@ -20,6 +25,11 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 - `$fable-understand`: source-grounded explanation of how a system works
 - `$fable-design-options`: design alternatives with tradeoffs and migration notes
 - `$fable-sweep`: repo-wide change workflow with discovery, implementation, and verification
+
+## Brand Assets
+
+- `assets/brand/fable5-hero.png`: README and social-preview banner
+- `assets/brand/fable5-mark.png`: compact repo mark for plugin cards or docs
 
 ## Install From GitHub
 
