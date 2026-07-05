@@ -11,9 +11,8 @@ Recommended jobs:
 Default safety posture:
 
 ```bash
-codex exec --sandbox read-only --ask-for-approval never \
+codex exec --sandbox read-only \
   "Use $fable-deep-review. Review this PR. Findings first."
 ```
 
 Do not allow the action to push commits, approve PRs, merge, deploy, publish packages, mutate secrets, or spend funds.
-

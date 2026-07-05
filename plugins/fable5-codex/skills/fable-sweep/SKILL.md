@@ -24,7 +24,10 @@ Perform broad changes with discovery first and scoped edits second. Do not mutat
 6. Run targeted validation. Include tests, lint, type checks, snapshot regeneration, or schema validation when relevant.
 7. Report changed files, preserved compatibility points, validation, and remaining uncertain areas.
 
+## Evidence Safety
+
+Never print raw secrets, tokens, private keys, wallet keys, credential files, or `.env` values. Redact secret-like values and cite only the file/path/key name needed to explain the issue.
+
 ## Safety
 
 Stop and ask before irreversible changes, external publishing, deploys, credential mutation, wallet spend, trust-state mutation, or destructive cleanup. For normal code edits, proceed when the user asked for implementation.
-

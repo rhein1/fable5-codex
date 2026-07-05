@@ -22,7 +22,10 @@ Generate options after reading the actual system. Avoid abstract architecture ad
    - evidence that makes it fit or not fit the repo
 6. Recommend one option only after comparing it against the constraints.
 
+## Evidence Safety
+
+Never print raw secrets, tokens, private keys, wallet keys, credential files, or `.env` values. Redact secret-like values and cite only the file/path/key name needed to explain the issue.
+
 ## Output
 
 Use a short decision memo. Separate facts from judgment. Call out unknowns that would change the recommendation.
-

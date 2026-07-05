@@ -28,6 +28,9 @@ $manifestJson = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
 if ($manifestJson.name -ne "fable5-codex") {
   throw "Unexpected plugin name: $($manifestJson.name)"
 }
+if ($manifestJson.version -ne "0.2.0-alpha") {
+  throw "Unexpected plugin version: $($manifestJson.version)"
+}
 if ($manifestJson.skills -ne "./skills/") {
   throw "Unexpected skills path: $($manifestJson.skills)"
 }

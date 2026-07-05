@@ -18,7 +18,6 @@ $skillByMode = @{
 }
 
 $sandbox = if ($Write) { "workspace-write" } else { "read-only" }
-$approval = if ($Write) { "untrusted" } else { "never" }
 $skill = $skillByMode[$Mode]
 
 $prompt = "Use $skill. Scope: $Scope."
@@ -26,5 +25,4 @@ if ($Focus.Trim().Length -gt 0) {
   $prompt = "$prompt Focus: $Focus."
 }
 
-codex exec --sandbox $sandbox --ask-for-approval $approval $prompt
-
+codex exec --sandbox $sandbox $prompt

@@ -22,6 +22,10 @@ Verify claims against actual evidence. Do not edit claims unless the user asks f
 6. Separate docs/source mismatch from environment/tooling failure.
 7. If asked to fix docs, patch only the claims that evidence disproves or bounds.
 
+## Evidence Safety
+
+Never print raw secrets, tokens, private keys, wallet keys, credential files, or `.env` values. Redact secret-like values and cite only the file/path/key name needed to explain the issue.
+
 ## Output
 
 Use a compact table when many claims are checked:
@@ -31,4 +35,3 @@ Claim | Verdict | Evidence | Correction
 ```
 
 End with the highest-risk false or partial claims and the safest next verification step.
-

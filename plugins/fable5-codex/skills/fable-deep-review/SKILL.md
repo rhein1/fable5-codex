@@ -23,6 +23,10 @@ Review like a senior engineer validating a change, not like a summarizer. Defaul
 6. Verify each candidate. Prefer a small command or source trace that proves the issue.
 7. Report only actionable findings. Put open questions after findings.
 
+## Evidence Safety
+
+Never print raw secrets, tokens, private keys, wallet keys, credential files, or `.env` values. Redact secret-like values and cite only the file/path/key name needed to explain the issue.
+
 ## Output
 
 Lead with findings ordered by severity. Each finding needs:
@@ -34,4 +38,3 @@ Lead with findings ordered by severity. Each finding needs:
 - suggested correction
 
 If no findings are found, say that clearly and list remaining test gaps or residual risk.
-

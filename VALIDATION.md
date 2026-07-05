@@ -17,6 +17,12 @@ custom agent toml ok
 Fable-5 package validation passed.
 ```
 
+Package version:
+
+```text
+plugins/fable5-codex/.codex-plugin/plugin.json version: 0.2.0-alpha
+```
+
 Plugin manifest validation:
 
 ```powershell
@@ -137,7 +143,48 @@ Result:
 
 ```text
 Added plugin `fable5-codex` from marketplace `fable5-local`.
-Installed plugin root: C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.1.0
+Installed plugin root: C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.2.0-alpha
+```
+
+Personal plugin reinstall:
+
+```powershell
+codex plugin add fable5-codex@personal
+```
+
+Result:
+
+```text
+Added plugin `fable5-codex` from marketplace `personal`.
+Installed plugin root: C:\Users\s8972\.codex\plugins\cache\personal\fable5-codex\0.2.0-alpha
+```
+
+Codex CLI skill smoke:
+
+```powershell
+codex exec --sandbox read-only --cd C:\projects\fable5-codex --output-last-message runtime-smoke\01-understand.md "Use $fable-understand..."
+codex exec --sandbox read-only --cd C:\projects\fable5-codex --output-last-message runtime-smoke\02-fact-check.md "Use $fable-fact-check..."
+codex exec --sandbox read-only --cd C:\projects\fable5-codex --output-last-message runtime-smoke\03-audit.md "Use $fable-audit..."
+```
+
+Results:
+
+```text
+runtime-smoke\01-understand.md
+runtime-smoke\02-fact-check.md
+runtime-smoke\03-audit.md
+```
+
+The CLI smokes selected the Fable-5 skills and produced source-cited reports. The read-only Windows sandbox could not spawn PowerShell inside the agent (`CreateProcessAsUserW failed: 5`), so the smoke runs used filesystem and Node MCP fallbacks for repository inspection.
+
+Post-audit fixes:
+
+```text
+- sync-personal-plugin.ps1 now computes the canonical plugin path from the checkout by default.
+- sync-personal-plugin.ps1 now rejects sibling-prefix paths like C:\Users\s8972\plugins-backup\fable5-codex.
+- install docs now include codex plugin marketplace add . and codex plugin add fable5-codex@fable5-local.
+- reusable skill and custom-agent instructions now include no-raw-secret redaction rules.
+- manifest/docs version source of truth is aligned to 0.2.0-alpha.
 ```
 
 ## Runtime Validation Matrix
@@ -153,11 +200,12 @@ Installed plugin root: C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-c
 | Personal plugin sync from repo canonical | PowerShell helper | PASS | `scripts/sync-personal-plugin.ps1` |
 | CLI marketplace list | Codex CLI | PASS | `codex-cli 0.142.5`; `codex plugin marketplace list` includes `personal` |
 | Repo marketplace registration | Codex CLI | PASS | `codex plugin marketplace add .` registered `fable5-local` at `C:\projects\fable5-codex` |
-| Repo plugin install | Codex CLI | PASS | `codex plugin add fable5-codex@fable5-local` installed cache root |
+| Repo plugin install | Codex CLI | PASS | `codex plugin add fable5-codex@fable5-local` installed `0.2.0-alpha` cache root |
+| Personal plugin reinstall | Codex CLI | PASS | `codex plugin add fable5-codex@personal` installed `0.2.0-alpha` cache root |
+| `$fable-understand` runs | Codex CLI | PASS | `runtime-smoke/01-understand.md` |
+| `$fable-fact-check` runs | Codex CLI | PASS | `runtime-smoke/02-fact-check.md` |
+| `$fable-audit` runs | Codex CLI | PASS | `runtime-smoke/03-audit.md` |
 | Codex app shows plugin | Codex app | TODO | pending restart/app discovery |
-| `$fable-understand` runs | Codex app | TODO | pending smoke run |
-| `$fable-fact-check` runs | Codex app | TODO | pending smoke run |
-| `$fable-audit` runs | Codex app | TODO | pending smoke run |
 | `$fable-sweep` fixture edit workflow runs | Codex app | TODO | pending smoke run |
 
 ## Remaining Runtime Smoke
@@ -190,11 +238,11 @@ That blocker is resolved for the current shell because `codex` now resolves to:
 C:\Users\s8972\AppData\Roaming\npm\codex.ps1
 ```
 
-The Codex app runtime smoke tests remain unproven until a fresh app thread runs the skills.
+Codex CLI runtime smoke has passed for `$fable-understand`, `$fable-fact-check`, and `$fable-audit`. Codex app UI discovery remains unproven until a fresh app thread runs the skills.
 
-## Required Runtime Smoke Before Publishing
+## Remaining Runtime Smoke
 
-Run these in a fresh Codex app thread after installing `fable5-codex`:
+Optional final app UI smoke after installing `fable5-codex`:
 
 ```text
 Use $fable-understand. Scope: C:\projects\fable5-codex. Question: what does this plugin provide, how is it installed, and what unknowns remain? Include exact file citations.

@@ -16,9 +16,9 @@ Use Fable-5 when the task needs high-confidence analysis, broad coverage, or sou
 Required reporting style:
 
 - Cite exact files, lines, commands, and outputs for every substantive claim.
+- Never print raw secrets, tokens, private keys, wallet keys, credential files, or `.env` values. Redact secret-like values and cite only the file/path/key name needed to explain the issue.
 - Preserve unknowns and unverifiable areas explicitly.
 - Separate target-system failures from runner/tool/environment failures.
 - Do not claim subagent, test, browser, deploy, or runtime verification happened unless it did.
 - For audits and reviews, list findings first by severity; keep summaries secondary.
 - For write tasks, keep edits scoped and verify with the narrowest meaningful commands.
-

@@ -26,6 +26,10 @@ Run an evidence-first audit. Default to read-only unless the user explicitly ask
 
 Use subagents only when available and useful. Do not claim independent review happened unless it did.
 
+## Evidence Safety
+
+Never print raw secrets, tokens, private keys, wallet keys, credential files, or `.env` values. Redact secret-like values and cite only the file/path/key name needed to explain the issue.
+
 ## Finding Format
 
 For each finding include:
@@ -42,4 +46,3 @@ Use clickable local file links in final answers when possible.
 ## Validation
 
 Run the narrowest meaningful checks for the audited area. If a check cannot run, report the blocker exactly and distinguish tool failure from target failure.
-

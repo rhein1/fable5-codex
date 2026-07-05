@@ -22,6 +22,10 @@ Answer from implementation evidence, not memory or stale docs.
 5. Use a small diagram or ordered flow when it improves clarity.
 6. Include unknowns, assumptions, and stale-doc risks.
 
+## Evidence Safety
+
+Never print raw secrets, tokens, private keys, wallet keys, credential files, or `.env` values. Redact secret-like values and cite only the file/path/key name needed to explain the issue.
+
 ## Output
 
 Prefer this shape:
@@ -33,4 +37,3 @@ Prefer this shape:
 - useful next probe, only if needed
 
 Every non-obvious claim should have a file, line, command, artifact, or runtime citation.
-

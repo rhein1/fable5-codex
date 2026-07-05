@@ -23,7 +23,15 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 
 ## Install From This Repo
 
-Open this repository in Codex, restart Codex if needed, then open **Plugins** and choose the **Fable-5 Local Plugins** marketplace source. Install `fable5-codex`, start a new thread, and call a skill directly:
+Register and install the repo marketplace:
+
+```powershell
+cd C:\projects\fable5-codex
+codex plugin marketplace add .
+codex plugin add fable5-codex@fable5-local
+```
+
+Then restart Codex if needed, open **Plugins**, choose the **Fable-5 Local Plugins** marketplace source, and confirm `fable5-codex` is installed. Start a new thread and call a skill directly:
 
 ```text
 Use $fable-understand. Scope: this repository. Question: what files define the Fable-5 Codex plugin, and what are the six installed skills? Include file citations and an UNKNOWNS section.
@@ -39,7 +47,7 @@ That lets someone clone the repo without depending on a personal Windows path.
 
 ## Smoke Tests
 
-After installing the plugin in Codex, run these:
+After installing the plugin in Codex, run these smoke prompts:
 
 ```text
 Use $fable-understand. Scope: C:\projects\fable5-codex. Question: what does this plugin provide, how is it installed, and what unknowns remain? Include exact file citations.
@@ -67,4 +75,4 @@ If you maintain a personal install on the same machine, treat `plugins/fable5-co
 
 ## Status
 
-This is a v0.2 repo-scoped package candidate. It has file-level validation and fixtures, but it should not be called production-ready until the three Codex-in-app smoke tests above pass in a fresh thread.
+This is a v0.2 alpha repo-scoped package. Static validation and Codex CLI skill smokes are captured in `VALIDATION.md`; Codex app UI smoke remains a separate manual check before calling it production-ready.

@@ -22,10 +22,8 @@ esac
 
 if [[ "$write" == "--write" ]]; then
   sandbox="workspace-write"
-  approval="untrusted"
 else
   sandbox="read-only"
-  approval="never"
 fi
 
 prompt="Use ${skill}. Scope: ${scope}."
@@ -33,5 +31,4 @@ if [[ -n "$focus" ]]; then
   prompt="${prompt} Focus: ${focus}."
 fi
 
-codex exec --sandbox "$sandbox" --ask-for-approval "$approval" "$prompt"
-
+codex exec --sandbox "$sandbox" "$prompt"

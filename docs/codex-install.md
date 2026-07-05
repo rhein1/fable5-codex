@@ -24,9 +24,25 @@ The marketplace entry uses:
 
 Codex resolves that path from the marketplace root for the repo, so cloned copies do not need personal machine paths.
 
+Register and install from the local repo:
+
+```powershell
+cd C:\projects\fable5-codex
+codex plugin marketplace add .
+codex plugin add fable5-codex@fable5-local
+codex plugin list
+```
+
+For a published GitHub repo, use the Git-backed marketplace path:
+
+```powershell
+codex plugin marketplace add rhein1/fable5-codex --ref main
+codex plugin add fable5-codex@fable5-local
+```
+
 ## Personal Install
 
-The repo copy is canonical:
+The checked-out repo copy is canonical. In this checkout that path is:
 
 ```text
 C:\projects\fable5-codex\plugins\fable5-codex
