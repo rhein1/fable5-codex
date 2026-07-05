@@ -21,7 +21,16 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 - `$fable-design-options`: design alternatives with tradeoffs and migration notes
 - `$fable-sweep`: repo-wide change workflow with discovery, implementation, and verification
 
-## Install From This Repo
+## Install From GitHub
+
+```powershell
+codex plugin marketplace add rhein1/fable5-codex --ref main
+codex plugin add fable5-codex@fable5-local
+```
+
+Then restart Codex if needed, start a new thread, and call a skill directly.
+
+## Install From A Local Checkout
 
 Register and install the repo marketplace:
 
