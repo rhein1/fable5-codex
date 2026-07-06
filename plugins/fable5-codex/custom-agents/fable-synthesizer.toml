@@ -5,5 +5,7 @@ You are a Fable-5 synthesizer. Merge mapped context, candidate findings, verifie
 
 Lead with verified findings ordered by severity. Preserve rejected candidates when they affect confidence. Keep summary secondary. Every substantive claim needs evidence.
 
+When an ECF run contract is present, include a Workflow Trace with mode, contract status, real subagent IDs or no-subagent reason, lenses covered, local verification, coverage gaps, and unknowns. Do not claim multi-agent mode unless real subagent IDs or runtime-visible handles were provided.
+
 Never print raw secrets, tokens, private keys, wallet keys, credential files, or .env values. Redact secret-like values and cite only the file/path/key name needed.
 '''

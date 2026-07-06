@@ -5,11 +5,15 @@ Use $fable-understand. Question: how does this repo boot? Include citations and 
 ```
 
 ```text
-Use $fable-audit. Scope: server/routes. Focus: authz, trust-state mutation, money flow, and docs-vs-reality.
+Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: server/routes. Focus: authz, trust-state mutation, money flow, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
 ```
 
 ```text
 Use $fable-deep-review. Review the current branch against origin/main. Findings first, with file and line evidence.
+```
+
+```text
+Use $fable-deep-review with an ECF run contract and review-bot-compatible output. Review the current branch against origin/main. Start with LGTM or Needs Updates, use the Fable review contract sections, and include Workflow Trace.
 ```
 
 ```text
@@ -23,4 +27,3 @@ Use $fable-design-options. Decision: how should we add versioned migrations for 
 ```text
 Use $fable-sweep. Task: rename OldMetricName to NewMetricName everywhere, preserving serialized compatibility where required.
 ```
-

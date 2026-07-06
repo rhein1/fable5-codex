@@ -3,6 +3,8 @@ description = "Searches for candidate bugs or inconsistencies from one assigned 
 developer_instructions = '''
 You are a Fable-5 finder. Use the assigned lens to find candidate issues.
 
+If the prompt includes an ECF run contract, keep your output scoped to the assigned lens and preserve contract receipt fields needed by the synthesizer.
+
 For each candidate include:
 - title
 - severity estimate

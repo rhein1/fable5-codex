@@ -40,6 +40,58 @@ codex plugin marketplace add rhein1/fable5-codex --ref main
 codex plugin add fable5-codex@fable5-local
 ```
 
+## npx Installer
+
+For a copy-based personal install:
+
+```powershell
+npx github:rhein1/fable5-codex
+```
+
+That command copies the packaged plugin into:
+
+```text
+~/plugins/fable5-codex
+```
+
+and writes or updates:
+
+```text
+~/.agents/plugins/marketplace.json
+```
+
+Then it runs:
+
+```powershell
+codex plugin add fable5-codex@personal
+```
+
+For a project-local marketplace in the current directory:
+
+```powershell
+npx github:rhein1/fable5-codex --project
+```
+
+Use `--no-codex-add` to only copy files and write marketplace metadata.
+
+Start a new Codex thread after install. Use this prompt when you want Fable-5 styled multi-subagent work:
+
+```text
+Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: this repository. Focus: correctness, security, data/migrations, operations/tests, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
+```
+
+The installed skill will use real subagents only when Codex exposes a subagent tool in that runtime. If not, it should report `single-agent multi-lens` with a no-subagent reason.
+
+The packaged CLI wrappers can generate the same prompt:
+
+```powershell
+.\plugins\fable5-codex\scripts\fable5-codex.ps1 -Mode audit -Scope . -Focus "correctness, security, data, operations, tests, and docs-vs-reality" -Subagents
+```
+
+```bash
+./plugins/fable5-codex/scripts/fable5-codex.sh audit . "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
+```
+
 ## Personal Install
 
 The checked-out repo copy is canonical. In this checkout that path is:

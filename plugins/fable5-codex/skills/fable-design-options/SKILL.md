@@ -7,20 +7,23 @@ description: Evidence-grounded design option generation for technical architectu
 
 Generate options after reading the actual system. Avoid abstract architecture advice when source evidence is available.
 
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split research into independent option-risk lenses and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
+
 ## Workflow
 
 1. Clarify the decision, constraints, authority boundaries, and success criteria from the prompt and repo instructions.
-2. Read the relevant implementation, callers/importers, tests, docs, and operational surfaces.
-3. Identify hard constraints: public contracts, migration compatibility, security/privacy rules, performance needs, deploy boundaries, and rollback requirements.
-4. Produce 2-4 viable options. Include a conservative option and a higher-leverage option when both are realistic.
-5. For each option, state:
+2. Declare the ECF run mode when the user asks for ECF, subagents, or a receipt.
+3. Read the relevant implementation, callers/importers, tests, docs, and operational surfaces.
+4. Identify hard constraints: public contracts, migration compatibility, security/privacy rules, performance needs, deploy boundaries, and rollback requirements.
+5. Produce 2-4 viable options. Include a conservative option and a higher-leverage option when both are realistic.
+6. For each option, state:
    - implementation shape
    - benefits
    - risks
    - migration/rollback path
    - tests or probes needed
    - evidence that makes it fit or not fit the repo
-6. Recommend one option only after comparing it against the constraints.
+7. Recommend one option only after comparing it against the constraints.
 
 ## Evidence Safety
 
@@ -29,3 +32,5 @@ Never print raw secrets, tokens, private keys, wallet keys, credential files, or
 ## Output
 
 Use a short decision memo. Separate facts from judgment. Call out unknowns that would change the recommendation.
+
+When requested, include a compact `Workflow Trace` with mode, ECF contract status, lenses covered, spawned agents or no-subagent reason, verification method, and coverage gaps.
