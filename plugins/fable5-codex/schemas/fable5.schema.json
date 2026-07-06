@@ -117,6 +117,7 @@
           "items": { "$ref": "#/$defs/lens" }
         },
         "delegationPolicy": { "type": "object" },
+        "authoritySplit": { "type": "object" },
         "evidencePolicy": { "type": "object" },
         "verificationPolicy": { "type": "object" },
         "receipt": { "type": "object" }

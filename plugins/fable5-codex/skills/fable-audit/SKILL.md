@@ -7,7 +7,7 @@ description: Evidence-first codebase audit for correctness, security, privacy, d
 
 Run an evidence-first audit. Default to read-only unless the user explicitly asks for fixes.
 
-For ECF-style governed runs, use the plugin reference at `../../references/ecf-run-contract.md` and the starter template at `../../templates/fable-ecf-run-contract.json`. The contract records scope, authority, required lenses, delegation policy, evidence policy, verification policy, and the final receipt. It does not itself spawn subagents.
+For ECF-style governed runs, use the plugin reference at `../../references/ecf-run-contract.md` and the starter template at `../../templates/fable-ecf-run-contract.json`. The contract records scope, authority, required lenses, delegation policy, authority split, evidence policy, verification policy, and the final receipt. It does not itself spawn subagents.
 
 ## Workflow
 
@@ -49,9 +49,10 @@ Codex subagents are allowed only when the user explicitly asks for subagents, de
    - `data-migrations-idempotency`: data consistency, persistence, idempotency, and migrations
    - `operations-tests-docs`: operations, startup, observability, tests, and docs-vs-reality
 5. Ask each subagent for candidate findings with exact evidence, failure scenario, refutation conditions, and unknowns.
-6. Record the real subagent IDs or runtime-visible handles. Do not invent IDs.
-7. Verify high-impact candidates locally or with a separate verifier subagent when that can run in parallel without blocking the orchestrator.
-8. Synthesize only verified findings. Keep refuted or uncertain candidates in `Not Reported` or `Unknowns` when they affect confidence.
+6. Keep subagents read-only unless the user explicitly assigns disjoint write scopes. The main agent owns final findings and external side effects.
+7. Record the real subagent IDs or runtime-visible handles. Do not invent IDs.
+8. Verify high-impact candidates locally or with a separate verifier subagent when that can run in parallel without blocking the orchestrator.
+9. Synthesize only verified findings. Keep refuted or uncertain candidates in `Not Reported` or `Unknowns` when they affect confidence.
 
 If the user did not explicitly ask for subagents, or the runtime does not expose a subagent tool, still run the same independent lenses locally and report `single-agent multi-lens` in `Workflow Trace`. Do not claim independent review, parallel review, or subagent work happened unless it actually did.
 

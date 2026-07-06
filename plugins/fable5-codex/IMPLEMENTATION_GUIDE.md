@@ -8,6 +8,8 @@ This plugin translates a Claude-style multi-agent workflow kit into Codex-native
 - Scripted local or CI runs can call `codex exec` through `scripts/fable5-codex.ps1` or `scripts/fable5-codex.sh`.
 - Structured evidence can be stored with `schemas/fable5.schema.json`.
 - ECF-style governance lives in `references/ecf-run-contract.md` and `templates/fable-ecf-run-contract.json`. This is a public Micro ECF-style contract, not private Full ECF runtime code.
+- Bot-compatible PR review verdicts live in `templates/fable-review-contract.md`.
+- The root `bin/install.mjs` provides a GitHub/npx copy-based install path for Codex personal and project-local marketplaces.
 
 Subagent behavior:
 
@@ -15,6 +17,7 @@ Subagent behavior:
 - `$fable-audit` must still show the workflow every time through a `Workflow Trace` section and should declare the ECF run contract when the user asks for ECF, subagents, repeatable evidence, CI ledgers, or durable receipts.
 - When subagents are not available or not explicitly requested, the audit should run as `single-agent multi-lens` and say that directly instead of implying independent review happened.
 - Do not claim `multi-agent` unless real subagent IDs or runtime-visible handles exist.
+- Keep authority split explicit: subagents research/plan/find/verify; the main agent spot-checks and owns final findings plus side effects.
 
 Suggested rollout:
 

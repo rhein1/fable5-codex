@@ -91,6 +91,57 @@ HasTemplate: True
 DefaultPrompt includes: Use $fable-audit with real Codex subagents and an ECF run contract on this repo. I explicitly authorize parallel subagents for this run.
 ```
 
+## 2026-07-06 rk-skills Pattern Carry-Forward
+
+Added GitHub/npx installer:
+
+```text
+package.json
+bin/install.mjs
+```
+
+Supported installer modes:
+
+```powershell
+npx github:rhein1/fable5-codex
+npx github:rhein1/fable5-codex --project
+node bin/install.mjs --dry-run --no-codex-add
+node bin/install.mjs --project --dry-run --no-codex-add
+```
+
+Added review and authority contracts:
+
+```text
+plugins/fable5-codex/templates/fable-review-contract.md
+plugins/fable5-codex/references/ecf-run-contract.md now includes authoritySplit
+plugins/fable5-codex/templates/fable-ecf-run-contract.json now includes authoritySplit
+```
+
+Validation rerun:
+
+```text
+node --check bin/install.mjs
+node bin/install.mjs --dry-run --no-codex-add
+node bin/install.mjs --project --dry-run --no-codex-add
+.\scripts\validate-package.ps1
+python C:\Users\s8972\.codex\skills\.system\plugin-creator\scripts\validate_plugin.py C:\projects\fable5-codex\plugins\fable5-codex
+quick_validate.py on each of the six skill directories
+python -m json.tool package.json
+python -m json.tool plugins\fable5-codex\templates\fable-ecf-run-contract.json
+python -m json.tool plugins\fable5-codex\schemas\fable5.schema.json
+npm pack --dry-run
+```
+
+Result:
+
+```text
+Fable-5 package validation passed.
+Plugin validation passed: C:\projects\fable5-codex\plugins\fable5-codex
+Skill is valid! (all six skills)
+JSON syntax ok
+npm pack --dry-run included bin/install.mjs, package.json, plugins/fable5-codex, assets, skills, references, schemas, and templates.
+```
+
 ## Passed
 
 File/package validation:

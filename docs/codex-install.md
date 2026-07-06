@@ -40,6 +40,40 @@ codex plugin marketplace add rhein1/fable5-codex --ref main
 codex plugin add fable5-codex@fable5-local
 ```
 
+## npx Installer
+
+For a copy-based personal install:
+
+```powershell
+npx github:rhein1/fable5-codex
+```
+
+That command copies the packaged plugin into:
+
+```text
+~/plugins/fable5-codex
+```
+
+and writes or updates:
+
+```text
+~/.agents/plugins/marketplace.json
+```
+
+Then it runs:
+
+```powershell
+codex plugin add fable5-codex@personal
+```
+
+For a project-local marketplace in the current directory:
+
+```powershell
+npx github:rhein1/fable5-codex --project
+```
+
+Use `--no-codex-add` to only copy files and write marketplace metadata.
+
 Start a new Codex thread after install. Use this prompt when you want Fable-5 styled multi-subagent work:
 
 ```text

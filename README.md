@@ -14,7 +14,8 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 - `plugins/fable5-codex/`: installable Codex plugin
 - `.agents/plugins/marketplace.json`: repo-local marketplace catalog
 - `plugins/fable5-codex/references/`: ECF-style run-contract guidance used by the installed skills
-- `plugins/fable5-codex/templates/`: starter ECF/Fable run-contract JSON
+- `plugins/fable5-codex/templates/`: starter ECF/Fable run-contract JSON and review contract
+- `bin/install.mjs`: GitHub/npx installer for personal or project-local Codex marketplaces
 - `examples/`: prompt calls, toy repo, and expected report examples
 - `evals/`: fixtures for fact-check, audit, and sweep validation
 - `docs/`: method, install, architecture, and schema notes
@@ -44,7 +45,10 @@ Fable-5 uses ECF-style contracts as the governance layer for a run. The contract
 
 - Contract reference: `plugins/fable5-codex/references/ecf-run-contract.md`
 - Starter JSON: `plugins/fable5-codex/templates/fable-ecf-run-contract.json`
+- PR review contract: `plugins/fable5-codex/templates/fable-review-contract.md`
 - Ledger schema: `plugins/fable5-codex/schemas/fable5.schema.json`
+
+Authority split: subagents may research, map, plan, draft, find, or verify inside assigned lenses. The main agent owns final findings, spot-checking, writes, commits, pushes, GitHub comments, deploys, publishing, credential mutation, and any money/wallet action.
 
 Public OSS boundary: this package includes Micro ECF-style contracts and reporting rules only. It does not include private Full ECF internals.
 
@@ -78,6 +82,26 @@ Then restart Codex if needed, start a new thread, and call a skill directly. For
 
 ```text
 Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: this repository. Focus: correctness, security, data/migrations, operations/tests, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
+```
+
+## Install With npx
+
+This repo also ships a copy-based installer for users who prefer a single command:
+
+```powershell
+npx github:rhein1/fable5-codex
+```
+
+The installer copies `plugins/fable5-codex` into the Codex personal marketplace layout, writes or updates `~/.agents/plugins/marketplace.json`, then runs:
+
+```powershell
+codex plugin add fable5-codex@personal
+```
+
+For a repo-local marketplace in the current directory:
+
+```powershell
+npx github:rhein1/fable5-codex --project
 ```
 
 ## Install From A Local Checkout

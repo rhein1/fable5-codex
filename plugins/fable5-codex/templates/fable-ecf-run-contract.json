@@ -38,6 +38,26 @@
     "fallback": "Run the same independent lenses locally and report single-agent multi-lens.",
     "claimRule": "Do not claim multi-agent mode unless real subagent IDs or runtime-visible handles exist."
   },
+  "authoritySplit": {
+    "subagentsMay": [
+      "research assigned lenses",
+      "map source evidence",
+      "draft plans",
+      "find candidate issues",
+      "verify or refute candidate issues"
+    ],
+    "subagentsMustNot": [
+      "perform side effects unless explicitly assigned a disjoint write scope",
+      "commit, push, publish, deploy, mutate credentials, spend funds, or edit issues/PRs",
+      "claim final findings without main-agent verification"
+    ],
+    "mainAgentOwns": [
+      "spot-checking load-bearing claims",
+      "final findings and severity",
+      "writes and external side effects",
+      "Workflow Trace and receipt"
+    ]
+  },
   "evidencePolicy": {
     "requiredEvidence": ["file", "command", "runtime", "artifact", "unknown"],
     "redaction": "Never print raw secrets, tokens, private keys, wallet keys, credential files, or .env values.",

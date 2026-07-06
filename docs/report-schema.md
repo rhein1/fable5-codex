@@ -24,3 +24,11 @@ The ECF run contract fields are optional for backward compatibility. New governe
 
 - `workflowTrace`: final execution mode, ECF contract status, lenses covered, spawned agents or no-subagent reason, verification method, and coverage gaps
 - `ecfRunContract`: contract version, authority, scope, required lenses, delegation policy, evidence policy, verification policy, and receipt fields
+
+New governed runs may also include `authoritySplit` inside `ecfRunContract` to record what subagents may do and what the main agent alone may do.
+
+For PR-review artifacts, use the Markdown verdict contract at:
+
+```text
+plugins/fable5-codex/templates/fable-review-contract.md
+```

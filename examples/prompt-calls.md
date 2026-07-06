@@ -9,6 +9,10 @@ Use $fable-fact-check. Doc: README.md. Verify every claim about installed files,
 ```
 
 ```text
+Use $fable-deep-review with an ECF run contract and review-bot-compatible output. Review the current branch against origin/main. Start with LGTM or Needs Updates, use the Fable review contract sections, and include Workflow Trace.
+```
+
+```text
 Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: plugins/fable5-codex. Focus: Codex plugin compatibility, path assumptions, Windows compatibility, overbroad promises, missing install steps, schema/reporting gaps, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
 ```
 

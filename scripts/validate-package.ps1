@@ -2,11 +2,14 @@ $ErrorActionPreference = "Stop"
 
 $repo = Split-Path -Parent $PSScriptRoot
 $plugin = Join-Path $repo "plugins/fable5-codex"
+$packageFile = Join-Path $repo "package.json"
+$installer = Join-Path $repo "bin/install.mjs"
 $manifest = Join-Path $plugin ".codex-plugin/plugin.json"
 $marketplace = Join-Path $repo ".agents/plugins/marketplace.json"
 $schema = Join-Path $plugin "schemas/fable5.schema.json"
 $ecfReference = Join-Path $plugin "references/ecf-run-contract.md"
 $ecfTemplate = Join-Path $plugin "templates/fable-ecf-run-contract.json"
+$reviewTemplate = Join-Path $plugin "templates/fable-review-contract.md"
 $requiredSkills = @(
   "fable-audit",
   "fable-deep-review",
@@ -27,6 +30,9 @@ Assert-Exists $marketplace
 Assert-Exists $schema
 Assert-Exists $ecfReference
 Assert-Exists $ecfTemplate
+Assert-Exists $reviewTemplate
+Assert-Exists $packageFile
+Assert-Exists $installer
 
 $manifestJson = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
 if ($manifestJson.name -ne "fable5-codex") {
@@ -45,6 +51,17 @@ if ($manifestJson.interface.websiteURL -ne "https://agoragentic.com") {
   throw "Unexpected interface.websiteURL: $($manifestJson.interface.websiteURL)"
 }
 
+$packageJson = Get-Content -LiteralPath $packageFile -Raw | ConvertFrom-Json
+if ($packageJson.name -ne "fable5-codex") {
+  throw "Unexpected package name: $($packageJson.name)"
+}
+if ($packageJson.version -ne $manifestJson.version) {
+  throw "Package version $($packageJson.version) does not match plugin version $($manifestJson.version)"
+}
+if ($packageJson.bin."fable5-codex" -ne "bin/install.mjs") {
+  throw "Package bin.fable5-codex must be bin/install.mjs"
+}
+
 $marketplaceJson = Get-Content -LiteralPath $marketplace -Raw | ConvertFrom-Json
 $entry = $marketplaceJson.plugins | Where-Object { $_.name -eq "fable5-codex" } | Select-Object -First 1
 if (-not $entry) {
@@ -60,6 +77,7 @@ if ($resolved -ne [System.IO.Path]::GetFullPath($plugin)) {
 
 Get-Content -LiteralPath $schema -Raw | ConvertFrom-Json | Out-Null
 Get-Content -LiteralPath $ecfTemplate -Raw | ConvertFrom-Json | Out-Null
+node $installer --dry-run --no-codex-add | Out-Null
 
 foreach ($skill in $requiredSkills) {
   $skillFile = Join-Path $plugin "skills/$skill/SKILL.md"

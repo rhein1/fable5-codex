@@ -8,6 +8,18 @@ Fable-5 for Codex uses an ECF-style run contract to make agent work explicit, bo
 - Codex subagent runtime: spawns real subagents when the user explicitly authorizes subagents and the runtime exposes a subagent tool.
 - Fable skill: maps the task, creates the contract, delegates independent lenses when allowed, verifies candidates, and reports the trace.
 
+## Authority Split
+
+Use the main-agent/subagent split as a hard safety boundary:
+
+- Subagents may research, map, plan, draft, find candidate issues, or verify candidate issues inside their assigned lens.
+- Subagents should be read-only by default unless the user explicitly asks for write-enabled parallel implementation and the main agent gives each worker a disjoint write scope.
+- The main agent owns side effects: final findings, file edits, commits, pushes, GitHub comments, issue edits, PR creation, deploys, publishing, credential mutation, and wallet/money actions.
+- The main agent must spot-check load-bearing subagent claims before acting on them.
+- If a subagent returns a structurally wrong plan or verdict, do not silently re-run or repair it into a claim of independent agreement. Report the problem, bound the uncertainty, or ask for a rerun when needed.
+- Snapshot `git status --porcelain` before and after delegated work when the runtime gives subagents command access. If a read-only subagent changed files, stop and report the unexpected mutation.
+- Save important subagent plans, verdicts, or candidate lists to a scratch artifact when a long run might outlive context.
+
 ## Authorization Gate
 
 Use real Codex subagents only when all conditions are true:
@@ -60,9 +72,14 @@ If no subagents were used, replace `spawned agents` with `no-subagent reason`.
 - `userAuthorization`: exact subagent authorization phrase, or empty when not authorized
 - `requiredLenses`: lens names and target responsibilities
 - `delegationPolicy`: when to spawn, when to stay local, and how to split work
+- `authoritySplit`: what subagents may do and what the main agent alone may do
 - `evidencePolicy`: source, command, runtime, artifact, redaction, and unknown rules
 - `verificationPolicy`: how candidates must be reproduced, refuted, or bounded
 - `receipt`: final mode, subagent IDs, validation, coverage gaps, and unknowns
+
+## Review Contract
+
+When a Fable run is reviewing a PR or driving a review loop, use `../templates/fable-review-contract.md` for the verdict shape. Keep the review contract and any bot prompt in sync: if the review sections or blocking rules change, update the skill instructions and parser/loop expectations together.
 
 ## Public OSS Boundary
 

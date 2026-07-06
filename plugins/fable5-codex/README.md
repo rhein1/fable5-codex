@@ -17,6 +17,10 @@ The plugin includes `references/ecf-run-contract.md` and `templates/fable-ecf-ru
 
 The ECF contract does not spawn subagents by itself. It records the intended workflow and the final trace. Real Codex subagents are used only when the user explicitly authorizes subagents and the active runtime exposes a subagent tool.
 
+Subagent authority is intentionally narrow. Subagents may research, map, plan, draft, find candidate issues, or verify assigned candidates. The main agent owns spot-checking, final findings, edits, commits, pushes, GitHub comments, deploys, publishing, credential mutation, and money/wallet actions.
+
+For PR review bots or review-loop artifacts, use `templates/fable-review-contract.md` so `LGTM` / `Needs Updates` verdicts and blocking sections stay machine-readable.
+
 ## Subagents
 
 Codex subagents are opt-in. The `$fable-audit` skill runs a visible multi-lens workflow every time, but it only spawns subagents when the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool.

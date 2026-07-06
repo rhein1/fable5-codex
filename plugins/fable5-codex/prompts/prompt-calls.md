@@ -13,6 +13,10 @@ Use $fable-deep-review. Review the current branch against origin/main. Findings 
 ```
 
 ```text
+Use $fable-deep-review with an ECF run contract and review-bot-compatible output. Review the current branch against origin/main. Start with LGTM or Needs Updates, use the Fable review contract sections, and include Workflow Trace.
+```
+
+```text
 Use $fable-fact-check. Doc: WRAPUP.md. Verify live/done/tested claims against disk and commands.
 ```
 

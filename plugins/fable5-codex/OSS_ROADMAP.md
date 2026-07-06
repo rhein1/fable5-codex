@@ -19,10 +19,13 @@ First release:
 - `codex exec` wrapper scripts
 - Optional custom-agent profiles
 - Micro ECF-style run-contract reference and starter template
+- GitHub/npx installer for personal and project-local Codex marketplaces
+- PR review verdict contract for future review-loop automation
 - Minimal examples
 
 Later releases:
 
 - TypeScript runner with adapter interface
 - GitHub Action for read-only audit and fact-check gates
-- Evidence dashboard for contracts, Workflow Traces, candidates, judge votes, refutations, coverage, and unresolved unknowns
+- Review-loop skills backed by the Fable review contract
+- Evidence dashboard for contracts, Workflow Traces, review verdicts, candidates, judge votes, refutations, coverage, and unresolved unknowns

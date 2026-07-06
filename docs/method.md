@@ -28,6 +28,12 @@ Default audit lenses:
 - data consistency, persistence, idempotency, and migrations
 - operations, startup, observability, tests, and docs-vs-reality
 
+Authority split:
+
+- Subagents may research, map, plan, draft, find candidate issues, or verify candidates within their assigned lens.
+- The main agent owns spot-checking, final findings, write actions, commits, pushes, GitHub comments, deploys, publishing, credential mutation, and money/wallet actions.
+- If subagent output is structurally wrong or unsupported, preserve it as refuted or unknown instead of treating it as independent agreement.
+
 ## Evidence Standard
 
 Every substantive claim should point to at least one of:
@@ -43,3 +49,5 @@ Every substantive claim should point to at least one of:
 For audits and reviews, findings come first and are ordered by severity. Summaries are secondary. Unknowns and refuted candidates are preserved when they affect confidence.
 
 Reports should include a compact Workflow Trace when the task has audit, review, fact-check, design, or sweep risk. The trace must distinguish `multi-agent` from `single-agent multi-lens` and must not claim subagent work without real subagent IDs or runtime-visible handles.
+
+For PR reviews that need bot-loop compatibility, use `plugins/fable5-codex/templates/fable-review-contract.md`.
