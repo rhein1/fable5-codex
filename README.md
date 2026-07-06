@@ -1,10 +1,38 @@
 # Fable-5 for Codex
 
+[![Validate](https://github.com/rhein1/fable5-codex/actions/workflows/validate.yml/badge.svg)](https://github.com/rhein1/fable5-codex/actions/workflows/validate.yml)
+[![npm version](https://img.shields.io/npm/v/fable5-codex?label=npm)](https://www.npmjs.com/package/fable5-codex)
+[![License: MIT](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+
 <p align="center">
   <img src="assets/brand/fable5-hero.png" alt="Fable-5 evidence-first review workflow" width="920">
 </p>
 
-Fable-5 for Codex is a Codex plugin that packages evidence-first engineering workflows as reusable skills. It is built for audits, deep reviews, fact checks, codebase understanding, design choices, and repo-wide sweeps where source-backed proof matters. The current alpha also ships Micro ECF-style run contracts so Codex can record scope, authority, lenses, evidence policy, verification policy, and a final Workflow Trace.
+Fable-5 for Codex is an OpenAI Codex plugin for evidence-first AI code review, codebase audits, fact checks, codebase understanding, design options, repo-wide sweeps, ECF run contracts, and subagent workflows. It packages six reusable Codex skills for serious software engineering work where source-backed proof matters. The current alpha ships Micro ECF-style run contracts so Codex can record scope, authority, lenses, evidence policy, verification policy, and a final Workflow Trace.
+
+<p align="center">
+  <img src="plugins/fable5-codex/assets/fable5-demo.gif" alt="Fable-5 for Codex install, run contract, subagent lenses, workflow trace, and benchmark flow" width="920">
+</p>
+
+## Quick Start
+
+Install from npm:
+
+```powershell
+npx fable5-codex
+```
+
+Or install directly from GitHub:
+
+```powershell
+npx github:rhein1/fable5-codex
+```
+
+Then start a new Codex thread and invoke a skill:
+
+```text
+Use $fable-audit. Scope: this repository. Focus: correctness, security, data, operations, tests, and docs-vs-reality. Include a Workflow Trace.
+```
 
 ## What This Repo Contains
 
@@ -17,6 +45,7 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 - `plugins/fable5-codex/templates/`: starter ECF/Fable run-contract JSON and review contract
 - `bin/install.mjs`: GitHub/npx installer for personal or project-local Codex marketplaces
 - `examples/`: prompt calls, toy repo, and expected report examples
+- `examples/gallery/`: polished sample outputs for audits, reviews, fact checks, and understanding
 - `evals/`: fixtures for fact-check, audit, and sweep validation
 - `docs/`: method, install, architecture, and schema notes
 - `scripts/validate-package.ps1`: local package validation
@@ -72,6 +101,7 @@ See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw out
 
 - `assets/brand/fable5-hero.png`: README and social-preview banner
 - `assets/brand/fable5-mark.png`: compact repo mark for plugin cards or docs
+- `plugins/fable5-codex/assets/fable5-demo.gif`: short install/run/trace demo for README and plugin screenshots
 
 ## Install From GitHub
 
@@ -88,7 +118,13 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 
 ## Install With npx
 
-This repo also ships a copy-based installer for users who prefer a single command:
+This repo ships a copy-based installer for users who prefer a single command. Use npm after the package is published:
+
+```powershell
+npx fable5-codex
+```
+
+Or install directly from GitHub:
 
 ```powershell
 npx github:rhein1/fable5-codex
@@ -103,8 +139,21 @@ codex plugin add fable5-codex@personal
 For a repo-local marketplace in the current directory:
 
 ```powershell
+npx fable5-codex --project
+```
+
+GitHub fallback:
+
+```powershell
 npx github:rhein1/fable5-codex --project
 ```
+
+## Examples Gallery
+
+- [Fable audit sample](examples/gallery/fable-audit-payment-risk.md)
+- [Fable fact-check sample](examples/gallery/fable-fact-check-status.md)
+- [Fable understand sample](examples/gallery/fable-understand-boot-flow.md)
+- [Fable deep-review sample](examples/gallery/fable-deep-review-pr.md)
 
 ## Install From A Local Checkout
 

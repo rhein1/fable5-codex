@@ -1,15 +1,31 @@
 {
   "name": "fable5-codex",
   "version": "0.3.0-alpha",
-  "description": "Installer for the Fable-5 Codex plugin: ECF-governed evidence-first workflows with explicit subagent orchestration.",
+  "description": "OpenAI Codex plugin for evidence-first AI code review, audits, fact checks, codebase understanding, ECF run contracts, and subagent workflows.",
   "type": "module",
   "bin": {
     "fable5-codex": "bin/install.mjs"
   },
+  "scripts": {
+    "validate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-package.ps1",
+    "pack:dry-run": "npm pack --dry-run",
+    "generate:demo": "python scripts/generate-demo-gif.py"
+  },
   "files": [
+    "assets",
+    "benchmarks/README.md",
+    "benchmarks/results/20260706T035611Z/*.md",
+    "benchmarks/results/20260706T035611Z/summary.csv",
+    "benchmarks/results/20260706T035611Z/summary.json",
+    "benchmarks/results/latest-run.txt",
+    "benchmarks/results/latest-summary.csv",
+    "benchmarks/results/latest-summary.json",
     "bin",
+    "docs",
+    "examples",
     "plugins",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "engines": {
@@ -17,15 +33,26 @@
   },
   "keywords": [
     "codex",
+    "openai-codex",
     "plugin",
+    "codex-plugin",
     "skills",
+    "agent-skills",
     "fable",
+    "fable5",
     "ecf",
+    "micro-ecf",
     "subagents",
+    "ai-code-review",
     "audit",
-    "code-review"
+    "code-review",
+    "fact-check",
+    "software-engineering"
   ],
   "homepage": "https://github.com/rhein1/fable5-codex#readme",
+  "bugs": {
+    "url": "https://github.com/rhein1/fable5-codex/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rhein1/fable5-codex.git"

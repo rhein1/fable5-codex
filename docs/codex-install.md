@@ -42,7 +42,13 @@ codex plugin add fable5-codex@fable5-local
 
 ## npx Installer
 
-For a copy-based personal install:
+For a copy-based personal install from npm:
+
+```powershell
+npx fable5-codex
+```
+
+GitHub fallback while testing an unreleased branch:
 
 ```powershell
 npx github:rhein1/fable5-codex
@@ -67,6 +73,12 @@ codex plugin add fable5-codex@personal
 ```
 
 For a project-local marketplace in the current directory:
+
+```powershell
+npx fable5-codex --project
+```
+
+GitHub fallback:
 
 ```powershell
 npx github:rhein1/fable5-codex --project

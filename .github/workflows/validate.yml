@@ -1,0 +1,49 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  package:
+    name: Package validation
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate package
+        shell: pwsh
+        run: .\scripts\validate-package.ps1
+
+      - name: Check JavaScript syntax
+        run: node --check bin/install.mjs
+
+      - name: Check JSON files
+        shell: pwsh
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); JSON.parse(require('fs').readFileSync('plugins/fable5-codex/.codex-plugin/plugin.json','utf8')); JSON.parse(require('fs').readFileSync('plugins/fable5-codex/templates/fable-ecf-run-contract.json','utf8')); JSON.parse(require('fs').readFileSync('benchmarks/results/latest-summary.json','utf8')); console.log('json ok')"
+
+      - name: Check shell wrapper syntax
+        shell: bash
+        run: bash -n plugins/fable5-codex/scripts/fable5-codex.sh
+
+      - name: npm pack dry run
+        run: npm pack --dry-run
+
+      - name: Whitespace check
+        run: git diff --check
