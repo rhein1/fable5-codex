@@ -19,7 +19,7 @@ For substantive engineering tasks, prefer the Fable-5 workflow style:
    - `$fable-design-options`
    - `$fable-sweep`
 
-Use subagents only when the task benefits from independent parallel exploration or verification. For routine edits, use the rigor rules without spawning extra agents.
+Use real Codex subagents for large or high-risk Fable tasks when the runtime exposes a subagent tool and the user has not opted out. Treat repo-wide, cross-package, security/privacy/money/data/API, migration, release, exhaustive audit, deep review, and broad sweep tasks as large by default. For routine edits, use the rigor rules without spawning extra agents.
 
 ## Package Rules
 
@@ -28,4 +28,3 @@ Use subagents only when the task benefits from independent parallel exploration 
 - Keep marketplace `source.path` relative and `./`-prefixed.
 - Do not introduce absolute user-specific paths into repo docs or marketplace files except in examples clearly labeled as local paths.
 - Run `scripts/validate-package.ps1` after changing packaging, skills, schemas, scripts, or custom-agent profiles.
-

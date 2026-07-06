@@ -33,7 +33,9 @@ Fable-5 for Codex is a Codex plugin that packages evidence-first engineering wor
 
 ## Subagents
 
-Fable-5 audits now report a visible `Workflow Trace` every time. Codex subagents are opt-in: ask for them explicitly, and the audit skill will use them when the runtime exposes a subagent tool. Without explicit subagent permission, the skill runs as `single-agent multi-lens` and says so instead of implying independent parallel review happened.
+Fable-5 audits now report a visible `Workflow Trace` every time. Large or high-risk Fable tasks use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out. Without a subagent tool, the skill runs as `single-agent multi-lens` and says so instead of implying independent parallel review happened.
+
+Large/high-risk means repo-wide or cross-package work, exhaustive audit, deep review, broad sweep, migration, launch readiness, "find every place", or anything touching money, auth, privacy, secrets, data migrations, public APIs, serialized contracts, deploys, or production operations.
 
 ```text
 Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: src/billing. Focus: money math, idempotency, integration wiring, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
@@ -78,7 +80,7 @@ codex plugin marketplace add rhein1/fable5-codex --ref main
 codex plugin add fable5-codex@fable5-local
 ```
 
-Then restart Codex if needed, start a new thread, and call a skill directly. For the full multi-subagent path, use an explicit authorization prompt:
+Then restart Codex if needed, start a new thread, and call a skill directly. Large/high-risk tasks request real subagents automatically when the runtime exposes them. For a smaller scope where you still want the full multi-subagent path, use an explicit authorization prompt:
 
 ```text
 Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: this repository. Focus: correctness, security, data/migrations, operations/tests, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.

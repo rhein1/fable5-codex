@@ -21,7 +21,7 @@ Required reporting style:
 - Separate target-system failures from runner/tool/environment failures.
 - Do not claim subagent, test, browser, deploy, or runtime verification happened unless it did.
 - When the user asks for ECF, subagents, repeatable evidence, CI ledgers, or durable receipts, declare an ECF-style run contract and include a Workflow Trace.
-- Use real Codex subagents only when the user explicitly authorizes subagents in the current request and the runtime exposes a subagent tool. Otherwise report `single-agent multi-lens` with the no-subagent reason.
+- Use real Codex subagents for large or high-risk Fable tasks when the runtime exposes a subagent tool and the user has not opted out. Treat repo-wide, cross-package, security/privacy/money/data/API, migration, release, exhaustive audit, deep review, and broad sweep tasks as large by default. Otherwise report `single-agent multi-lens` with the no-subagent reason.
 - Keep the authority split clear: subagents may research, map, plan, draft, find, or verify; the main agent owns final findings and external side effects.
 - For audits and reviews, list findings first by severity; keep summaries secondary.
 - For write tasks, keep edits scoped and verify with the narrowest meaningful commands.

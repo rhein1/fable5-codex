@@ -7,7 +7,7 @@ description: Claim-by-claim verification of docs, status reports, launch claims,
 
 Verify claims against actual evidence. Do not edit claims unless the user asks for a correction pass.
 
-For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split claims across independent verifier lenses and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used.
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk fact checks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat multi-document, launch/status, security/privacy/money/data/API, release-readiness, or many-claim checks as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used.
 
 ## Workflow
 

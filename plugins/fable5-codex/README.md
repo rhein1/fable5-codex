@@ -15,7 +15,7 @@ The plugin is intentionally conservative. It asks Codex to map the target, inspe
 
 The plugin includes `references/ecf-run-contract.md` and `templates/fable-ecf-run-contract.json`. These files define the governance layer for a run: scope, authority, lenses, delegation policy, evidence policy, verification policy, and final receipt fields.
 
-The ECF contract does not spawn subagents by itself. It records the intended workflow and the final trace. Real Codex subagents are used only when the user explicitly authorizes subagents and the active runtime exposes a subagent tool.
+The ECF contract does not spawn subagents by itself. It records the intended workflow and the final trace. Real Codex subagents are used for large or high-risk Fable tasks when the active runtime exposes a subagent tool and the user has not opted out.
 
 Subagent authority is intentionally narrow. Subagents may research, map, plan, draft, find candidate issues, or verify assigned candidates. The main agent owns spot-checking, final findings, edits, commits, pushes, GitHub comments, deploys, publishing, credential mutation, and money/wallet actions.
 
@@ -23,7 +23,9 @@ For PR review bots or review-loop artifacts, use `templates/fable-review-contrac
 
 ## Subagents
 
-Codex subagents are opt-in. The `$fable-audit` skill runs a visible multi-lens workflow every time, but it only spawns subagents when the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool.
+Codex subagents are automatic for large or high-risk Fable tasks when the runtime exposes a subagent tool and the user has not opted out. The `$fable-audit` skill still runs a visible multi-lens workflow every time; when subagents are unavailable or the task is small/routine, it reports `single-agent multi-lens` instead of implying independent parallel review.
+
+Large/high-risk means repo-wide or cross-package work, exhaustive audit, deep review, broad sweep, migration, launch readiness, "find every place", or anything touching money, auth, privacy, secrets, data migrations, public APIs, serialized contracts, deploys, or production operations.
 
 Use this form when you want the multi-agent path:
 
@@ -77,4 +79,4 @@ Bash with ECF contract and explicit subagent authorization:
 ./scripts/fable5-codex.sh audit src "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
 ```
 
-The wrappers call `codex exec` in read-only mode by default. Pass the write flag only for controlled edits. `-Subagents` / `--subagents` adds the explicit authorization phrase and requests an ECF run contract, but the report must still fall back to `single-agent multi-lens` if the active Codex runtime does not expose subagents.
+The wrappers call `codex exec` in read-only mode by default. Pass the write flag only for controlled edits. Large/high-risk tasks request real subagents automatically when the runtime exposes a subagent tool; `-Subagents` / `--subagents` adds an explicit authorization phrase for smaller scopes. The report must still fall back to `single-agent multi-lens` if the active Codex runtime does not expose subagents.

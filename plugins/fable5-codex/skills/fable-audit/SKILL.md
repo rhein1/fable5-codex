@@ -38,11 +38,11 @@ Every audit must make the workflow visible. In the final report, include a short
 - verification method
 - coverage gaps and unknowns
 
-Codex subagents are allowed only when the user explicitly asks for subagents, delegation, or parallel agent work and a subagent tool is available. If that condition is met, use this orchestration pattern unless the scope is too small to justify it:
+Use real Codex subagents for large or high-risk audits when the runtime exposes a subagent tool and the user has not opted out. Treat an audit as large or high-risk when it is repo-wide, cross-package, touches many files, asks for exhaustive/deep coverage, or involves money, auth, privacy, secrets, data migrations, public APIs, serialized contracts, deploys, or production operations. Explicit user requests for subagents trigger the same path even for smaller scopes. If that condition is met, use this orchestration pattern:
 
 1. Keep the main agent as orchestrator and synthesizer.
 2. Do the initial scope/read-order check locally so delegated work is well bounded.
-3. Declare an ECF-style contract with `mode: multi-agent`, the quoted authorization phrase, authority boundaries, and the planned lenses.
+3. Declare an ECF-style contract with `mode: multi-agent`, the subagent trigger reason, authority boundaries, and the planned lenses.
 4. Spawn independent read-only finder subagents for disjoint lenses:
    - `correctness-integration`: correctness, edge cases, and integration contracts
    - `security-privacy-authz`: security, privacy, authn/authz, and secret handling
@@ -54,7 +54,7 @@ Codex subagents are allowed only when the user explicitly asks for subagents, de
 8. Verify high-impact candidates locally or with a separate verifier subagent when that can run in parallel without blocking the orchestrator.
 9. Synthesize only verified findings. Keep refuted or uncertain candidates in `Not Reported` or `Unknowns` when they affect confidence.
 
-If the user did not explicitly ask for subagents, or the runtime does not expose a subagent tool, still run the same independent lenses locally and report `single-agent multi-lens` in `Workflow Trace`. Do not claim independent review, parallel review, or subagent work happened unless it actually did.
+If the task is not large/high-risk, the user opted out, or the runtime does not expose a subagent tool, still run the same independent lenses locally and report `single-agent multi-lens` in `Workflow Trace`. Do not claim independent review, parallel review, or subagent work happened unless it actually did.
 
 Use this prompt shape when a user wants the full path:
 

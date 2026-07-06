@@ -13,9 +13,9 @@ This plugin translates a Claude-style multi-agent workflow kit into Codex-native
 
 Subagent behavior:
 
-- Codex only spawns subagents when the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool.
+- Codex should use real subagents for large or high-risk Fable tasks when the runtime exposes a subagent tool and the user has not opted out. Explicit user subagent requests still trigger the same path for smaller scopes.
 - `$fable-audit` must still show the workflow every time through a `Workflow Trace` section and should declare the ECF run contract when the user asks for ECF, subagents, repeatable evidence, CI ledgers, or durable receipts.
-- When subagents are not available or not explicitly requested, the audit should run as `single-agent multi-lens` and say that directly instead of implying independent review happened.
+- When subagents are not available, the task is small/routine, or the user opted out, the audit should run as `single-agent multi-lens` and say that directly instead of implying independent review happened.
 - Do not claim `multi-agent` unless real subagent IDs or runtime-visible handles exist.
 - Keep authority split explicit: subagents research/plan/find/verify; the main agent spot-checks and owns final findings plus side effects.
 

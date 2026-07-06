@@ -14,7 +14,7 @@ They are not automatically registered by the Fable-5 plugin manifest. The plugin
 
 ## Audit Usage
 
-For Codex runtimes with generic subagent tools, ask for subagents explicitly and request an ECF run contract:
+For Codex runtimes with generic subagent tools, large or high-risk Fable tasks should use real subagents by default unless the user opts out. An explicit request is still useful when you want the multi-agent path on a smaller scope:
 
 ```text
 Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: src/billing. Focus: money math, idempotency, integration wiring, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.

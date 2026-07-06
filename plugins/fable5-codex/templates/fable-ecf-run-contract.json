@@ -13,6 +13,9 @@
   },
   "userAuthorization": {
     "subagentsRequested": false,
+    "subagentsRequired": "auto-for-large-tasks",
+    "largeTaskAutoSubagents": true,
+    "userOptOut": false,
     "authorizationPhrase": ""
   },
   "requiredLenses": [
@@ -34,7 +37,13 @@
     }
   ],
   "delegationPolicy": {
-    "spawnWhen": "The user explicitly authorizes subagents and the Codex runtime exposes a subagent tool.",
+    "spawnWhen": "Use real Codex subagents for large or high-risk tasks when the user has not opted out and the runtime exposes a subagent tool. Explicit user subagent requests also trigger the same path.",
+    "largeTaskSignals": [
+      "repo-wide, cross-package, cross-directory, or many-file scope",
+      "exhaustive audit, deep review, broad sweep, migration, launch readiness, or find-every-place request",
+      "money, auth, privacy, secrets, data migrations, public APIs, serialized contracts, deploy, or production operations risk",
+      "more than three independent lenses needed for adequate coverage"
+    ],
     "fallback": "Run the same independent lenses locally and report single-agent multi-lens.",
     "claimRule": "Do not claim multi-agent mode unless real subagent IDs or runtime-visible handles exist."
   },
@@ -69,6 +78,7 @@
   },
   "receipt": {
     "mode": "single-agent-multi-lens",
+    "subagentTrigger": "large-task-policy",
     "subagentTool": "unavailable",
     "spawnedAgents": [],
     "lensesCovered": [],
