@@ -7,7 +7,7 @@ description: Fable-5 deep code review for pull requests, branches, diffs, or pro
 
 Review like a senior engineer validating a change, not like a summarizer. Default to no edits unless the user asks to address findings.
 
-For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split review into independent lenses and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used. For bot-parseable PR review output, use `../../templates/fable-review-contract.md`.
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk reviews, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat repo-wide, cross-package, security/privacy/money/data/API, migration, release, or deep-review requests as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used. For bot-parseable PR review output, use `../../templates/fable-review-contract.md`.
 
 ## Workflow
 

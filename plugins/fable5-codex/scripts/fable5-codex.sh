@@ -49,6 +49,7 @@ fi
 if [[ -n "$ecf" ]]; then
   prompt="${prompt} Include an ECF run contract and Workflow Trace."
 fi
+prompt="${prompt} For large or high-risk Fable tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; otherwise report single-agent multi-lens with the no-subagent reason."
 if [[ -n "$subagents" ]]; then
   prompt="${prompt} I explicitly authorize parallel subagents for this run. Spawn four independent read-only lenses when the runtime exposes a subagent tool: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist."
 fi

@@ -7,7 +7,7 @@ description: Source-grounded codebase understanding for behavior, architecture, 
 
 Answer from implementation evidence, not memory or stale docs.
 
-For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split mapping into independent lenses and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk understanding tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat cross-module architecture, boot flow, data flow, integration wiring, security/privacy/money/data/API, or many-file mapping questions as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
 
 ## Workflow
 

@@ -7,7 +7,7 @@ description: Evidence-grounded design option generation for technical architectu
 
 Generate options after reading the actual system. Avoid abstract architecture advice when source evidence is available.
 
-For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split research into independent option-risk lenses and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk design-option tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat architecture, migration, API, data model, security/privacy/money/data/API, operational, release, or cross-module decisions as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
 
 ## Workflow
 

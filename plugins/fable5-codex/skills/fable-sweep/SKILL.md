@@ -7,7 +7,7 @@ description: Repo-wide implementation workflow for renames, migrations, consiste
 
 Perform broad changes with discovery first and scoped edits second. Do not mutate unrelated worktree changes.
 
-For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split discovery, verification, or disjoint implementation slices across agents and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large sweeps, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat repo-wide renames, migrations, consistency passes, generated-surface syncs, docs/tests syncs, and "find every place" tasks as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
 
 ## Workflow
 
