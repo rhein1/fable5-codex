@@ -28,6 +28,12 @@
       "type": "array",
       "items": { "$ref": "#/$defs/coverageArea" }
     },
+    "workflowTrace": {
+      "$ref": "#/$defs/workflowTrace"
+    },
+    "ecfRunContract": {
+      "$ref": "#/$defs/ecfRunContract"
+    },
     "findings": {
       "type": "array",
       "items": { "$ref": "#/$defs/finding" }
@@ -53,6 +59,86 @@
         "source": { "type": "string" },
         "line": { "type": "integer", "minimum": 1 },
         "summary": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "workflowTrace": {
+      "type": "object",
+      "required": ["mode", "lensesCovered", "verificationMethod"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["multi-agent", "single-agent-multi-lens", "single-agent"]
+        },
+        "ecfContract": {
+          "type": "string",
+          "enum": ["declared-inline", "artifact-path", "not-emitted"]
+        },
+        "artifactPath": { "type": "string" },
+        "authorizationPhrase": { "type": "string" },
+        "subagentTool": { "type": "string" },
+        "spawnedAgents": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/spawnedAgent" }
+        },
+        "noSubagentReason": { "type": "string" },
+        "lensesCovered": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "verificationMethod": { "type": "string" },
+        "coverageGaps": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ecfRunContract": {
+      "type": "object",
+      "required": ["contractVersion", "mode", "authority", "scope", "requiredLenses", "evidencePolicy", "verificationPolicy"],
+      "properties": {
+        "contractVersion": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": ["audit", "deep-review", "fact-check", "understand", "design-options", "sweep"]
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["multi-agent", "single-agent-multi-lens", "single-agent"]
+        },
+        "authority": { "type": "object" },
+        "scope": { "type": "object" },
+        "userAuthorization": { "type": "object" },
+        "requiredLenses": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/lens" }
+        },
+        "delegationPolicy": { "type": "object" },
+        "evidencePolicy": { "type": "object" },
+        "verificationPolicy": { "type": "object" },
+        "receipt": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "spawnedAgent": {
+      "type": "object",
+      "required": ["id", "lens"],
+      "properties": {
+        "id": { "type": "string" },
+        "lens": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "lens": {
+      "type": "object",
+      "required": ["name", "responsibility"],
+      "properties": {
+        "name": { "type": "string" },
+        "responsibility": { "type": "string" }
       },
       "additionalProperties": false
     },

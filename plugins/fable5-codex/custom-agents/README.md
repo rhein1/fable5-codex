@@ -14,10 +14,10 @@ They are not automatically registered by the Fable-5 plugin manifest. The plugin
 
 ## Audit Usage
 
-For Codex runtimes with generic subagent tools, ask for subagents explicitly:
+For Codex runtimes with generic subagent tools, ask for subagents explicitly and request an ECF run contract:
 
 ```text
-Use $fable-audit with subagents. Scope: src/billing. Focus: money math, idempotency, integration wiring, and docs-vs-reality.
+Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: src/billing. Focus: money math, idempotency, integration wiring, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
 ```
 
 If no subagent tool is available, `$fable-audit` should still run the same lenses locally and report `single-agent multi-lens` in its `Workflow Trace`.

@@ -7,21 +7,24 @@ description: Fable-5 deep code review for pull requests, branches, diffs, or pro
 
 Review like a senior engineer validating a change, not like a summarizer. Default to no edits unless the user asks to address findings.
 
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split review into independent lenses and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used.
+
 ## Workflow
 
 1. Identify the review target: PR, branch, diff, commit range, or files.
-2. Read repo instructions and changed files completely before judging them.
-3. Inspect callers, importers, tests, docs, migrations, and generated/runtime surfaces touched by the change.
-4. Build a change map: intent, modified behavior, affected contracts, and risk areas.
-5. Generate candidate regressions from multiple lenses:
+2. Restate authority boundaries and declare the ECF run mode: `multi-agent` only with real spawned subagents, otherwise `single-agent multi-lens`.
+3. Read repo instructions and changed files completely before judging them.
+4. Inspect callers, importers, tests, docs, migrations, and generated/runtime surfaces touched by the change.
+5. Build a change map: intent, modified behavior, affected contracts, and risk areas.
+6. Generate candidate regressions from multiple lenses:
    - API/contract compatibility
    - data/schema and migration safety
    - concurrency/idempotency/retry behavior
    - auth, privacy, and permission checks
    - user-facing/runtime behavior
    - test adequacy and missing cases
-6. Verify each candidate. Prefer a small command or source trace that proves the issue.
-7. Report only actionable findings. Put open questions after findings.
+7. Verify each candidate. Prefer a small command or source trace that proves the issue.
+8. Report only actionable findings. Put open questions after findings.
 
 ## Evidence Safety
 
@@ -38,3 +41,5 @@ Lead with findings ordered by severity. Each finding needs:
 - suggested correction
 
 If no findings are found, say that clearly and list remaining test gaps or residual risk.
+
+Include a compact `Workflow Trace` with mode, ECF contract status, lenses covered, spawned agents or no-subagent reason, verification method, and coverage gaps.

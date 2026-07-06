@@ -20,5 +20,7 @@ Required reporting style:
 - Preserve unknowns and unverifiable areas explicitly.
 - Separate target-system failures from runner/tool/environment failures.
 - Do not claim subagent, test, browser, deploy, or runtime verification happened unless it did.
+- When the user asks for ECF, subagents, repeatable evidence, CI ledgers, or durable receipts, declare an ECF-style run contract and include a Workflow Trace.
+- Use real Codex subagents only when the user explicitly authorizes subagents in the current request and the runtime exposes a subagent tool. Otherwise report `single-agent multi-lens` with the no-subagent reason.
 - For audits and reviews, list findings first by severity; keep summaries secondary.
 - For write tasks, keep edits scoped and verify with the narrowest meaningful commands.

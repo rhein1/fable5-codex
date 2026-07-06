@@ -5,11 +5,11 @@ This benchmark compares the same Codex model in two modes:
 - **Baseline:** `gpt-5.5` with user config ignored and no Fable-5 skill invoked.
 - **Plugin:** `gpt-5.5` with the installed Fable-5 plugin, explicitly invoking the relevant `$fable-*` skill.
 
-It is a workflow benchmark, not a broad model benchmark. The fixtures are intentionally tiny, so normal `gpt-5.5` already finds the expected issues. The measurable difference in the current run is mostly Fable-5's discipline around explicit unknowns, coverage notes, and structured evidence.
+It is a workflow benchmark, not a broad model benchmark. The fixtures are intentionally tiny, so normal `gpt-5.5` already finds the expected issues. The measurable difference in completed cases is mostly Fable-5's discipline around explicit unknowns, coverage notes, and structured evidence. Runtime reliability matters too: timeout failures count as failed benchmark trials.
 
 ## Latest Run
 
-- Run id: `20260705T182614Z`
+- Run id: `20260706T004209Z`
 - Model: `gpt-5.5`
 - Reasoning effort: `xhigh`
 - Timeout: 210 seconds per trial
@@ -43,20 +43,21 @@ Expected concept recall is regex-scored against fixed fixture-specific concepts 
 | Case | Baseline composite | Fable-5 composite | Main difference |
 |---|---:|---:|---|
 | `fact-check-status` | 90.0 | 100.0 | Fable-5 added explicit unknowns and coverage notes. |
-| `audit-payment-attempts` | 96.0 | 96.0 | Both modes found the expected issues. |
-| `understand-toy-repo` | 100.0 | 100.0 | Both modes found the expected behavior/docs mismatch. |
+| `audit-payment-attempts` | 100.0 | 0.0 | Plugin trial timed out at the default 210s harness limit. |
+| `understand-toy-repo` | 90.0 | 90.0 | Both modes found the expected behavior/docs mismatch; plugin added unknowns but missed structured-report markers. |
 
-Average composite: `95.3 -> 98.7` (`+3.3 pts`).
+Average composite in the default harness: `93.3 -> 63.3` (`-30.0 pts`) because timeout failures score as zero. A targeted 360s rerun of `audit-payment-attempts` completed and scored 100 by the same rubric, so treat the chart as a timeout/reliability signal rather than a quality-only signal.
 
 ## Raw Outputs
 
 - `benchmarks/results/latest-summary.csv`
 - `benchmarks/results/latest-summary.json`
-- `benchmarks/results/20260705T182614Z/fact-check-status-baseline.md`
-- `benchmarks/results/20260705T182614Z/fact-check-status-plugin.md`
-- `benchmarks/results/20260705T182614Z/audit-payment-attempts-baseline.md`
-- `benchmarks/results/20260705T182614Z/audit-payment-attempts-plugin.md`
-- `benchmarks/results/20260705T182614Z/understand-toy-repo-baseline.md`
-- `benchmarks/results/20260705T182614Z/understand-toy-repo-plugin.md`
+- `benchmarks/results/20260706T004209Z/fact-check-status-baseline.md`
+- `benchmarks/results/20260706T004209Z/fact-check-status-plugin.md`
+- `benchmarks/results/20260706T004209Z/audit-payment-attempts-baseline.md`
+- `benchmarks/results/20260706T004209Z/audit-payment-attempts-plugin.md`
+- `benchmarks/results/20260706T004209Z/audit-payment-attempts-plugin-rerun-360.md`
+- `benchmarks/results/20260706T004209Z/understand-toy-repo-baseline.md`
+- `benchmarks/results/20260706T004209Z/understand-toy-repo-plugin.md`
 
 CLI logs are ignored by git because they include local runtime noise and machine paths.

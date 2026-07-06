@@ -4,7 +4,23 @@ set -euo pipefail
 mode="${1:-audit}"
 scope="${2:-.}"
 focus="${3:-}"
-write="${4:-}"
+shift $(( $# >= 3 ? 3 : $# ))
+write=""
+ecf=""
+subagents=""
+
+for flag in "$@"; do
+  case "$flag" in
+    --write) write="1" ;;
+    --ecf) ecf="1" ;;
+    --subagents) subagents="1"; ecf="1" ;;
+    *)
+      echo "Unknown flag: $flag" >&2
+      echo "Expected flags: --write, --ecf, --subagents" >&2
+      exit 2
+      ;;
+  esac
+done
 
 case "$mode" in
   audit) skill='$fable-audit' ;;
@@ -20,7 +36,7 @@ case "$mode" in
     ;;
 esac
 
-if [[ "$write" == "--write" ]]; then
+if [[ -n "$write" ]]; then
   sandbox="workspace-write"
 else
   sandbox="read-only"
@@ -29,6 +45,12 @@ fi
 prompt="Use ${skill}. Scope: ${scope}."
 if [[ -n "$focus" ]]; then
   prompt="${prompt} Focus: ${focus}."
+fi
+if [[ -n "$ecf" ]]; then
+  prompt="${prompt} Include an ECF run contract and Workflow Trace."
+fi
+if [[ -n "$subagents" ]]; then
+  prompt="${prompt} I explicitly authorize parallel subagents for this run. Spawn four independent read-only lenses when the runtime exposes a subagent tool: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist."
 fi
 
 codex exec --sandbox "$sandbox" "$prompt"

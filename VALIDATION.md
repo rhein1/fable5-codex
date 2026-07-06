@@ -1,6 +1,95 @@
 # Validation
 
-Date: 2026-07-05
+Date: 2026-07-06
+
+## 2026-07-06 ECF / Multi-Subagent Update
+
+Changed package version:
+
+```text
+plugins/fable5-codex/.codex-plugin/plugin.json version: 0.3.0-alpha
+```
+
+Added installable ECF resources:
+
+```text
+plugins/fable5-codex/references/ecf-run-contract.md
+plugins/fable5-codex/templates/fable-ecf-run-contract.json
+```
+
+Updated command surface:
+
+```text
+$fable-audit with real Codex subagents and an ECF run contract
+$fable-deep-review with an ECF run contract
+$fable-fact-check with an ECF run contract
+$fable-understand with an ECF run contract
+$fable-design-options with an ECF run contract
+$fable-sweep with an ECF run contract
+```
+
+Explicit multi-subagent prompt:
+
+```text
+Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: this repository. Focus: correctness, security, data/migrations, operations/tests, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
+```
+
+Validation rerun:
+
+```powershell
+.\scripts\validate-package.ps1
+python C:\Users\s8972\.codex\skills\.system\plugin-creator\scripts\validate_plugin.py C:\projects\fable5-codex\plugins\fable5-codex
+python C:\Users\s8972\.codex\skills\.system\skill-creator\scripts\quick_validate.py <each skill directory>
+git diff --check
+```
+
+Result:
+
+```text
+custom agent toml ok
+Fable-5 package validation passed.
+Plugin validation passed: C:\projects\fable5-codex\plugins\fable5-codex
+Skill is valid! (all six skills)
+git diff --check: no whitespace errors; only CRLF normalization warnings
+```
+
+Wrapper and JSON syntax checks:
+
+```text
+PowerShell wrapper syntax ok
+Bash wrapper syntax ok
+JSON syntax ok
+```
+
+Repo marketplace state:
+
+```text
+Marketplace `fable5-local` is already added from \\?\C:\projects\fable5-codex.
+Installed marketplace root: C:\projects\fable5-codex
+```
+
+Repo plugin reinstall:
+
+```text
+Added plugin `fable5-codex` from marketplace `fable5-local`.
+Installed plugin root: C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.3.0-alpha
+```
+
+Personal plugin reinstall:
+
+```text
+Added plugin `fable5-codex` from marketplace `personal`.
+Installed plugin root: C:\Users\s8972\.codex\plugins\cache\personal\fable5-codex\0.3.0-alpha
+```
+
+Installed cache proof for both repo and personal installs:
+
+```text
+Version: 0.3.0-alpha
+HasReference: True
+HasTemplate: True
+DefaultPrompt includes: Use $fable-audit with real Codex subagents and an ECF run contract on this repo. I explicitly authorize parallel subagents for this run.
+```
 
 ## Passed
 
@@ -20,7 +109,7 @@ Fable-5 package validation passed.
 Package version:
 
 ```text
-plugins/fable5-codex/.codex-plugin/plugin.json version: 0.2.0-alpha
+plugins/fable5-codex/.codex-plugin/plugin.json version: 0.3.0-alpha
 ```
 
 Plugin manifest validation:
@@ -143,7 +232,7 @@ Result:
 
 ```text
 Added plugin `fable5-codex` from marketplace `fable5-local`.
-Installed plugin root: C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.2.0-alpha
+Installed plugin root: C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.3.0-alpha
 ```
 
 Personal plugin reinstall:
@@ -156,7 +245,7 @@ Result:
 
 ```text
 Added plugin `fable5-codex` from marketplace `personal`.
-Installed plugin root: C:\Users\s8972\.codex\plugins\cache\personal\fable5-codex\0.2.0-alpha
+Installed plugin root: C:\Users\s8972\.codex\plugins\cache\personal\fable5-codex\0.3.0-alpha
 ```
 
 Codex CLI skill smoke:
@@ -184,7 +273,7 @@ Post-audit fixes:
 - sync-personal-plugin.ps1 now rejects sibling-prefix paths like C:\Users\s8972\plugins-backup\fable5-codex.
 - install docs now include codex plugin marketplace add . and codex plugin add fable5-codex@fable5-local.
 - reusable skill and custom-agent instructions now include no-raw-secret redaction rules.
-- manifest/docs version source of truth is aligned to 0.2.0-alpha.
+- manifest/docs version source of truth is aligned to 0.3.0-alpha.
 ```
 
 ## Runtime Validation Matrix
@@ -200,8 +289,8 @@ Post-audit fixes:
 | Personal plugin sync from repo canonical | PowerShell helper | PASS | `scripts/sync-personal-plugin.ps1` |
 | CLI marketplace list | Codex CLI | PASS | `codex-cli 0.142.5`; `codex plugin marketplace list` includes `personal` |
 | Repo marketplace registration | Codex CLI | PASS | `codex plugin marketplace add .` registered `fable5-local` at `C:\projects\fable5-codex` |
-| Repo plugin install | Codex CLI | PASS | `codex plugin add fable5-codex@fable5-local` installed `0.2.0-alpha` cache root |
-| Personal plugin reinstall | Codex CLI | PASS | `codex plugin add fable5-codex@personal` installed `0.2.0-alpha` cache root |
+| Repo plugin install | Codex CLI | PASS | `codex plugin add fable5-codex@fable5-local` installed `0.3.0-alpha` cache root |
+| Personal plugin reinstall | Codex CLI | PASS | `codex plugin add fable5-codex@personal` installed `0.3.0-alpha` cache root |
 | `$fable-understand` runs | Codex CLI | PASS | `runtime-smoke/01-understand.md` |
 | `$fable-fact-check` runs | Codex CLI | PASS | `runtime-smoke/02-fact-check.md` |
 | `$fable-audit` runs | Codex CLI | PASS | `runtime-smoke/03-audit.md` |

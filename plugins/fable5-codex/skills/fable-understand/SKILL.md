@@ -7,20 +7,23 @@ description: Source-grounded codebase understanding for behavior, architecture, 
 
 Answer from implementation evidence, not memory or stale docs.
 
+For ECF-style governed runs, use `../../references/ecf-run-contract.md`. When the user explicitly asks for subagents, delegation, or parallel agent work and the runtime exposes a subagent tool, split mapping into independent lenses and report real subagent IDs in `Workflow Trace`. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
+
 ## Workflow
 
 1. Restate the question and scope.
-2. Read repo instructions and the most direct source files.
-3. Trace from entrypoint to effects:
+2. Restate authority boundaries and declare the ECF run mode when the user asks for ECF, subagents, or a receipt.
+3. Read repo instructions and the most direct source files.
+4. Trace from entrypoint to effects:
    - route/command/UI entry
    - service/module boundaries
    - data reads/writes
    - external calls
    - errors, retries, and fallbacks
    - tests and docs that confirm or contradict behavior
-4. Inspect callers and importers before answering behavior questions.
-5. Use a small diagram or ordered flow when it improves clarity.
-6. Include unknowns, assumptions, and stale-doc risks.
+5. Inspect callers and importers before answering behavior questions.
+6. Use a small diagram or ordered flow when it improves clarity.
+7. Include unknowns, assumptions, and stale-doc risks.
 
 ## Evidence Safety
 
@@ -37,3 +40,5 @@ Prefer this shape:
 - useful next probe, only if needed
 
 Every non-obvious claim should have a file, line, command, artifact, or runtime citation.
+
+When requested, include a compact `Workflow Trace` with mode, ECF contract status, lenses covered, spawned agents or no-subagent reason, verification method, and coverage gaps.

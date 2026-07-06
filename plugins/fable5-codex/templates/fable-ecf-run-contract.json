@@ -1,0 +1,59 @@
+{
+  "contractVersion": "fable5-ecf-0.1",
+  "kind": "audit",
+  "mode": "single-agent-multi-lens",
+  "authority": {
+    "editMode": "read-only",
+    "externalActions": "none",
+    "secretHandling": "redact-values"
+  },
+  "scope": {
+    "target": "current repository",
+    "focus": "correctness, security, data, operations, tests, and docs-vs-reality"
+  },
+  "userAuthorization": {
+    "subagentsRequested": false,
+    "authorizationPhrase": ""
+  },
+  "requiredLenses": [
+    {
+      "name": "correctness-integration",
+      "responsibility": "Correctness, edge cases, and integration contracts"
+    },
+    {
+      "name": "security-privacy-authz",
+      "responsibility": "Security, privacy, authn/authz, and secret handling"
+    },
+    {
+      "name": "data-migrations-idempotency",
+      "responsibility": "Data consistency, persistence, idempotency, and migrations"
+    },
+    {
+      "name": "operations-tests-docs",
+      "responsibility": "Operations, startup, observability, tests, and docs-vs-reality"
+    }
+  ],
+  "delegationPolicy": {
+    "spawnWhen": "The user explicitly authorizes subagents and the Codex runtime exposes a subagent tool.",
+    "fallback": "Run the same independent lenses locally and report single-agent multi-lens.",
+    "claimRule": "Do not claim multi-agent mode unless real subagent IDs or runtime-visible handles exist."
+  },
+  "evidencePolicy": {
+    "requiredEvidence": ["file", "command", "runtime", "artifact", "unknown"],
+    "redaction": "Never print raw secrets, tokens, private keys, wallet keys, credential files, or .env values.",
+    "unknowns": "Preserve material unknowns, blocked probes, and coverage gaps."
+  },
+  "verificationPolicy": {
+    "candidateStandard": "Every reported finding needs a concrete failure scenario and exact evidence.",
+    "verificationStandard": "The main agent must reproduce, refute, or bound high-impact candidates before final reporting."
+  },
+  "receipt": {
+    "mode": "single-agent-multi-lens",
+    "subagentTool": "unavailable",
+    "spawnedAgents": [],
+    "lensesCovered": [],
+    "localVerification": [],
+    "coverageGaps": [],
+    "unknowns": []
+  }
+}

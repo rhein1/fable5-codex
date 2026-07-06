@@ -309,7 +309,8 @@ function Render-CaseChart($rows, [string]$path) {
       $delta = $avgPlugin - $avgBase
       $noteFont = New-Object System.Drawing.Font("Segoe UI", 25, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
       try {
-        $note = "Average composite: {0:n1} -> {1:n1}  (+{2:n1} pts)" -f $avgBase, $avgPlugin, $delta
+        $deltaText = if ($delta -ge 0) { "+{0:n1}" -f $delta } else { "{0:n1}" -f $delta }
+        $note = "Average composite: {0:n1} -> {1:n1}  ({2} pts)" -f $avgBase, $avgPlugin, $deltaText
         $g.DrawString($note, $noteFont, $white, 120, 812)
       } finally { $noteFont.Dispose() }
     } finally {
