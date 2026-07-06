@@ -1,7 +1,6 @@
 # Fable-5 for Codex
 
 [![Validate](https://github.com/rhein1/fable5-codex/actions/workflows/validate.yml/badge.svg)](https://github.com/rhein1/fable5-codex/actions/workflows/validate.yml)
-[![npm version](https://img.shields.io/npm/v/fable5-codex?label=npm)](https://www.npmjs.com/package/fable5-codex)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 <p align="center">
@@ -16,16 +15,16 @@ Fable-5 for Codex is an OpenAI Codex plugin for evidence-first AI code review, c
 
 ## Quick Start
 
-Install from npm:
-
-```powershell
-npx fable5-codex
-```
-
-Or install directly from GitHub:
+Install directly from GitHub:
 
 ```powershell
 npx github:rhein1/fable5-codex
+```
+
+The npm package metadata is publish-ready. After npm authentication is available and the package is published, the shorter install path will be:
+
+```powershell
+npx fable5-codex
 ```
 
 Then start a new Codex thread and invoke a skill:
@@ -118,16 +117,16 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 
 ## Install With npx
 
-This repo ships a copy-based installer for users who prefer a single command. Use npm after the package is published:
-
-```powershell
-npx fable5-codex
-```
-
-Or install directly from GitHub:
+This repo ships a copy-based installer for users who prefer a single command. The live public install path is GitHub:
 
 ```powershell
 npx github:rhein1/fable5-codex
+```
+
+The npm package metadata is ready, but npm publishing requires an authenticated npm account. After publish, this shorter command will work:
+
+```powershell
+npx fable5-codex
 ```
 
 The installer copies `plugins/fable5-codex` into the Codex personal marketplace layout, writes or updates `~/.agents/plugins/marketplace.json`, then runs:
@@ -139,13 +138,13 @@ codex plugin add fable5-codex@personal
 For a repo-local marketplace in the current directory:
 
 ```powershell
-npx fable5-codex --project
+npx github:rhein1/fable5-codex --project
 ```
 
-GitHub fallback:
+After npm publish:
 
 ```powershell
-npx github:rhein1/fable5-codex --project
+npx fable5-codex --project
 ```
 
 ## Examples Gallery
