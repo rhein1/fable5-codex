@@ -64,7 +64,7 @@ Public OSS boundary: this package includes Micro ECF-style contracts and reporti
   <img src="assets/benchmarks/fable5-benchmark-metrics.png" alt="Fable-5 benchmark metric subscores" width="920">
 </p>
 
-Latest measured run: `20260706T004209Z`, `gpt-5.5`, matched `xhigh` reasoning effort. On these intentionally tiny fixtures, normal `gpt-5.5` already found the expected issues. The plugin path improved unknown/coverage discipline on completed cases, but one audit case timed out in the default harness; rerun long-running plugin audits with a wider timeout before using the chart as a quality claim.
+Latest measured run: `20260706T035611Z`, `gpt-5.5`, matched `xhigh` reasoning effort, 240s per trial. On these intentionally tiny fixtures, normal `gpt-5.5` already found the expected issues. The plugin path raised average composite from `93.3` to `98.7` by adding explicit unknowns and structured reporting; all six trials completed, with one audit case scoring `96.0` after missing one evidence marker.
 
 See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw outputs.
 
