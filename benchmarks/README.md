@@ -9,14 +9,14 @@ It is a workflow benchmark, not a broad model benchmark. The fixtures are intent
 
 ## Latest Run
 
-- Run id: `20260706T004209Z`
+- Run id: `20260706T030048Z`
 - Model: `gpt-5.5`
 - Reasoning effort: `xhigh`
-- Timeout: 210 seconds per trial
+- Timeout: 240 seconds per trial
 - Command:
 
 ```powershell
-.\scripts\run-benchmarks.ps1 -Model 'gpt-5.5' -ReasoningEffort 'xhigh' -TimeoutSeconds 210
+.\scripts\run-benchmarks.ps1 -Model 'gpt-5.5' -ReasoningEffort 'xhigh' -TimeoutSeconds 240
 ```
 
 The runner copies `evals/` and `examples/` into `tmp/benchmarks/<run-id>/` before invoking nested Codex runs. That keeps benchmark execution isolated from the source tree.
@@ -43,21 +43,20 @@ Expected concept recall is regex-scored against fixed fixture-specific concepts 
 | Case | Baseline composite | Fable-5 composite | Main difference |
 |---|---:|---:|---|
 | `fact-check-status` | 90.0 | 100.0 | Fable-5 added explicit unknowns and coverage notes. |
-| `audit-payment-attempts` | 100.0 | 0.0 | Plugin trial timed out at the default 210s harness limit. |
-| `understand-toy-repo` | 90.0 | 90.0 | Both modes found the expected behavior/docs mismatch; plugin added unknowns but missed structured-report markers. |
+| `audit-payment-attempts` | 100.0 | 92.0 | Plugin completed under the 240s gate and found every expected issue, but cited fewer fixed evidence markers than baseline. |
+| `understand-toy-repo` | 90.0 | 100.0 | Both modes found the behavior/docs mismatch; Fable-5 also preserved explicit unknowns and structured-report language. |
 
-Average composite in the default harness: `93.3 -> 63.3` (`-30.0 pts`) because timeout failures score as zero. A targeted 360s rerun of `audit-payment-attempts` completed and scored 100 by the same rubric, so treat the chart as a timeout/reliability signal rather than a quality-only signal.
+Average composite in the current harness: `93.3 -> 97.3` (`+4.0 pts`). The previous `20260706T004209Z` run had one plugin timeout and scored `93.3 -> 63.3`; this run did not reproduce that timeout. Treat the improvement as a reliability-plus-discipline signal on tiny fixtures, not as a broad model-quality claim.
 
 ## Raw Outputs
 
 - `benchmarks/results/latest-summary.csv`
 - `benchmarks/results/latest-summary.json`
-- `benchmarks/results/20260706T004209Z/fact-check-status-baseline.md`
-- `benchmarks/results/20260706T004209Z/fact-check-status-plugin.md`
-- `benchmarks/results/20260706T004209Z/audit-payment-attempts-baseline.md`
-- `benchmarks/results/20260706T004209Z/audit-payment-attempts-plugin.md`
-- `benchmarks/results/20260706T004209Z/audit-payment-attempts-plugin-rerun-360.md`
-- `benchmarks/results/20260706T004209Z/understand-toy-repo-baseline.md`
-- `benchmarks/results/20260706T004209Z/understand-toy-repo-plugin.md`
+- `benchmarks/results/20260706T030048Z/fact-check-status-baseline.md`
+- `benchmarks/results/20260706T030048Z/fact-check-status-plugin.md`
+- `benchmarks/results/20260706T030048Z/audit-payment-attempts-baseline.md`
+- `benchmarks/results/20260706T030048Z/audit-payment-attempts-plugin.md`
+- `benchmarks/results/20260706T030048Z/understand-toy-repo-baseline.md`
+- `benchmarks/results/20260706T030048Z/understand-toy-repo-plugin.md`
 
 CLI logs are ignored by git because they include local runtime noise and machine paths.
