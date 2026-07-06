@@ -21,7 +21,8 @@
     "logo": "./assets/fable5-mark.png",
     "logoDark": "./assets/fable5-mark.png",
     "screenshots": [
-      "./assets/fable5-hero.png"
+      "./assets/fable5-hero.png",
+      "./assets/fable5-demo.gif"
     ],
     "defaultPrompt": [
       "Use $fable-audit with real Codex subagents and an ECF run contract on this repo. I explicitly authorize parallel subagents for this run.",

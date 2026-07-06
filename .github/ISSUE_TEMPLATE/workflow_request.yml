@@ -1,0 +1,34 @@
+name: Workflow request
+description: Request a new Fable-5 skill, prompt pattern, lens, or example.
+title: "[workflow] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What should Codex be able to do with Fable-5?
+    validations:
+      required: true
+  - type: textarea
+    id: target_users
+    attributes:
+      label: Target users
+      description: Who needs this workflow and where would they run it?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_rules
+    attributes:
+      label: Evidence and safety rules
+      description: What source, runtime, or redaction requirements should the workflow enforce?
+    validations:
+      required: false
+  - type: textarea
+    id: example_prompt
+    attributes:
+      label: Example prompt
+      description: A prompt you wish this plugin handled well.
+    validations:
+      required: false

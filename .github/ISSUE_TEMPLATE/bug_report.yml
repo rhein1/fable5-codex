@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a reproducible plugin, installer, or workflow issue.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include raw secrets, private keys, API keys, wallet keys, or credential files.
+  - type: input
+    id: version
+    attributes:
+      label: Fable-5 version
+      placeholder: "0.3.0-alpha"
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - Codex app
+        - Codex CLI
+        - Codex IDE extension
+        - npm installer
+        - repo-local marketplace
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include commands, prompt, expected behavior, and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add redacted logs, screenshots, output paths, or links.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I have redacted secrets and credentials.
+          required: true
+        - label: I have checked whether this is already reported.
+          required: true
