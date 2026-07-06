@@ -42,16 +42,16 @@ codex plugin add fable5-codex@fable5-local
 
 ## npx Installer
 
-For a copy-based personal install from npm:
-
-```powershell
-npx fable5-codex
-```
-
-GitHub fallback while testing an unreleased branch:
+For a live copy-based personal install from GitHub:
 
 ```powershell
 npx github:rhein1/fable5-codex
+```
+
+The npm package metadata is ready, but npm publishing requires an authenticated npm account. After publish, this shorter command will work:
+
+```powershell
+npx fable5-codex
 ```
 
 That command copies the packaged plugin into:
@@ -75,13 +75,13 @@ codex plugin add fable5-codex@personal
 For a project-local marketplace in the current directory:
 
 ```powershell
-npx fable5-codex --project
+npx github:rhein1/fable5-codex --project
 ```
 
-GitHub fallback:
+After npm publish:
 
 ```powershell
-npx github:rhein1/fable5-codex --project
+npx fable5-codex --project
 ```
 
 Use `--no-codex-add` to only copy files and write marketplace metadata.
