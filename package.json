@@ -7,6 +7,7 @@
     "fable5-codex": "bin/install.mjs"
   },
   "scripts": {
+    "test": "node --test test/*.test.mjs",
     "validate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-package.ps1",
     "pack:dry-run": "npm pack --dry-run",
     "generate:demo": "python scripts/generate-demo-gif.py"

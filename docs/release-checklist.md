@@ -6,6 +6,7 @@ Use this checklist for Fable-5 for Codex releases.
 
 ```powershell
 git status -sb
+npm test
 npm run validate
 node --check bin/install.mjs
 npm run pack:dry-run

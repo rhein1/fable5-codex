@@ -1,5 +1,17 @@
 #!/usr/bin/env node
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, resolve, relative } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -14,13 +26,14 @@ const valueFor = (name) => {
 };
 
 if (has('--help') || has('-h')) {
-  console.log(`Usage: fable5-codex [--project] [--dry-run] [--no-codex-add] [--marketplace-name=<name>]
+  console.log(`Usage: fable5-codex [--project] [--dry-run] [--force] [--no-codex-add] [--marketplace-name=<name>]
 
 Installs the Fable-5 Codex plugin into the Codex personal marketplace by default.
 
 Options:
   --project              Install into the current directory as a repo-local marketplace.
   --dry-run              Print planned paths without writing files or running codex.
+  --force                Replace an existing copied plugin directory.
   --no-codex-add         Copy files and write marketplace.json, but do not run codex plugin add.
   --marketplace-name=N   Override the marketplace name. Defaults to personal or fable5-local.
 `);
@@ -33,6 +46,7 @@ const pluginSrc = join(pkgRoot, 'plugins', pluginName);
 const manifestPath = join(pluginSrc, '.codex-plugin', 'plugin.json');
 const project = has('--project');
 const dryRun = has('--dry-run');
+const force = has('--force');
 const noCodexAdd = has('--no-codex-add');
 const targetRoot = resolve(project ? process.cwd() : homedir());
 const marketplaceName = valueFor('--marketplace-name') || (project ? 'fable5-local' : 'personal');
@@ -46,6 +60,17 @@ function fail(message) {
   process.exit(1);
 }
 
+function validateMarketplaceName(value) {
+  if (typeof value !== 'string') {
+    fail('marketplace name must be a string');
+  }
+  const name = value;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(name)) {
+    fail('marketplace name must be 1-64 characters using only letters, numbers, dot, underscore, or hyphen');
+  }
+  return name;
+}
+
 function ensureInside(child, parent) {
   const rel = relative(resolve(parent), resolve(child));
   if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))) {
@@ -56,16 +81,76 @@ function ensureInside(child, parent) {
 
 function readJson(path, fallback) {
   if (!existsSync(path)) return fallback;
-  return JSON.parse(readFileSync(path, 'utf8'));
+  const raw = readFileSync(path, 'utf8');
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    fail(`could not parse JSON at ${path}: ${error.message}`);
+  }
 }
 
 function writeJson(path, value) {
-  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+  const tempPath = join(dirname(path), `.marketplace-${process.pid}-${randomUUID()}.tmp`);
+  ensurePhysicalContainment(tempPath, targetRoot);
+  try {
+    writeFileSync(tempPath, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+    try {
+      renameSync(tempPath, path);
+    } catch (error) {
+      if (!['EEXIST', 'EPERM', 'EACCES'].includes(error.code)
+          || !lstatSync(path, { throwIfNoEntry: false })) throw error;
+      ensurePhysicalContainment(path, targetRoot);
+      unlinkSync(path);
+      renameSync(tempPath, path);
+    }
+  } finally {
+    if (lstatSync(tempPath, { throwIfNoEntry: false })) unlinkSync(tempPath);
+  }
 }
 
 if (!existsSync(manifestPath)) {
   fail(`could not find plugin manifest at ${manifestPath}`);
 }
+
+function ensurePhysicalContainment(child, parent) {
+  ensureInside(child, parent);
+  const resolvedParent = resolve(parent);
+  const parentPhysical = comparablePhysicalPath(resolvedParent);
+  let candidate = resolve(child);
+
+  while (!lstatSync(candidate, { throwIfNoEntry: false }) && candidate !== resolvedParent) {
+    candidate = dirname(candidate);
+  }
+
+  let candidatePhysical;
+  try {
+    candidatePhysical = realpathSync.native(candidate);
+  } catch {
+    fail(`refusing an unresolved link or path in target root: ${child}`);
+  }
+  if (process.platform === 'win32') candidatePhysical = candidatePhysical.toLowerCase();
+  const rel = relative(parentPhysical, candidatePhysical);
+  if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))) {
+    return;
+  }
+  fail(`refusing to follow a path outside target root: ${child}`);
+}
+
+function comparablePhysicalPath(value) {
+  let physical;
+  try {
+    physical = realpathSync.native(value);
+  } catch {
+    physical = resolve(value);
+  }
+  return process.platform === 'win32' ? physical.toLowerCase() : physical;
+}
+
+function isSamePhysicalPath(left, right) {
+  return comparablePhysicalPath(left) === comparablePhysicalPath(right);
+}
+
+validateMarketplaceName(marketplaceName);
 
 const manifest = readJson(manifestPath);
 if (manifest.name !== pluginName) {
@@ -83,23 +168,44 @@ console.log(`marketplace: ${marketplacePath}`);
 console.log(`market name: ${marketplaceName}`);
 
 if (!dryRun) {
-  mkdirSync(dirname(pluginDest), { recursive: true });
-  rmSync(pluginDest, { recursive: true, force: true });
-  cpSync(pluginSrc, pluginDest, { recursive: true });
-
-  mkdirSync(dirname(marketplacePath), { recursive: true });
+  ensurePhysicalContainment(pluginDest, targetRoot);
+  ensurePhysicalContainment(marketplacePath, targetRoot);
   const marketplace = readJson(marketplacePath, {
     name: marketplaceName,
     interface: { displayName },
     plugins: []
   });
-
-  marketplace.name ||= marketplaceName;
-  marketplace.interface ||= {};
+  if (!marketplace || typeof marketplace !== 'object' || Array.isArray(marketplace)) {
+    fail(`marketplace metadata must be a JSON object: ${marketplacePath}`);
+  }
+  if (!Object.hasOwn(marketplace, 'name')) marketplace.name = marketplaceName;
+  if (!Object.hasOwn(marketplace, 'interface')) marketplace.interface = {};
+  if (!marketplace.interface || typeof marketplace.interface !== 'object' || Array.isArray(marketplace.interface)) {
+    fail(`marketplace interface must be an object: ${marketplacePath}`);
+  }
   marketplace.interface.displayName ||= displayName;
-  marketplace.plugins ||= [];
-  installedMarketplaceName = marketplace.name;
+  if (!Object.hasOwn(marketplace, 'plugins')) marketplace.plugins = [];
+  if (!Array.isArray(marketplace.plugins)) {
+    fail(`marketplace plugins must be an array: ${marketplacePath}`);
+  }
+  installedMarketplaceName = validateMarketplaceName(marketplace.name);
+  marketplace.name = installedMarketplaceName;
 
+  const sourceIsDestination = isSamePhysicalPath(pluginSrc, pluginDest);
+  if (sourceIsDestination) {
+    console.log('plugin source is already the project-local destination; copy skipped.');
+  } else {
+    if (existsSync(pluginDest) && !force) {
+      fail(`plugin destination already exists: ${pluginDest}. Rerun with --force to replace it.`);
+    }
+    mkdirSync(dirname(pluginDest), { recursive: true });
+    ensurePhysicalContainment(pluginDest, targetRoot);
+    if (existsSync(pluginDest)) rmSync(pluginDest, { recursive: true, force: true });
+    cpSync(pluginSrc, pluginDest, { recursive: true });
+  }
+
+  mkdirSync(dirname(marketplacePath), { recursive: true });
+  ensurePhysicalContainment(marketplacePath, targetRoot);
   const entry = {
     name: pluginName,
     source: {
@@ -113,7 +219,7 @@ if (!dryRun) {
     category: 'Developer Tools'
   };
 
-  const index = marketplace.plugins.findIndex((plugin) => plugin.name === pluginName);
+  const index = marketplace.plugins.findIndex((plugin) => plugin && plugin.name === pluginName);
   if (index >= 0) marketplace.plugins[index] = entry;
   else marketplace.plugins.push(entry);
 
@@ -123,24 +229,27 @@ if (!dryRun) {
 if (dryRun) {
   console.log('dry run: no files changed and codex was not invoked.');
 } else {
-  console.log(`installed plugin files and marketplace entry for ${pluginName}@${marketplace.name}`);
+  console.log(`installed plugin files and marketplace entry for ${pluginName}@${installedMarketplaceName}`);
 }
 
-if (!dryRun && !noCodexAdd) {
+if (!dryRun && !noCodexAdd && process.platform !== 'win32') {
   const commands = [];
-  if (project) commands.push(['plugin', 'marketplace', 'add', targetRoot]);
-  commands.push(['plugin', 'add', `${pluginName}@${installedMarketplaceName}`]);
+  if (project) commands.push({ args: ['plugin', 'marketplace', 'add', '.'], cwd: targetRoot });
+  commands.push({ args: ['plugin', 'add', `${pluginName}@${installedMarketplaceName}`], cwd: targetRoot });
 
   for (const command of commands) {
-    console.log(`codex ${command.join(' ')}`);
-    const result = spawnSync('codex', command, { stdio: 'inherit', shell: process.platform === 'win32' });
-    if (result.status !== 0) {
-      fail(`codex command failed. You can rerun manually: codex ${command.join(' ')}`);
+    console.log(`codex ${command.args.join(' ')}`);
+    const result = spawnSync('codex', command.args, { cwd: command.cwd, stdio: 'inherit', shell: false });
+    if (result.error || result.status !== 0) {
+      fail(`codex command failed. Rerun the printed command from the target root shown above.`);
     }
   }
 } else if (!dryRun) {
+  if (!noCodexAdd && process.platform === 'win32') {
+    console.log('codex invocation skipped on Windows to avoid passing arguments through a command shell.');
+  }
   if (project) {
-    console.log(`next: codex plugin marketplace add ${targetRoot}`);
+    console.log('next (from the target root shown above): codex plugin marketplace add .');
   }
   console.log(`next: codex plugin add ${pluginName}@${installedMarketplaceName}`);
 }

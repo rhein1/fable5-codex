@@ -135,6 +135,8 @@ The installer copies `plugins/fable5-codex` into the Codex personal marketplace 
 codex plugin add fable5-codex@personal
 ```
 
+On Windows, the installer deliberately does not launch `codex` through a command shell; it prints the exact `codex plugin add` command for you to run. Replacing an existing copied plugin directory requires an explicit `--force`. A project-local install run from this repository recognizes that the source is already in place and never deletes or recopies it.
+
 For a repo-local marketplace in the current directory:
 
 ```powershell
@@ -197,6 +199,7 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 For file-only package validation:
 
 ```powershell
+npm test
 .\scripts\validate-package.ps1
 ```
 
