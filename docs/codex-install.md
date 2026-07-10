@@ -66,11 +66,13 @@ and writes or updates:
 ~/.agents/plugins/marketplace.json
 ```
 
-Then it runs:
+On macOS and Linux it then runs:
 
 ```powershell
 codex plugin add fable5-codex@personal
 ```
+
+On Windows, automatic Codex invocation is skipped so installer-controlled paths are never passed through a command shell. Run the printed `codex plugin add` command yourself. For `--project`, change to the target root and run `codex plugin marketplace add .` followed by the printed plugin-add command.
 
 For a project-local marketplace in the current directory:
 
@@ -84,7 +86,7 @@ After npm publish:
 npx fable5-codex --project
 ```
 
-Use `--no-codex-add` to only copy files and write marketplace metadata.
+Use `--no-codex-add` to only copy files and write marketplace metadata. If a copied plugin destination already exists, review it and pass `--force` explicitly to replace it. The installer rejects marketplace names with unsafe characters or non-string JSON types and refuses destination paths that resolve outside the selected personal/project root.
 
 Start a new Codex thread after install. Use this prompt when you want Fable-5 styled multi-subagent work:
 

@@ -4,6 +4,7 @@
 
 ## Validation
 
+- [ ] `npm test`
 - [ ] `npm run validate`
 - [ ] `node --check bin/install.mjs`
 - [ ] `npm run pack:dry-run`

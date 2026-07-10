@@ -26,11 +26,12 @@ Start a new Codex thread after reinstalling.
 - Keep `.agents/plugins/marketplace.json` source paths relative and `./`-prefixed.
 - Preserve the public boundary: Micro ECF-style contracts are public; private Full ECF internals must not be added.
 - Do not claim multi-agent or parallel subagent behavior unless the workflow records real subagent IDs or runtime-visible handles.
-- Run `npm run validate` and `npm run pack:dry-run` before opening a PR.
+- Run `npm test`, `npm run validate`, and `npm run pack:dry-run` before opening a PR.
 
 ## Useful Checks
 
 ```powershell
+npm test
 npm run validate
 node --check bin/install.mjs
 npm run pack:dry-run
