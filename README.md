@@ -105,15 +105,15 @@ Public OSS boundary: this package includes Micro ECF-style contracts and reporti
 ## Benchmark Snapshot
 
 <p align="center">
-  <img src="assets/benchmarks/fable5-benchmark-summary.png" alt="Fable-5 benchmark composite score by fixture" width="920">
+  <img src="assets/benchmarks/fable5-benchmark-summary-20260713T234332Z.png" alt="Fable-5 Sol Ultra benchmark composite score by fixture, run 20260713T234332Z" width="920">
 </p>
 
 <p align="center">
-  <img src="assets/benchmarks/fable5-benchmark-metrics.png" alt="Fable-5 benchmark metric subscores" width="920">
+  <img src="assets/benchmarks/fable5-benchmark-metrics-20260713T234332Z.png" alt="Fable-5 Sol Ultra benchmark metric subscores, run 20260713T234332Z" width="920">
 </p>
 
 <p align="center">
-  <img src="assets/benchmarks/fable5-benchmark-latency.png" alt="Fable-5 benchmark wall time by fixture" width="920">
+  <img src="assets/benchmarks/fable5-benchmark-latency-20260713T234332Z.png" alt="Fable-5 Sol Ultra benchmark wall time by fixture, run 20260713T234332Z" width="920">
 </p>
 
 Latest published measured run: `20260713T234332Z`, `gpt-5.6-sol`, matched `ultra` reasoning effort, 600s per trial. Across three intentionally tiny fixtures, the Fable-5 path raised average composite from `81.7` to `100.0` (`+18.3` points), expected-concept recall from `93.3` to `100.0`, evidence markers from `78.3` to `100.0`, and explicit unknowns from `0.0` to `100.0`. Average wall time increased from `144.5s` to `344.0s` (`2.38x`). All six final trials completed successfully.
@@ -127,7 +127,7 @@ See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw out
 - `assets/brand/fable5-hero.png`: README and social-preview banner
 - `assets/brand/fable5-sol-ultra.png`: GPT-5.6 Sol Ultra profile banner
 - `assets/brand/fable5-mark.png`: compact repo mark for plugin cards or docs
-- `assets/benchmarks/fable5-benchmark-latency.png`: measured wall-time comparison for the latest run
+- `assets/benchmarks/fable5-benchmark-*-20260713T234332Z.png`: cache-stable charts for the latest measured run
 - `plugins/fable5-codex/assets/fable5-demo.gif`: short install/run/trace demo for README and plugin screenshots
 
 ## Install From GitHub

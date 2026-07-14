@@ -7,7 +7,7 @@ Date: 2026-07-13
 Package and plugin version:
 
 ```text
-fable5-codex: 0.4.0-alpha.1
+fable5-codex: 0.4.0-alpha.2
 model: gpt-5.6-sol
 reasoning effort: ultra
 minimum Codex CLI for GPT-5.6: 0.144.0
@@ -59,6 +59,7 @@ Bash and PowerShell syntax checks passed.
 PowerShell and Bash wrapper dry-runs selected gpt-5.6-sol / ultra.
 Benchmark JSON: six typed rows, matched config, all exit code 0.
 Benchmark report links: canonical repo-relative destinations; no absolute Windows links.
+Benchmark images: all three charts use run-specific `20260713T234332Z` filenames with hashes matching their freshly rendered stable counterparts.
 npm pack --dry-run: Sol Ultra package, benchmark, and branded assets included.
 git diff --check: no whitespace errors; only line-ending normalization warnings.
 ```
@@ -66,8 +67,8 @@ git diff --check: no whitespace errors; only line-ending normalization warnings.
 Installed plugin proof:
 
 ```text
-C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.4.0-alpha.1
-C:\Users\s8972\.codex\plugins\cache\personal\fable5-codex\0.4.0-alpha.1
+C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.4.0-alpha.2
+C:\Users\s8972\.codex\plugins\cache\personal\fable5-codex\0.4.0-alpha.2
 ```
 
 Both installed roots contain the Sol Ultra template and all six Sol-aware skills. The plugin cannot change the model or effort of an already-open Codex task; users must select Sol + Ultra or launch through the packaged wrapper/config.
