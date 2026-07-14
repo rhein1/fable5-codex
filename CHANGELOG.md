@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0-alpha.2 - 2026-07-14
+
+### Fixed
+
+- README benchmark charts now use run-specific filenames so GitHub and CDN caches cannot retain the earlier GPT-5.5 images.
+- The benchmark renderer emits both stable compatibility filenames and immutable run-specific assets.
+- Package validation requires both READMEs to reference all three current run-specific charts.
+
 ## 0.4.0-alpha.1 - 2026-07-13
 
 ### Fixed

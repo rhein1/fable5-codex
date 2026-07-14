@@ -12,6 +12,8 @@ $ecfTemplate = Join-Path $plugin "templates/fable-ecf-run-contract.json"
 $solUltraTemplate = Join-Path $plugin "templates/sol-ultra.config.toml"
 $reviewTemplate = Join-Path $plugin "templates/fable-review-contract.md"
 $latestRunFile = Join-Path $repo "benchmarks/results/latest-run.txt"
+$rootReadme = Join-Path $repo "README.md"
+$benchmarkReadme = Join-Path $repo "benchmarks/README.md"
 $requiredSkills = @(
   "fable-audit",
   "fable-deep-review",
@@ -27,6 +29,17 @@ function Assert-Exists($Path) {
   }
 }
 
+function Get-FileSha256($Path) {
+  $stream = [System.IO.File]::OpenRead($Path)
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    return -join ($sha256.ComputeHash($stream) | ForEach-Object { $_.ToString("x2") })
+  } finally {
+    $sha256.Dispose()
+    $stream.Dispose()
+  }
+}
+
 Assert-Exists $manifest
 Assert-Exists $marketplace
 Assert-Exists $schema
@@ -35,6 +48,8 @@ Assert-Exists $ecfTemplate
 Assert-Exists $solUltraTemplate
 Assert-Exists $reviewTemplate
 Assert-Exists $latestRunFile
+Assert-Exists $rootReadme
+Assert-Exists $benchmarkReadme
 Assert-Exists $packageFile
 Assert-Exists $installer
 
@@ -81,6 +96,31 @@ if (-not $latestRunPrefix.StartsWith($benchmarkResultsPrefix, [System.StringComp
   throw "Latest benchmark run resolves outside benchmarks/results: $latestRunRelative"
 }
 Assert-Exists $latestRunDir
+$latestRunId = Split-Path -Leaf $latestRunDir
+$rootReadmeText = Get-Content -LiteralPath $rootReadme -Raw
+$benchmarkReadmeText = Get-Content -LiteralPath $benchmarkReadme -Raw
+foreach ($chartName in @("summary", "metrics", "latency")) {
+  $assetName = "fable5-benchmark-$chartName-$latestRunId.png"
+  $versionedAsset = Join-Path $repo "assets/benchmarks/$assetName"
+  $stableAsset = Join-Path $repo "assets/benchmarks/fable5-benchmark-$chartName.png"
+  Assert-Exists $versionedAsset
+  Assert-Exists $stableAsset
+  if ((Get-FileSha256 $versionedAsset) -ne (Get-FileSha256 $stableAsset)) {
+    throw "Run-specific benchmark asset does not match its stable counterpart: $assetName"
+  }
+  if (-not $rootReadmeText.Contains("assets/benchmarks/$assetName")) {
+    throw "Root README must reference the run-specific benchmark asset: $assetName"
+  }
+  if (-not $benchmarkReadmeText.Contains("../assets/benchmarks/$assetName")) {
+    throw "Benchmark README must reference the run-specific benchmark asset: $assetName"
+  }
+  if ($rootReadmeText.Contains("assets/benchmarks/fable5-benchmark-$chartName.png")) {
+    throw "Root README must not reference the cache-prone stable benchmark filename: $chartName"
+  }
+  if ($benchmarkReadmeText.Contains("../assets/benchmarks/fable5-benchmark-$chartName.png")) {
+    throw "Benchmark README must not reference the cache-prone stable benchmark filename: $chartName"
+  }
+}
 $absoluteBenchmarkLinks = @(Get-ChildItem -LiteralPath $latestRunDir -Filter *.md -File | Select-String -Pattern '\(/?[A-Za-z]:/')
 if ($absoluteBenchmarkLinks.Count -gt 0) {
   throw "Latest benchmark reports contain absolute Windows links: $($absoluteBenchmarkLinks[0].Path):$($absoluteBenchmarkLinks[0].LineNumber)"

@@ -42,11 +42,11 @@ The final run completed all six trials. The first `understand-toy-repo` plugin a
 
 ## Charts
 
-![Fable-5 benchmark summary](../assets/benchmarks/fable5-benchmark-summary.png)
+![Fable-5 Sol Ultra benchmark summary, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-summary-20260713T234332Z.png)
 
-![Fable-5 benchmark metrics](../assets/benchmarks/fable5-benchmark-metrics.png)
+![Fable-5 Sol Ultra benchmark metrics, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-metrics-20260713T234332Z.png)
 
-![Fable-5 benchmark latency](../assets/benchmarks/fable5-benchmark-latency.png)
+![Fable-5 Sol Ultra benchmark latency, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-latency-20260713T234332Z.png)
 
 ## Scoring Rubric
 

@@ -24,20 +24,20 @@ Verify versions match:
 Use a signed, annotated tag:
 
 ```powershell
-git tag -s v0.4.0-alpha.1 -m "v0.4.0-alpha.1"
-git push origin v0.4.0-alpha.1
+git tag -s v0.4.0-alpha.2 -m "v0.4.0-alpha.2"
+git push origin v0.4.0-alpha.2
 ```
 
 Create the release:
 
 ```powershell
-gh release create v0.4.0-alpha.1 --title "Fable-5 for Codex v0.4.0-alpha.1" --notes-file docs/release-notes/v0.4.0-alpha.1.md
+gh release create v0.4.0-alpha.2 --title "Fable-5 for Codex v0.4.0-alpha.2" --notes-file docs/release-notes/v0.4.0-alpha.2.md
 ```
 
 Pin install example:
 
 ```powershell
-codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.1
+codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.2
 codex plugin add fable5-codex@fable5-local
 ```
 

@@ -535,11 +535,28 @@ function Render-LatencyChart($rows, [string]$path) {
   }
 }
 
+function Render-BenchmarkCharts($rows) {
+  $runIds = @($rows | Select-Object -ExpandProperty run_id -Unique)
+  if ($runIds.Count -ne 1 -or $runIds[0] -notmatch '^\d{8}T\d{6}Z$') {
+    throw "Benchmark charts require exactly one valid run id"
+  }
+
+  $runId = $runIds[0]
+  $charts = @(
+    @{ Name = "summary"; Render = ${function:Render-CaseChart} },
+    @{ Name = "metrics"; Render = ${function:Render-MetricChart} },
+    @{ Name = "latency"; Render = ${function:Render-LatencyChart} }
+  )
+  foreach ($chart in $charts) {
+    $stablePath = Join-Path $assetsDir "fable5-benchmark-$($chart.Name).png"
+    & $chart.Render $rows $stablePath
+    Copy-Item -LiteralPath $stablePath -Destination (Join-Path $assetsDir "fable5-benchmark-$($chart.Name)-$runId.png") -Force
+  }
+}
+
 if (-not [string]::IsNullOrWhiteSpace($RenderSummaryPath)) {
   $rows = @(Import-Csv -LiteralPath $renderSummaryResolved | ForEach-Object { ConvertFrom-BenchmarkCsvRow $_ })
-  Render-CaseChart $rows (Join-Path $assetsDir "fable5-benchmark-summary.png")
-  Render-MetricChart $rows (Join-Path $assetsDir "fable5-benchmark-metrics.png")
-  Render-LatencyChart $rows (Join-Path $assetsDir "fable5-benchmark-latency.png")
+  Render-BenchmarkCharts $rows
   Write-Host "Rendered benchmark charts from: $renderSummaryResolved"
   return
 }
@@ -577,9 +594,7 @@ $rows | Export-Csv -LiteralPath $latestCsv -NoTypeInformation -Encoding UTF8
 $rows | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $latestJson -Encoding UTF8
 [System.IO.Path]::GetRelativePath($repo, $runDir) | Set-Content -LiteralPath $latestRun -Encoding UTF8
 
-Render-CaseChart $rows (Join-Path $assetsDir "fable5-benchmark-summary.png")
-Render-MetricChart $rows (Join-Path $assetsDir "fable5-benchmark-metrics.png")
-Render-LatencyChart $rows (Join-Path $assetsDir "fable5-benchmark-latency.png")
+Render-BenchmarkCharts $rows
 
 Write-Host "Benchmark complete."
 Write-Host "Run dir: $runDir"
