@@ -15,6 +15,8 @@
 
 The fixtures are intentionally small. The runner disabled subagents to isolate workflow discipline rather than measure multi-agent performance.
 
+The committed report citations point to the canonical repository fixtures. The runner normalizes only Markdown link destinations from the isolated execution workspace; report prose, scores, and timings are unchanged.
+
 ## Qualification Note
 
 The first `understand-toy-repo` plugin attempt returned `Selected model is at capacity`. The successful baseline rows and other plugin rows were retained. Only the failed row was retried with the same configuration:

@@ -11,6 +11,7 @@ $ecfReference = Join-Path $plugin "references/ecf-run-contract.md"
 $ecfTemplate = Join-Path $plugin "templates/fable-ecf-run-contract.json"
 $solUltraTemplate = Join-Path $plugin "templates/sol-ultra.config.toml"
 $reviewTemplate = Join-Path $plugin "templates/fable-review-contract.md"
+$latestRunFile = Join-Path $repo "benchmarks/results/latest-run.txt"
 $requiredSkills = @(
   "fable-audit",
   "fable-deep-review",
@@ -33,6 +34,7 @@ Assert-Exists $ecfReference
 Assert-Exists $ecfTemplate
 Assert-Exists $solUltraTemplate
 Assert-Exists $reviewTemplate
+Assert-Exists $latestRunFile
 Assert-Exists $packageFile
 Assert-Exists $installer
 
@@ -67,6 +69,21 @@ if ($packageJson.version -ne $manifestJson.version) {
 }
 if ($packageJson.bin."fable5-codex" -ne "bin/install.mjs") {
   throw "Package bin.fable5-codex must be bin/install.mjs"
+}
+
+$latestRunRelative = (Get-Content -LiteralPath $latestRunFile -Raw).Trim()
+$latestRunDir = [System.IO.Path]::GetFullPath((Join-Path $repo $latestRunRelative))
+$benchmarkResultsRoot = [System.IO.Path]::GetFullPath((Join-Path $repo "benchmarks/results"))
+$trimSeparators = [char[]]@([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+$benchmarkResultsPrefix = $benchmarkResultsRoot.TrimEnd($trimSeparators) + [System.IO.Path]::DirectorySeparatorChar
+$latestRunPrefix = $latestRunDir.TrimEnd($trimSeparators) + [System.IO.Path]::DirectorySeparatorChar
+if (-not $latestRunPrefix.StartsWith($benchmarkResultsPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+  throw "Latest benchmark run resolves outside benchmarks/results: $latestRunRelative"
+}
+Assert-Exists $latestRunDir
+$absoluteBenchmarkLinks = @(Get-ChildItem -LiteralPath $latestRunDir -Filter *.md -File | Select-String -Pattern '\(/?[A-Za-z]:/')
+if ($absoluteBenchmarkLinks.Count -gt 0) {
+  throw "Latest benchmark reports contain absolute Windows links: $($absoluteBenchmarkLinks[0].Path):$($absoluteBenchmarkLinks[0].LineNumber)"
 }
 
 $marketplaceJson = Get-Content -LiteralPath $marketplace -Raw | ConvertFrom-Json

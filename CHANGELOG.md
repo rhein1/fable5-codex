@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0-alpha.1 - 2026-07-13
+
+### Fixed
+
+- Benchmark report citations now link to canonical repository fixtures instead of the isolated Windows execution workspace.
+- Package validation now rejects absolute Windows links in the latest benchmark reports.
+
 ## 0.4.0-alpha - 2026-07-13
 
 ### Added

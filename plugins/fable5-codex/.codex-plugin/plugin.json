@@ -1,6 +1,6 @@
 {
   "name": "fable5-codex",
-  "version": "0.4.0-alpha",
+  "version": "0.4.0-alpha.1",
   "description": "Fable-5 evidence-first GPT-5.6 Sol Ultra workflows for Codex with ECF run contracts and real subagent orchestration.",
   "author": {
     "name": "Agoragentic",
