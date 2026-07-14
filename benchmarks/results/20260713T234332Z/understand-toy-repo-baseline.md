@@ -2,17 +2,17 @@ The repository documents idempotent retries, but the implementation is not idemp
 
 ### Storage
 
-[src/paymentAttempts.js](C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/examples/toy-buggy-repo/src/paymentAttempts.js:1) keeps attempts in a module-level in-memory array:
+[src/paymentAttempts.js](../../../examples/toy-buggy-repo/src/paymentAttempts.js#L1) keeps attempts in a module-level in-memory array:
 
 - Every call creates a plain object with a sequential `attempt_N` ID and copies `invoiceId`, `idempotencyKey`, and `amountCents`.
-- It sets `type: "FooPaymentAttempt"` ([line 9](C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/examples/toy-buggy-repo/src/paymentAttempts.js:9)).
-- It unconditionally pushes the object into the array ([line 12](C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/examples/toy-buggy-repo/src/paymentAttempts.js:12)).
+- It sets `type: "FooPaymentAttempt"` ([line 9](../../../examples/toy-buggy-repo/src/paymentAttempts.js#L9)).
+- It unconditionally pushes the object into the array ([line 12](../../../examples/toy-buggy-repo/src/paymentAttempts.js#L12)).
 - There is no database, disk persistence, validation, or actual serialization.
 - `allPaymentAttempts()` returns a shallow copy of the array. Callers cannot alter the stored collection by pushing to that copy, but the contained records remain shared and mutable.
 
 ### Intended versus actual retries
 
-The README says duplicate retry submissions should reuse the original attempt ([README lines 7–9](C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/examples/toy-buggy-repo/README.md:7)), and the API documentation identifies `idempotencyKey` as the matching key ([docs/api.md line 5](C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/examples/toy-buggy-repo/docs/api.md:5)).
+The README says duplicate retry submissions should reuse the original attempt ([README lines 7–9](../../../examples/toy-buggy-repo/README.md#L7)), and the API documentation identifies `idempotencyKey` as the matching key ([docs/api.md line 5](../../../examples/toy-buggy-repo/docs/api.md#L5)).
 
 Thus, a retry is supposed to:
 
@@ -24,7 +24,7 @@ None of that lookup exists. A read-only execution probe with two identical submi
 
 ### What the test covers
 
-The only test creates one attempt and asserts that the total array length is exactly one ([paymentAttempts.test.js lines 3–12](C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/examples/toy-buggy-repo/tests/paymentAttempts.test.js:3)).
+The only test creates one attempt and asserts that the total array length is exactly one ([paymentAttempts.test.js lines 3–12](../../../examples/toy-buggy-repo/tests/paymentAttempts.test.js#L3)).
 
 It does not test:
 

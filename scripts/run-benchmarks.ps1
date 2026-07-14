@@ -136,6 +136,40 @@ function ConvertTo-SafeName([string]$value) {
   return ($value -replace "[^A-Za-z0-9._-]", "-").Trim("-")
 }
 
+function ConvertTo-PublicBenchmarkLinks([string]$outputPath) {
+  $text = Get-Content -LiteralPath $outputPath -Raw
+  $repoUri = ($repo -replace '\\', '/').TrimEnd('/')
+  $workUri = ($workRoot -replace '\\', '/').TrimEnd('/')
+  $outputDir = Split-Path -Parent $outputPath
+  $rewritten = [regex]::Replace($text, '\((/?[A-Za-z]:/[^)\r\n]+)\)', {
+    param($match)
+
+    $target = $match.Groups[1].Value.TrimStart('/')
+    $line = $null
+    if ($target -match '^(.*):(\d+)$') {
+      $target = $Matches[1]
+      $line = $Matches[2]
+    }
+
+    $repoRelative = if ($target.StartsWith("$workUri/", [System.StringComparison]::OrdinalIgnoreCase)) {
+      $target.Substring($workUri.Length + 1)
+    } elseif ($target.StartsWith("$repoUri/", [System.StringComparison]::OrdinalIgnoreCase)) {
+      $target.Substring($repoUri.Length + 1)
+    } else {
+      return $match.Value
+    }
+
+    $canonicalPath = Join-Path $repo ($repoRelative -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+    $relativeLink = [System.IO.Path]::GetRelativePath($outputDir, $canonicalPath) -replace '\\', '/'
+    $anchor = if ($line) { "#L$line" } else { "" }
+    return "($relativeLink$anchor)"
+  })
+
+  if ($rewritten -ne $text) {
+    $rewritten | Set-Content -LiteralPath $outputPath -Encoding UTF8 -NoNewline
+  }
+}
+
 function Invoke-BenchmarkCase($case, [string]$mode, [string]$prompt) {
   $safe = ConvertTo-SafeName "$($case.Id)-$mode"
   $outFile = Join-Path $runDir "$safe.md"
@@ -194,6 +228,7 @@ function Invoke-BenchmarkCase($case, [string]$mode, [string]$prompt) {
   if (-not (Test-Path -LiteralPath $outFile)) {
     "" | Set-Content -LiteralPath $outFile -Encoding UTF8
   }
+  ConvertTo-PublicBenchmarkLinks $outFile
 
   return [pscustomobject]@{
     OutputPath = $outFile

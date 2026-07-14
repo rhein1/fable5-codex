@@ -84,3 +84,4 @@ That quality gain had a measured latency cost: average wall time increased from 
 - `benchmarks/results/20260713T234332Z/understand-toy-repo-plugin.md`
 
 CLI logs are ignored by git because they include local runtime noise and machine paths.
+Committed report citations are normalized from the isolated run workspace to canonical `evals/` and `examples/` paths so they remain clickable on GitHub.

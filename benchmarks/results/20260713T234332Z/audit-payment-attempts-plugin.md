@@ -2,7 +2,7 @@
 
 ### 1. High — Payment retries create duplicate attempts
 
-[createPaymentAttempt()](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/src/paymentAttempts.js:3) copies `paymentKey` without checking it, generates a new ID from array length at [line 5](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/src/paymentAttempts.js:5), and unconditionally appends at [line 12](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/src/paymentAttempts.js:12).
+[createPaymentAttempt()](../../../evals/audit-fixture/src/paymentAttempts.js#L3) copies `paymentKey` without checking it, generates a new ID from array length at [line 5](../../../evals/audit-fixture/src/paymentAttempts.js#L5), and unconditionally appends at [line 12](../../../evals/audit-fixture/src/paymentAttempts.js#L12).
 
 An isolated probe submitting the same invoice, key, amount, and status twice returned:
 
@@ -10,13 +10,13 @@ An isolated probe submitting the same invoice, key, amount, and status twice ret
 {"ids":["attempt_1","attempt_2"],"count":2,"reusedOriginal":false}
 ```
 
-Reusing one key with amounts `1000` and `2500` also persisted both records. A client retry after a timeout therefore creates another processable attempt instead of replaying the original result. This contradicts the retry and duplicate claims in [README.md:7](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/README.md:7).
+Reusing one key with amounts `1000` and `2500` also persisted both records. A client retry after a timeout therefore creates another processable attempt instead of replaying the original result. This contradicts the retry and duplicate claims in [README.md:7](../../../evals/audit-fixture/README.md#L7).
 
 Safest fix: enforce atomic uniqueness on a durable idempotency-key scope, return the original result for an equivalent replay, and reject key reuse with conflicting immutable payment fields.
 
 ### 2. Medium — Status values are not validated
 
-[Payment attempt creation](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/src/paymentAttempts.js:9) stores `input.status` verbatim. There is no allowlist, required-field check, or rejection path.
+[Payment attempt creation](../../../evals/audit-fixture/src/paymentAttempts.js#L9) stores `input.status` verbatim. There is no allowlist, required-field check, or rejection path.
 
 Runtime probes successfully persisted:
 
@@ -26,13 +26,13 @@ null
 undefined
 ```
 
-That directly contradicts [README.md:9](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/README.md:9). Invalid or missing statuses can consequently reach any downstream consumer.
+That directly contradicts [README.md:9](../../../evals/audit-fixture/README.md#L9). Invalid or missing statuses can consequently reach any downstream consumer.
 
 Safest fix: define the allowed states and transition ownership, validate before insertion, and preferably initialize the creation status internally rather than accepting arbitrary caller state.
 
 ### 3. Medium — Callers can mutate stored attempts through returned references
 
-The object inserted into the module-global array is returned directly at [paymentAttempts.js:12](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/src/paymentAttempts.js:12). [listPaymentAttempts()](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/src/paymentAttempts.js:16) copies the array but not its contained objects.
+The object inserted into the module-global array is returned directly at [paymentAttempts.js:12](../../../evals/audit-fixture/src/paymentAttempts.js#L12). [listPaymentAttempts()](../../../evals/audit-fixture/src/paymentAttempts.js#L16) copies the array but not its contained objects.
 
 A probe mutated the creation result and a listed record; a subsequent read returned:
 
@@ -49,15 +49,15 @@ Safest fix: keep internal records private and return immutable copies. Route leg
 
 ### 4. Medium — The nominal test produces a load-only green result
 
-[paymentAttempts.test.js:3](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/tests/paymentAttempts.test.js:3) exports `testPaymentAttemptCreated`, but neither invokes it nor registers it with `node:test`.
+[paymentAttempts.test.js:3](../../../evals/audit-fixture/tests/paymentAttempts.test.js#L3) exports `testPaymentAttemptCreated`, but neither invokes it nor registers it with `node:test`.
 
 Observed behavior:
 
 - Direct execution exited `0` without exercising the assertion.
 - `node --test evals/audit-fixture/tests/paymentAttempts.test.js` reported one passing file-level test because the module loaded.
 - Importing the test left the stored count at `0`, proving the exported test function was not called.
-- When manually invoked, it checked only total length. A second invocation failed with `expected one attempt` because the state at [paymentAttempts.js:1](/C:/projects/fable5-codex/tmp/benchmarks/20260713T234332Z/evals/audit-fixture/src/paymentAttempts.js:1) is global and has no reset mechanism.
-- The repository’s configured test command targets another directory at [package.json:10](/C:/projects/fable5-codex/package.json:10).
+- When manually invoked, it checked only total length. A second invocation failed with `expected one attempt` because the state at [paymentAttempts.js:1](../../../evals/audit-fixture/src/paymentAttempts.js#L1) is global and has no reset mechanism.
+- The repository’s configured test command targets another directory at [package.json:10](../../../package.json#L10).
 
 Thus the suite can appear green while retry, conflict, invalid-status, mutation, and isolation behavior remain untested.
 
