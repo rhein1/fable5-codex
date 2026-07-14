@@ -9,6 +9,8 @@ Run an evidence-first audit. Default to read-only unless the user explicitly ask
 
 For ECF-style governed runs, use the plugin reference at `../../references/ecf-run-contract.md` and the starter template at `../../templates/fable-ecf-run-contract.json`. The contract records scope, authority, required lenses, delegation policy, authority split, evidence policy, verification policy, and the final receipt. It does not itself spawn subagents.
 
+For large or high-risk Fable tasks, recommend running the parent task on `gpt-5.6-sol` with Ultra (`model_reasoning_effort = "ultra"`) when available. Ultra may delegate proactively, but still explicitly request parallel delegation for disjoint Fable lenses when the runtime supports subagents; otherwise use `single-agent multi-lens` and report the reason.
+
 ## Workflow
 
 1. Restate scope, focus, and any authority boundaries.

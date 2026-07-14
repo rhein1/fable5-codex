@@ -96,6 +96,25 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 
 The installed skill will use real subagents only when Codex exposes a subagent tool in that runtime. If not, it should report `single-agent multi-lens` with a no-subagent reason.
 
+## Select GPT-5.6 Sol Ultra
+
+In the Codex app, select **GPT-5.6 Sol** and **Ultra** beneath the composer. If Ultra is hidden, open **Settings > Configuration** and enable it in the model picker. Ultra availability depends on the active plan and surface.
+
+GPT-5.6 requires Codex CLI `0.144.0` or newer. Check with `codex --version` before using the wrappers.
+
+For CLI and repo defaults, copy the values from `plugins/fable5-codex/templates/sol-ultra.config.toml` into `~/.codex/config.toml` or a trusted repo's `.codex/config.toml`:
+
+```toml
+model = "gpt-5.6-sol"
+model_reasoning_effort = "ultra"
+
+[agents]
+max_threads = 6
+max_depth = 1
+```
+
+Ultra is the effort setting; there is no separate `gpt-5.6-sol-ultra` model ID. See [Sol Ultra setup and runtime boundaries](sol-ultra.md).
+
 The packaged CLI wrappers can generate the same prompt:
 
 ```powershell

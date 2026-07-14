@@ -3,9 +3,13 @@ param(
   [string]$Mode = "audit",
   [string]$Scope = ".",
   [string]$Focus = "",
+  [string]$Model = "gpt-5.6-sol",
+  [ValidateSet("low", "medium", "high", "xhigh", "max", "ultra")]
+  [string]$ReasoningEffort = "ultra",
   [switch]$Write,
   [switch]$Ecf,
-  [switch]$Subagents
+  [switch]$Subagents,
+  [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,7 +26,7 @@ $skillByMode = @{
 $sandbox = if ($Write) { "workspace-write" } else { "read-only" }
 $skill = $skillByMode[$Mode]
 
-$prompt = "Use $skill. Scope: $Scope."
+$prompt = "Use $skill. Scope: $Scope"
 if ($Focus.Trim().Length -gt 0) {
   $prompt = "$prompt Focus: $Focus."
 }
@@ -34,4 +38,24 @@ if ($Subagents) {
   $prompt = "$prompt I explicitly authorize parallel subagents for this run. Spawn four independent read-only lenses when the runtime exposes a subagent tool: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist."
 }
 
-codex exec --sandbox $sandbox $prompt
+$codexArgs = @(
+  "exec",
+  "--model", $Model,
+  "-c", "model_reasoning_effort=`"$ReasoningEffort`"",
+  "--sandbox", $sandbox,
+  $prompt
+)
+
+if ($DryRun) {
+  [pscustomobject]@{
+    model = $Model
+    reasoningEffort = $ReasoningEffort
+    minimumCliVersion = "0.144.0"
+    sandbox = $sandbox
+    prompt = $prompt
+  } | ConvertTo-Json -Depth 3
+  return
+}
+
+& codex @codexArgs
+exit $LASTEXITCODE

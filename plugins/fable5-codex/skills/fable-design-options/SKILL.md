@@ -9,6 +9,8 @@ Generate options after reading the actual system. Avoid abstract architecture ad
 
 For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk design-option tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat architecture, migration, API, data model, security/privacy/money/data/API, operational, release, or cross-module decisions as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
 
+For large or high-risk Fable tasks, recommend running the parent task on `gpt-5.6-sol` with Ultra (`model_reasoning_effort = "ultra"`) when available. Ultra may delegate proactively, but still explicitly request parallel delegation for disjoint Fable lenses when the runtime supports subagents; otherwise use `single-agent multi-lens` and report the reason.
+
 ## Workflow
 
 1. Clarify the decision, constraints, authority boundaries, and success criteria from the prompt and repo instructions.

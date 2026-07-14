@@ -1,6 +1,75 @@
 # Validation
 
-Date: 2026-07-06
+Date: 2026-07-13
+
+## 2026-07-13 GPT-5.6 Sol Ultra Update
+
+Package and plugin version:
+
+```text
+fable5-codex: 0.4.0-alpha
+model: gpt-5.6-sol
+reasoning effort: ultra
+minimum Codex CLI for GPT-5.6: 0.144.0
+```
+
+Runtime proof used an isolated repo-local Codex CLI so the machine-wide install was not changed:
+
+```text
+isolated CLI: codex-cli 0.144.3
+machine-wide CLI: codex-cli 0.142.5
+Sol Ultra smoke: SOL_ULTRA_OK
+```
+
+Matched workflow benchmark:
+
+```text
+run id: 20260713T234332Z
+model/effort: gpt-5.6-sol / ultra
+subagents allowed: false
+timeout: 600 seconds per trial
+final rows: 6
+final nonzero exit codes: 0
+average composite: 81.7 -> 100.0 (+18.3 points)
+average wall time: 144.5s -> 344.0s (2.38x)
+```
+
+Subagents were disabled because the fixtures are intentionally small and the benchmark isolates Fable workflow discipline. The first `understand-toy-repo` plugin attempt returned `Selected model is at capacity`; only that failed row was retried in place with the same configuration. See `benchmarks/results/20260713T234332Z/RUN.md`.
+
+Validation rerun:
+
+```powershell
+npm test
+npm run validate
+python C:\Users\s8972\.codex\skills\.system\plugin-creator\scripts\validate_plugin.py plugins/fable5-codex
+python C:\Users\s8972\.codex\skills\.system\skill-creator\scripts\quick_validate.py <each skill directory>
+bash -n plugins/fable5-codex/scripts/fable5-codex.sh
+npm run pack:dry-run
+git diff --check
+```
+
+Result:
+
+```text
+npm test: 15 passed, 2 skipped, 0 failed
+Fable-5 package validation passed.
+Plugin validation passed.
+Skill is valid! (all six skills)
+Bash and PowerShell syntax checks passed.
+PowerShell and Bash wrapper dry-runs selected gpt-5.6-sol / ultra.
+Benchmark JSON: six typed rows, matched config, all exit code 0.
+npm pack --dry-run: 74 files, 0.4.0-alpha, new benchmark and Sol Ultra assets included.
+git diff --check: no whitespace errors; only line-ending normalization warnings.
+```
+
+Installed plugin proof:
+
+```text
+C:\Users\s8972\.codex\plugins\cache\fable5-local\fable5-codex\0.4.0-alpha
+C:\Users\s8972\.codex\plugins\cache\personal\fable5-codex\0.4.0-alpha
+```
+
+Both installed roots contain the Sol Ultra template and all six Sol-aware skills. The plugin cannot change the model or effort of an already-open Codex task; users must select Sol + Ultra or launch through the packaged wrapper/config.
 
 ## 2026-07-06 ECF / Multi-Subagent Update
 

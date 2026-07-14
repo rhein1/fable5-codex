@@ -1,7 +1,7 @@
 {
   "name": "fable5-codex",
-  "version": "0.3.0-alpha",
-  "description": "OpenAI Codex plugin for evidence-first AI code review, audits, fact checks, codebase understanding, ECF run contracts, and subagent workflows.",
+  "version": "0.4.0-alpha",
+  "description": "GPT-5.6 Sol Ultra Codex plugin for evidence-first AI code review, audits, ECF run contracts, and multi-agent workflows.",
   "type": "module",
   "bin": {
     "fable5-codex": "bin/install.mjs"
@@ -15,9 +15,9 @@
   "files": [
     "assets",
     "benchmarks/README.md",
-    "benchmarks/results/20260706T035611Z/*.md",
-    "benchmarks/results/20260706T035611Z/summary.csv",
-    "benchmarks/results/20260706T035611Z/summary.json",
+    "benchmarks/results/20260713T234332Z/*.md",
+    "benchmarks/results/20260713T234332Z/summary.csv",
+    "benchmarks/results/20260713T234332Z/summary.json",
     "benchmarks/results/latest-run.txt",
     "benchmarks/results/latest-summary.csv",
     "benchmarks/results/latest-summary.json",
@@ -44,6 +44,9 @@
     "ecf",
     "micro-ecf",
     "subagents",
+    "gpt-5-6",
+    "sol-ultra",
+    "multi-agent",
     "ai-code-review",
     "audit",
     "code-review",

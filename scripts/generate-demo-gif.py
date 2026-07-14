@@ -5,6 +5,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "plugins" / "fable5-codex" / "assets" / "fable5-demo.gif"
+PLUGIN_BANNER_OUT = ROOT / "plugins" / "fable5-codex" / "assets" / "fable5-sol-ultra.png"
+ROOT_BANNER_OUT = ROOT / "assets" / "brand" / "fable5-sol-ultra.png"
 
 W, H = 1280, 720
 BG = "#0B1020"
@@ -66,27 +68,38 @@ def code_panel(draw, lines, x=86, y=210, w=1108, h=250):
 
 
 def flow_cards(draw, cards):
-    x = 90
+    x = 55
     y = 238
+    card_w = 245
+    step = 310
     for i, (head, body, color) in enumerate(cards):
-        rounded(draw, (x, y, x + 260, y + 200), PANEL, outline=color, radius=24)
+        rounded(draw, (x, y, x + card_w, y + 200), PANEL, outline=color, radius=24)
         draw.text((x + 28, y + 28), head, fill=color, font=SUB)
         draw_lines(draw, body, x + 28, y + 82, fill=WHITE, spacing=8, fnt=SMALL)
         if i < len(cards) - 1:
-            draw.line((x + 270, y + 100, x + 318, y + 100), fill=MUTED, width=4)
-            draw.polygon([(x + 318, y + 100), (x + 304, y + 91), (x + 304, y + 109)], fill=MUTED)
-        x += 320
+            draw.line((x + 252, y + 100, x + 298, y + 100), fill=MUTED, width=4)
+            draw.polygon([(x + 298, y + 100), (x + 284, y + 91), (x + 284, y + 109)], fill=MUTED)
+        x += step
 
 
 frames = []
 
-img, draw = base("Install in one command", "npm install path plus GitHub fallback for pinned testing.")
+sol_ultra, draw = base("GPT-5.6 Sol Ultra", "Fable-5 coordinates evidence-first work across real Codex subagents.")
+flow_cards(draw, [
+    ("Coordinator", ["gpt-5.6-sol", "ultra effort", "scope first"], BLUE),
+    ("Parallel 4", ["disjoint lenses", "real agent IDs", "read-only default"], ORANGE),
+    ("ECF", ["authority", "evidence rules", "receipts"], GREEN),
+    ("Verify", ["spot-check claims", "preserve unknowns", "truthful trace"], "#FACC15"),
+])
+frames.append(sol_ultra)
+
+img, draw = base("Install in one command", "The GitHub installer is live; the shorter npm name follows publication.")
 code_panel(draw, [
-    "> npx fable5-codex",
+    "> npx github:rhein1/fable5-codex",
     "> codex plugin add fable5-codex@personal",
     "> start a new Codex thread",
 ])
-draw.text((90, 540), "Fallback: npx github:rhein1/fable5-codex", fill=MUTED, font=BODY)
+draw.text((90, 540), "After npm publish: npx fable5-codex", fill=MUTED, font=BODY)
 frames.append(img)
 
 img, draw = base("Call a Fable skill", "Use the skill directly or let Codex match the task.")
@@ -106,7 +119,7 @@ flow_cards(draw, [
 ])
 frames.append(img)
 
-img, draw = base("Large tasks can fan out", "When explicitly authorized and runtime-supported, lenses become real subagents.")
+img, draw = base("Large tasks can fan out", "Sol Ultra delegates proactively; Fable skills also request runtime-supported subagents.")
 flow_cards(draw, [
     ("Correctness", ["edge cases", "integration", "contracts"], BLUE),
     ("Security", ["auth", "privacy", "secrets"], ORANGE),
@@ -134,26 +147,31 @@ draw_lines(draw, [
 ], 130, 260, fill=WHITE, spacing=20, fnt=BODY)
 frames.append(img)
 
-img, draw = base("Measured workflow lift", "Tiny benchmark fixtures show output discipline, not broad model quality.")
+img, draw = base("Measured Sol Ultra workflow lift", "Matched tiny fixtures; subagents disabled to isolate workflow discipline.")
 rounded(draw, (110, 250, 560, 510), PANEL, outline=MUTED, radius=24)
 rounded(draw, (720, 250, 1170, 510), PANEL, outline=ORANGE, radius=24)
-draw.text((180, 300), "Normal gpt-5.5", fill=MUTED, font=SUB)
-draw.text((250, 370), "93.3", fill=WHITE, font=font(76, True))
-draw.text((790, 300), "gpt-5.5 + Fable-5", fill=ORANGE, font=SUB)
-draw.text((862, 370), "98.7", fill=WHITE, font=font(76, True))
-draw.text((533, 598), "+5.3 pts", fill=GREEN, font=font(44, True))
+draw.text((170, 300), "Sol Ultra baseline", fill=MUTED, font=SUB)
+draw.text((250, 370), "81.7", fill=WHITE, font=font(76, True))
+draw.text((780, 300), "Sol Ultra + Fable-5", fill=ORANGE, font=SUB)
+draw.text((842, 370), "100.0", fill=WHITE, font=font(76, True))
+draw.text((516, 566), "+18.3 pts", fill=GREEN, font=font(44, True))
+draw.text((443, 630), "Average time: 144.5s -> 344.0s", fill=MUTED, font=SMALL)
 frames.append(img)
 
 img, draw = base("Fable-5 for Codex", "Evidence-first multi-pass workflows for serious codebase work.")
 code_panel(draw, [
-    "> npx fable5-codex",
+    "> npx github:rhein1/fable5-codex",
+    "> select GPT-5.6 Sol + Ultra",
     "> Use $fable-audit with an ECF run contract.",
-    "> Include findings, rejected candidates, unknowns, and Workflow Trace.",
 ], h=260)
 draw.text((90, 560), "https://github.com/rhein1/fable5-codex", fill=BLUE, font=BODY)
 frames.append(img)
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
+PLUGIN_BANNER_OUT.parent.mkdir(parents=True, exist_ok=True)
+ROOT_BANNER_OUT.parent.mkdir(parents=True, exist_ok=True)
+sol_ultra.save(PLUGIN_BANNER_OUT, format="PNG", optimize=True)
+sol_ultra.save(ROOT_BANNER_OUT, format="PNG", optimize=True)
 frames[0].save(
     OUT,
     save_all=True,
@@ -163,3 +181,5 @@ frames[0].save(
     optimize=True,
 )
 print(f"wrote {OUT}")
+print(f"wrote {PLUGIN_BANNER_OUT}")
+print(f"wrote {ROOT_BANNER_OUT}")

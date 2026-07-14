@@ -1,7 +1,7 @@
 {
   "name": "fable5-codex",
-  "version": "0.3.0-alpha",
-  "description": "Fable-5 evidence-first review, audit, fact-check, understanding, design, and sweep workflows for Codex with ECF-style run contracts.",
+  "version": "0.4.0-alpha",
+  "description": "Fable-5 evidence-first GPT-5.6 Sol Ultra workflows for Codex with ECF run contracts and real subagent orchestration.",
   "author": {
     "name": "Agoragentic",
     "url": "https://agoragentic.com"
@@ -10,8 +10,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Fable-5 for Codex",
-    "shortDescription": "Evidence-first governed workflows for serious codebase work.",
-    "longDescription": "Fable-5 for Codex provides reusable skills for audits, deep reviews, fact checks, codebase understanding, design options, and repo-wide sweeps. Each workflow emphasizes ECF-style run contracts, source-grounded mapping, independent lenses, verified findings, rejected-candidate preservation, coverage notes, explicit unknowns, and honest Workflow Traces for real subagent use.",
+    "shortDescription": "Sol Ultra evidence-first multi-agent workflows for serious codebase work.",
+    "longDescription": "Fable-5 for Codex provides GPT-5.6 Sol Ultra-ready skills for audits, deep reviews, fact checks, codebase understanding, design options, and repo-wide sweeps. Each workflow emphasizes ECF-style run contracts, source-grounded mapping, parallel independent lenses, verified findings, rejected-candidate preservation, coverage notes, explicit unknowns, and honest Workflow Traces for real subagent use.",
     "developerName": "Agoragentic",
     "category": "Developer Tools",
     "websiteURL": "https://agoragentic.com",
@@ -21,11 +21,12 @@
     "logo": "./assets/fable5-mark.png",
     "logoDark": "./assets/fable5-mark.png",
     "screenshots": [
+      "./assets/fable5-sol-ultra.png",
       "./assets/fable5-hero.png",
       "./assets/fable5-demo.gif"
     ],
     "defaultPrompt": [
-      "Use $fable-audit with real Codex subagents and an ECF run contract on this repo. I explicitly authorize parallel subagents for this run.",
+      "With GPT-5.6 Sol + Ultra selected, use $fable-audit with real subagents and an ECF run contract on this repo.",
       "Use $fable-fact-check on STATUS.md.",
       "Use $fable-understand with an ECF run contract to explain boot flow."
     ]
