@@ -9,6 +9,8 @@ Verify claims against actual evidence. Do not edit claims unless the user asks f
 
 For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk fact checks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat multi-document, launch/status, security/privacy/money/data/API, release-readiness, or many-claim checks as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used.
 
+For large or high-risk Fable tasks, recommend running the parent task on `gpt-5.6-sol` with Ultra (`model_reasoning_effort = "ultra"`) when available. Ultra may delegate proactively, but still explicitly request parallel delegation for disjoint Fable lenses when the runtime supports subagents; otherwise use `single-agent multi-lens` and report the reason.
+
 ## Workflow
 
 1. Identify the document, status report, or claim set.

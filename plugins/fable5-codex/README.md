@@ -11,6 +11,12 @@ Fable-5 for Codex is a local Codex plugin that packages evidence-first workflows
 
 The plugin is intentionally conservative. It asks Codex to map the target, inspect callers/importers, preserve rejected candidates, cite file and command evidence, and separate target-system failures from runner/tool failures.
 
+## GPT-5.6 Sol Ultra Profile
+
+The packaged wrappers default to `gpt-5.6-sol` with `ultra` reasoning. Ultra is a reasoning and multi-agent setting, not a separate model slug. It lets the coordinator proactively delegate parallel work; the Fable skills add explicit lens assignments, authority boundaries, verification, and Workflow Trace requirements.
+
+Copy `templates/sol-ultra.config.toml` into your Codex configuration when you want the same defaults in the app, IDE, and CLI. The plugin cannot silently replace the model or reasoning setting of an already-open task.
+
 ## ECF Run Contracts
 
 The plugin includes `references/ecf-run-contract.md` and `templates/fable-ecf-run-contract.json`. These files define the governance layer for a run: scope, authority, lenses, delegation policy, evidence policy, verification policy, and final receipt fields.
@@ -79,4 +85,4 @@ Bash with ECF contract and explicit subagent authorization:
 ./scripts/fable5-codex.sh audit src "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
 ```
 
-The wrappers call `codex exec` in read-only mode by default. Pass the write flag only for controlled edits. Large/high-risk tasks request real subagents automatically when the runtime exposes a subagent tool; `-Subagents` / `--subagents` adds an explicit authorization phrase for smaller scopes. The report must still fall back to `single-agent multi-lens` if the active Codex runtime does not expose subagents.
+The wrappers call `codex exec` in read-only mode with GPT-5.6 Sol Ultra by default. PowerShell supports `-Model`, `-ReasoningEffort`, and `-DryRun`; Bash supports `FABLE5_MODEL`, `FABLE5_REASONING_EFFORT`, `--model=`, `--reasoning=`, and `--dry-run`. Pass the write flag only for controlled edits. Large/high-risk tasks request real subagents automatically when the runtime exposes a subagent tool; `-Subagents` / `--subagents` adds an explicit authorization phrase for smaller scopes. The report must still fall back to `single-agent multi-lens` if the active Codex runtime does not expose subagents.

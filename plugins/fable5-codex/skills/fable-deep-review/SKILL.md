@@ -9,6 +9,8 @@ Review like a senior engineer validating a change, not like a summarizer. Defaul
 
 For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk reviews, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat repo-wide, cross-package, security/privacy/money/data/API, migration, release, or deep-review requests as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used. For bot-parseable PR review output, use `../../templates/fable-review-contract.md`.
 
+For large or high-risk Fable tasks, recommend running the parent task on `gpt-5.6-sol` with Ultra (`model_reasoning_effort = "ultra"`) when available. Ultra may delegate proactively, but still explicitly request parallel delegation for disjoint Fable lenses when the runtime supports subagents; otherwise use `single-agent multi-lens` and report the reason.
+
 ## Workflow
 
 1. Identify the review target: PR, branch, diff, commit range, or files.

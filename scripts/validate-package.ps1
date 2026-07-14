@@ -9,6 +9,7 @@ $marketplace = Join-Path $repo ".agents/plugins/marketplace.json"
 $schema = Join-Path $plugin "schemas/fable5.schema.json"
 $ecfReference = Join-Path $plugin "references/ecf-run-contract.md"
 $ecfTemplate = Join-Path $plugin "templates/fable-ecf-run-contract.json"
+$solUltraTemplate = Join-Path $plugin "templates/sol-ultra.config.toml"
 $reviewTemplate = Join-Path $plugin "templates/fable-review-contract.md"
 $requiredSkills = @(
   "fable-audit",
@@ -30,6 +31,7 @@ Assert-Exists $marketplace
 Assert-Exists $schema
 Assert-Exists $ecfReference
 Assert-Exists $ecfTemplate
+Assert-Exists $solUltraTemplate
 Assert-Exists $reviewTemplate
 Assert-Exists $packageFile
 Assert-Exists $installer
@@ -38,8 +40,8 @@ $manifestJson = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
 if ($manifestJson.name -ne "fable5-codex") {
   throw "Unexpected plugin name: $($manifestJson.name)"
 }
-if ($manifestJson.version -ne "0.3.0-alpha") {
-  throw "Unexpected plugin version: $($manifestJson.version)"
+if ([string]::IsNullOrWhiteSpace($manifestJson.version)) {
+  throw "Plugin version must not be empty"
 }
 if ($manifestJson.skills -ne "./skills/") {
   throw "Unexpected skills path: $($manifestJson.skills)"
@@ -49,6 +51,11 @@ if ($manifestJson.homepage -ne "https://agoragentic.com") {
 }
 if ($manifestJson.interface.websiteURL -ne "https://agoragentic.com") {
   throw "Unexpected interface.websiteURL: $($manifestJson.interface.websiteURL)"
+}
+foreach ($prompt in $manifestJson.interface.defaultPrompt) {
+  if ($prompt.Length -gt 128) {
+    throw "Plugin default prompts must be at most 128 characters: $prompt"
+  }
 }
 
 $packageJson = Get-Content -LiteralPath $packageFile -Raw | ConvertFrom-Json
@@ -86,8 +93,22 @@ foreach ($skill in $requiredSkills) {
   if ($text -notmatch "(?s)^---\s*.*name:\s*$skill\b.*description:\s*.+?---") {
     throw "Skill frontmatter is missing name/description for $skill"
   }
+  if (
+    $text -notmatch "gpt-5\.6-sol" -or
+    $text -notmatch 'model_reasoning_effort\s*=\s*"ultra"' -or
+    $text -notmatch "parallel delegation" -or
+    $text -notmatch "single-agent multi-lens"
+  ) {
+    throw "Skill is missing the Sol Ultra delegation/fallback policy: $skill"
+  }
 }
 
 python -c "import pathlib,tomllib; [tomllib.loads(p.read_text()) for p in pathlib.Path(r'$plugin/custom-agents').glob('*.toml')]; print('custom agent toml ok')"
+python -c "import pathlib,tomllib; data=tomllib.loads(pathlib.Path(r'$solUltraTemplate').read_text()); assert data['model'] == 'gpt-5.6-sol'; assert data['model_reasoning_effort'] == 'ultra'; print('Sol Ultra config ok')"
+
+$wrapperDryRun = & (Join-Path $plugin "scripts/fable5-codex.ps1") -DryRun | ConvertFrom-Json
+if ($wrapperDryRun.model -ne "gpt-5.6-sol" -or $wrapperDryRun.reasoningEffort -ne "ultra") {
+  throw "PowerShell wrapper must default to gpt-5.6-sol with ultra reasoning"
+}
 
 Write-Host "Fable-5 package validation passed."

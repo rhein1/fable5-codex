@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.0-alpha - 2026-07-13
+
+### Added
+
+- GPT-5.6 Sol Ultra configuration template and setup guide.
+- Sol Ultra-branded plugin screenshot and demo frame.
+- Wrapper dry-run output for verifying model, effort, sandbox, and generated prompt without starting Codex.
+- Sol Ultra benchmark run `20260713T234332Z`, raw outputs, quality charts, and latency chart.
+
+### Changed
+
+- PowerShell, Bash, and benchmark runners now default to `gpt-5.6-sol` with `ultra` reasoning.
+- Plugin card and default audit prompt now identify the Sol Ultra multi-agent profile.
+- Custom-agent templates explicitly inherit the coordinator's model and effort while keeping delegation depth bounded.
+- Package validation checks the Sol Ultra template and wrapper defaults.
+
+### Notes
+
+- Ultra is an effort setting, not a separate model ID.
+- The plugin cannot silently change the model or effort of an already-open Codex task.
+- The matched Sol Ultra workflow benchmark improved average composite `81.7 -> 100.0` while average wall time increased `144.5s -> 344.0s`; subagents were disabled for these tiny fixtures.
+
 ## 0.3.0-alpha - 2026-07-06
 
 ### Added

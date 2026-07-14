@@ -10,6 +10,10 @@
 Fable-5 for Codex is an OpenAI Codex plugin for evidence-first AI code review, codebase audits, fact checks, codebase understanding, design options, repo-wide sweeps, ECF run contracts, and subagent workflows. It packages six reusable Codex skills for serious software engineering work where source-backed proof matters. The current alpha ships Micro ECF-style run contracts so Codex can record scope, authority, lenses, evidence policy, verification policy, and a final Workflow Trace.
 
 <p align="center">
+  <img src="assets/brand/fable5-sol-ultra.png" alt="Fable-5 configured for GPT-5.6 Sol Ultra multi-agent workflows" width="920">
+</p>
+
+<p align="center">
   <img src="plugins/fable5-codex/assets/fable5-demo.gif" alt="Fable-5 for Codex install, run contract, subagent lenses, workflow trace, and benchmark flow" width="920">
 </p>
 
@@ -32,6 +36,8 @@ Then start a new Codex thread and invoke a skill:
 ```text
 Use $fable-audit. Scope: this repository. Focus: correctness, security, data, operations, tests, and docs-vs-reality. Include a Workflow Trace.
 ```
+
+For the highest-capability profile, select **GPT-5.6 Sol** and **Ultra** in Codex, or use the included wrapper/config template. Ultra is the reasoning and multi-agent setting; the model ID remains `gpt-5.6-sol`.
 
 ## What This Repo Contains
 
@@ -59,9 +65,23 @@ Use $fable-audit. Scope: this repository. Focus: correctness, security, data, op
 - `$fable-design-options`: design alternatives with tradeoffs and migration notes
 - `$fable-sweep`: repo-wide change workflow with discovery, implementation, and verification
 
+## GPT-5.6 Sol Ultra
+
+Fable-5 v0.4 is tuned for `gpt-5.6-sol` with `ultra` reasoning on large or high-risk work. OpenAI describes Ultra as its highest-capability setting: it coordinates multiple agents across parallel workstreams, using four agents by default. The plugin pairs that runtime with explicit Fable lenses, ECF authority boundaries, local verification, and a truthful Workflow Trace.
+
+Use the ready-to-copy config at `plugins/fable5-codex/templates/sol-ultra.config.toml`, or run the wrapper directly:
+
+```powershell
+.\plugins\fable5-codex\scripts\fable5-codex.ps1 -Mode audit -Scope . -Subagents
+```
+
+The wrapper defaults to `gpt-5.6-sol` plus `ultra`. Override with `-Model` and `-ReasoningEffort` when a smaller task does not justify Ultra. See [Sol Ultra setup and behavior](docs/sol-ultra.md) and the [official GPT-5.6 announcement](https://openai.com/index/gpt-5-6/).
+
+CLI requirement: GPT-5.6 needs Codex CLI `0.144.0` or newer.
+
 ## Subagents
 
-Fable-5 audits now report a visible `Workflow Trace` every time. Large or high-risk Fable tasks use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out. Without a subagent tool, the skill runs as `single-agent multi-lens` and says so instead of implying independent parallel review happened.
+Fable-5 audits now report a visible `Workflow Trace` every time. Sol Ultra can proactively delegate useful parallel work; Fable skills also explicitly request real Codex subagents for large or high-risk tasks when the runtime exposes a subagent tool and the user has not opted out. Without a subagent tool, the skill runs as `single-agent multi-lens` and says so instead of implying independent parallel review happened.
 
 Large/high-risk means repo-wide or cross-package work, exhaustive audit, deep review, broad sweep, migration, launch readiness, "find every place", or anything touching money, auth, privacy, secrets, data migrations, public APIs, serialized contracts, deploys, or production operations.
 
@@ -92,14 +112,22 @@ Public OSS boundary: this package includes Micro ECF-style contracts and reporti
   <img src="assets/benchmarks/fable5-benchmark-metrics.png" alt="Fable-5 benchmark metric subscores" width="920">
 </p>
 
-Latest measured run: `20260706T035611Z`, `gpt-5.5`, matched `xhigh` reasoning effort, 240s per trial. On these intentionally tiny fixtures, normal `gpt-5.5` already found the expected issues. The plugin path raised average composite from `93.3` to `98.7` by adding explicit unknowns and structured reporting; all six trials completed, with one audit case scoring `96.0` after missing one evidence marker.
+<p align="center">
+  <img src="assets/benchmarks/fable5-benchmark-latency.png" alt="Fable-5 benchmark wall time by fixture" width="920">
+</p>
+
+Latest published measured run: `20260713T234332Z`, `gpt-5.6-sol`, matched `ultra` reasoning effort, 600s per trial. Across three intentionally tiny fixtures, the Fable-5 path raised average composite from `81.7` to `100.0` (`+18.3` points), expected-concept recall from `93.3` to `100.0`, evidence markers from `78.3` to `100.0`, and explicit unknowns from `0.0` to `100.0`. Average wall time increased from `144.5s` to `344.0s` (`2.38x`). All six final trials completed successfully.
+
+Subagents were explicitly disabled in this run to isolate workflow discipline on small fixtures. These results do not measure broad model quality or prove multi-agent gains; they show the output-quality and latency difference between matched Sol Ultra runs with plugins disabled versus explicit Fable skill invocation. One plugin trial initially hit provider capacity and was retried in place with the same configuration; the run record preserves that qualification note.
 
 See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw outputs.
 
 ## Brand Assets
 
 - `assets/brand/fable5-hero.png`: README and social-preview banner
+- `assets/brand/fable5-sol-ultra.png`: GPT-5.6 Sol Ultra profile banner
 - `assets/brand/fable5-mark.png`: compact repo mark for plugin cards or docs
+- `assets/benchmarks/fable5-benchmark-latency.png`: measured wall-time comparison for the latest run
 - `plugins/fable5-codex/assets/fable5-demo.gif`: short install/run/trace demo for README and plugin screenshots
 
 ## Install From GitHub
@@ -211,4 +239,4 @@ If you maintain a personal install on the same machine, treat `plugins/fable5-co
 
 ## Status
 
-This is a v0.3 alpha repo-scoped package. Static validation and Codex CLI skill smokes are captured in `VALIDATION.md`; Codex app UI smoke remains a separate manual check before calling it production-ready.
+This is a v0.4 alpha repo-scoped package. Static validation and Codex CLI skill smokes are captured in `VALIDATION.md`; Codex app UI smoke remains a separate manual check before calling it production-ready.

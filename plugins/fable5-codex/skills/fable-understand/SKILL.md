@@ -9,6 +9,8 @@ Answer from implementation evidence, not memory or stale docs.
 
 For ECF-style governed runs, use `../../references/ecf-run-contract.md`. For large or high-risk understanding tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; treat cross-module architecture, boot flow, data flow, integration wiring, security/privacy/money/data/API, or many-file mapping questions as large by default. Otherwise run `single-agent multi-lens` and say why no subagents were used when workflow trace is requested.
 
+For large or high-risk Fable tasks, recommend running the parent task on `gpt-5.6-sol` with Ultra (`model_reasoning_effort = "ultra"`) when available. Ultra may delegate proactively, but still explicitly request parallel delegation for disjoint Fable lenses when the runtime supports subagents; otherwise use `single-agent multi-lens` and report the reason.
+
 ## Workflow
 
 1. Restate the question and scope.

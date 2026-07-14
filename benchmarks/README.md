@@ -1,33 +1,52 @@
 # Fable-5 Benchmark
 
-This benchmark compares the same Codex model in two modes:
+This benchmark compares the same Codex model and reasoning effort in two modes. The runner now defaults to the Fable-5 v0.4 profile:
 
-- **Baseline:** `gpt-5.5` with user config ignored and no Fable-5 skill invoked.
-- **Plugin:** `gpt-5.5` with the installed Fable-5 plugin, explicitly invoking the relevant `$fable-*` skill.
+- Model: `gpt-5.6-sol`
+- Reasoning effort: `ultra`
 
-It is a workflow benchmark, not a broad model benchmark. The fixtures are intentionally tiny, so normal `gpt-5.5` already finds the expected issues. The measurable difference in completed cases is mostly Fable-5's discipline around explicit unknowns, coverage notes, and structured evidence. Runtime reliability matters too: timeout failures count as failed benchmark trials.
+Run it with:
 
-## Latest Run
+```powershell
+.\scripts\run-benchmarks.ps1 -Model 'gpt-5.6-sol' -ReasoningEffort 'ultra' -TimeoutSeconds 600
+```
 
-- Run id: `20260706T035611Z`
-- Model: `gpt-5.5`
-- Reasoning effort: `xhigh`
-- Timeout: 240 seconds per trial
+Use `-CodexExecutable <path>` to test with an isolated current CLI without replacing a machine-wide installation.
+
+Ultra is an effort setting, not a separate model ID. Keep the baseline and plugin settings matched so the benchmark measures the workflow rather than comparing different model configurations.
+
+The two modes are:
+
+- **Baseline:** `gpt-5.6-sol` with user config ignored and no Fable-5 skill invoked.
+- **Plugin:** `gpt-5.6-sol` with the installed Fable-5 plugin, explicitly invoking the relevant `$fable-*` skill.
+
+It is a workflow benchmark, not a broad model or multi-agent benchmark. The fixtures are intentionally tiny, and the default runner explicitly disables subagents so proactive Ultra delegation does not add unrelated fan-out. The measurable difference is Fable-5's discipline around recall, explicit unknowns, coverage notes, and structured evidence. Use `-AllowSubagents` only for a separate benchmark designed to measure delegation. Runtime reliability matters too: timeout failures count as failed benchmark trials.
+
+## Latest Committed Run
+
+- Run id: `20260713T234332Z`
+- Model: `gpt-5.6-sol`
+- Reasoning effort: `ultra`
+- Subagents allowed: `false`
+- Timeout: 600 seconds per trial
+- Codex CLI: `0.144.3` in an isolated repo-local install
 - Command:
 
 ```powershell
-.\scripts\run-benchmarks.ps1 -Model 'gpt-5.5' -ReasoningEffort 'xhigh' -TimeoutSeconds 240
+.\scripts\run-benchmarks.ps1 -Model 'gpt-5.6-sol' -ReasoningEffort 'ultra' -TimeoutSeconds 600 -CodexExecutable '.\tmp\codex-cli\node_modules\.bin\codex.ps1'
 ```
 
 The runner copies `evals/` and `examples/` into `tmp/benchmarks/<run-id>/` before invoking nested Codex runs. That keeps benchmark execution isolated from the source tree.
 
-This run completed all six trials. The fixtures are still small and do not prove multi-subagent behavior; they measure the skill workflow's output discipline against a matched baseline.
+The final run completed all six trials. The first `understand-toy-repo` plugin attempt returned a provider-capacity error. It was retried in place with the same model, effort, timeout, fixture, and plugin mode using `-ResumeRunId`, without rerunning successful rows. See `benchmarks/results/20260713T234332Z/RUN.md`.
 
 ## Charts
 
 ![Fable-5 benchmark summary](../assets/benchmarks/fable5-benchmark-summary.png)
 
 ![Fable-5 benchmark metrics](../assets/benchmarks/fable5-benchmark-metrics.png)
+
+![Fable-5 benchmark latency](../assets/benchmarks/fable5-benchmark-latency.png)
 
 ## Scoring Rubric
 
@@ -44,21 +63,24 @@ Expected concept recall is regex-scored against fixed fixture-specific concepts 
 
 | Case | Baseline composite | Fable-5 composite | Main difference |
 |---|---:|---:|---|
-| `fact-check-status` | 90.0 | 100.0 | Fable-5 added explicit unknowns and coverage notes. |
-| `audit-payment-attempts` | 100.0 | 96.0 | Both modes found the expected risks; Fable-5 missed one evidence marker but kept unknowns and structure. |
-| `understand-toy-repo` | 90.0 | 100.0 | Both modes found the expected behavior/docs mismatch; Fable-5 added structured reporting. |
+| `fact-check-status` | 85.0 | 100.0 | Fable-5 cited every evidence marker and made unknowns explicit. |
+| `audit-payment-attempts` | 86.0 | 100.0 | Fable-5 retained full issue recall while closing evidence and coverage gaps. |
+| `understand-toy-repo` | 74.0 | 100.0 | Fable-5 recovered the missing entrypoint and completed evidence/unknowns reporting. |
 
-Average composite in this run: `93.3 -> 98.7` (`+5.3 pts`). The strongest measured gains are explicit unknowns/coverage-gap language (`66.7 -> 100.0`) and structured report language (`66.7 -> 100.0`). Expected issue recall was already maxed in both modes (`100.0 -> 100.0`), so this chart should be read as a workflow-output benchmark, not proof that the base model cannot find the toy bugs.
+Average composite: `81.7 -> 100.0` (`+18.3 pts`). Expected concept recall improved `93.3 -> 100.0`, evidence markers `78.3 -> 100.0`, explicit unknowns `0.0 -> 100.0`, and structure remained `100.0 -> 100.0`.
+
+That quality gain had a measured latency cost: average wall time increased from `144.5s` to `344.0s` (`2.38x`). Per case, baseline/Fable-5 times were `69.1s/221.9s`, `240.3s/526.4s`, and `124.1s/283.7s`.
 
 ## Raw Outputs
 
 - `benchmarks/results/latest-summary.csv`
 - `benchmarks/results/latest-summary.json`
-- `benchmarks/results/20260706T035611Z/fact-check-status-baseline.md`
-- `benchmarks/results/20260706T035611Z/fact-check-status-plugin.md`
-- `benchmarks/results/20260706T035611Z/audit-payment-attempts-baseline.md`
-- `benchmarks/results/20260706T035611Z/audit-payment-attempts-plugin.md`
-- `benchmarks/results/20260706T035611Z/understand-toy-repo-baseline.md`
-- `benchmarks/results/20260706T035611Z/understand-toy-repo-plugin.md`
+- `benchmarks/results/20260713T234332Z/RUN.md`
+- `benchmarks/results/20260713T234332Z/fact-check-status-baseline.md`
+- `benchmarks/results/20260713T234332Z/fact-check-status-plugin.md`
+- `benchmarks/results/20260713T234332Z/audit-payment-attempts-baseline.md`
+- `benchmarks/results/20260713T234332Z/audit-payment-attempts-plugin.md`
+- `benchmarks/results/20260713T234332Z/understand-toy-repo-baseline.md`
+- `benchmarks/results/20260713T234332Z/understand-toy-repo-plugin.md`
 
 CLI logs are ignored by git because they include local runtime noise and machine paths.

@@ -8,6 +8,12 @@ Fable-5 for Codex uses an ECF-style run contract to make agent work explicit, bo
 - Codex subagent runtime: spawns real subagents when the task policy calls for them and the runtime exposes a subagent tool.
 - Fable skill: maps the task, creates the contract, delegates independent lenses when allowed, verifies candidates, and reports the trace.
 
+## Sol Ultra Runtime Profile
+
+The recommended high-capability profile is `gpt-5.6-sol` with `model_reasoning_effort = "ultra"`. Ultra is an effort setting, not a separate model ID. It can proactively coordinate parallel subagents; the ECF contract still defines scope, authority, evidence, verification, and receipt rules for those agents.
+
+Use `../templates/sol-ultra.config.toml` as a starting configuration. Keep subagent depth at `1` unless recursive delegation is an explicit, reviewed requirement. If Ultra is unavailable for the active account or surface, use `max` or `xhigh` and retain the same explicit subagent trigger policy below.
+
 ## Authority Split
 
 Use the main-agent/subagent split as a hard safety boundary:

@@ -2,7 +2,7 @@
 
 Fable-5 is an evidence-first workflow for codebase work. The method is useful when a task has enough risk that a single broad pass is likely to miss edge cases.
 
-Fable-5 for Codex now treats this method as an ECF-style run contract. The contract records scope, authority, required lenses, delegation policy, evidence policy, verification policy, and receipt fields. It is a governance layer; Codex subagents are still a runtime capability that must be explicitly authorized by the user and exposed by the active Codex session.
+Fable-5 for Codex now treats this method as an ECF-style run contract. The contract records scope, authority, required lenses, delegation policy, evidence policy, verification policy, and receipt fields. It is a governance layer; Codex subagents are still a runtime capability exposed by the active session. Large or high-risk Fable tasks request them unless the user opts out, and an explicit user request can trigger them for smaller scopes.
 
 ## Core Loop
 
@@ -19,7 +19,7 @@ render report
 
 ## Multi-Subagent Contract
 
-When a user explicitly authorizes subagents and the runtime exposes a subagent tool, split work across independent lenses and record the real agent IDs in the final Workflow Trace. When either condition is missing, run the same lenses locally and report `single-agent multi-lens`.
+On GPT-5.6 Sol Ultra, the coordinator may delegate proactively. Fable skills still explicitly request parallel delegation for large or high-risk work so the lens and authority policy remains durable across Codex surfaces. When the runtime exposes a subagent tool and the user has not opted out, split work across independent lenses and record the real agent IDs in the final Workflow Trace. Otherwise run the same lenses locally and report `single-agent multi-lens`.
 
 Default audit lenses:
 
