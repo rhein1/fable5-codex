@@ -3,7 +3,7 @@ model = "gpt-5.6-sol"
 model_reasoning_effort = "ultra"
 
 [agents]
-# Ultra coordinates four agents by default. Leave headroom for the coordinator
-# and verifier while preventing recursive fan-out.
+# Codex defaults to six concurrently open agent threads. Keep that cap and
+# prevent recursive fan-out; Fable prompts assign only the lenses a task needs.
 max_threads = 6
 max_depth = 1

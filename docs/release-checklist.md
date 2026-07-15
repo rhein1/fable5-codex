@@ -30,9 +30,15 @@ gh api repos/rhein1/fable5-codex/branches/main/protection
 
 Private vulnerability reporting and Actions SHA pinning must be enabled. Main must require the aggregate `Release gate`, require conversation resolution, and reject force pushes and deletion.
 
+Verify runtime discovery against the exact release candidate before merging:
+
+- An isolated Codex home installs and lists the expected plugin version from the candidate checkout.
+- A fresh Codex app task discovers one intended Fable-5 plugin source, with no stale duplicate version.
+- `VALIDATION.md` records the Codex CLI/app-host versions, plugin version, marketplace source, and any remaining manual gap.
+
 ## Merge Gate
 
-Do not create a release tag from a feature branch. Merge the reviewed pull request, wait for the full `Validate` matrix to pass on `main`, then verify the local release point is the exact clean remote head:
+Do not create a release tag from a feature branch. Before merge, require at least one approving review from a collaborator who did not author the latest push, resolve every review thread, and verify the PR-specific `Release gate` is green. Then merge the reviewed pull request, wait for the full `Validate` matrix to pass on `main`, and verify the local release point is the exact clean remote head:
 
 ```powershell
 git fetch origin
@@ -52,13 +58,14 @@ Use a signed, annotated tag:
 
 ```powershell
 git tag -s v0.4.0-alpha.3 -m "v0.4.0-alpha.3"
+git tag -v v0.4.0-alpha.3
 git push origin v0.4.0-alpha.3
 ```
 
 Create the release:
 
 ```powershell
-gh release create v0.4.0-alpha.3 --title "Fable-5 for Codex v0.4.0-alpha.3" --notes-file docs/release-notes/v0.4.0-alpha.3.md
+gh release create v0.4.0-alpha.3 --verify-tag --prerelease --latest=false --title "Fable-5 for Codex v0.4.0-alpha.3" --notes-file docs/release-notes/v0.4.0-alpha.3.md
 ```
 
 Pin install example:

@@ -141,7 +141,7 @@ function pngChunk(type, data) {
   return Buffer.concat([length, typeBuffer, data, checksum]);
 }
 
-function writePng(path, pixels) {
+function writePng(path, pixels, metadata = {}) {
   const header = Buffer.alloc(13);
   header.writeUInt32BE(WIDTH, 0);
   header.writeUInt32BE(HEIGHT, 4);
@@ -153,9 +153,13 @@ function writePng(path, pixels) {
     scanlines[target] = 0;
     pixels.copy(scanlines, target + 1, y * WIDTH * 4, (y + 1) * WIDTH * 4);
   }
+  const textChunks = Object.entries(metadata).map(([key, value]) =>
+    pngChunk('tEXt', Buffer.from(`${key}\0${value}`, 'latin1')),
+  );
   writeFileSync(path, Buffer.concat([
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     pngChunk('IHDR', header),
+    ...textChunks,
     pngChunk('IDAT', deflateSync(scanlines, { level: 9 })),
     pngChunk('IEND', Buffer.alloc(0)),
   ]));
@@ -173,19 +177,52 @@ function pairRows(rows) {
   }));
 }
 
-function drawHeader(canvas, title, subtitle, model) {
-  const titleScale = canvas.textWidth(title, 6) <= 980 ? 6 : 5;
+function drawHeader(canvas, title, subtitle, legend) {
+  const titleScale = canvas.textWidth(title, 6) <= 980
+    ? 6
+    : canvas.textWidth(title, 5) <= 980 ? 5 : 4;
+  const subtitleScale = canvas.textWidth(subtitle, 3) <= 980 ? 3 : 2;
   canvas.drawText(title, 72, 48, titleScale, COLORS.white, 980);
-  canvas.drawText(subtitle, 76, 112, 3, COLORS.muted, 1420);
+  canvas.drawText(subtitle, 76, 112, subtitleScale, COLORS.muted, 980);
   canvas.fillRect(1110, 55, 26, 18, COLORS.baseline);
-  canvas.drawText(`NORMAL ${model}`, 1150, 54, 3, COLORS.white, 400);
+  canvas.drawText(legend.baseline, 1150, 54, 3, COLORS.white, 400);
   canvas.fillRect(1110, 92, 26, 18, COLORS.plugin);
-  canvas.drawText(`${model} + FABLE-5`, 1150, 91, 3, COLORS.white, 400);
+  canvas.drawText(legend.plugin, 1150, 91, 3, COLORS.white, 400);
 }
 
-function renderSummary(rows, model, outputPath) {
+function chartContext(qualification, model, runId) {
+  if (qualification === 'historical-pre-alpha3') {
+    return {
+      legend: { baseline: 'LEGACY BASELINE', plugin: 'LEGACY FABLE ARM' },
+      summaryTitle: 'HISTORICAL WORKFLOW FORMAT SNAPSHOT',
+      summarySubtitle: 'PRE-ALPHA.3, N=1 PER ARM. LEXICAL RUBRIC; SEE DISCLOSURE BELOW.',
+      summaryDescription: 'PRE-ALPHA.3, N=1 PER ARM, LEXICAL RUBRIC, NOT PLUGIN-ONLY CAUSAL EVIDENCE.',
+      metricsTitle: 'LEXICAL RUBRIC SIGNALS IN THE OUTPUT',
+      metricsSubtitle: 'PRE-ALPHA.3, N=1 PER ARM. FORMAT SIGNALS; SEE DISCLOSURE BELOW.',
+      metricsDescription: 'PRE-ALPHA.3, N=1 PER ARM. FORMAT SIGNALS ARE NOT SEMANTIC QUALITY PROOF.',
+      latencyTitle: 'HISTORICAL LATENCY OBSERVATION',
+      latencySubtitle: 'PRE-ALPHA.3, N=1 PER ARM. LEGACY BASELINE WAS NOT CLEANLY ISOLATED.',
+      latencyDescription: 'PRE-ALPHA.3, N=1 PER ARM. THE LEGACY BASELINE WAS NOT CLEANLY ISOLATED.',
+      disclosure: `RUN ${runId} - HISTORICAL PRE-ALPHA.3 - SEE BENCHMARKS/README.MD`,
+    };
+  }
+  return {
+    legend: { baseline: `BASELINE ${model}`, plugin: `${model} + FABLE-5` },
+    summaryTitle: 'FABLE-5 WORKFLOW FORMAT SNAPSHOT',
+    summarySubtitle: 'ATTESTED ISOLATED RUN, N=1 PER ARM, LEXICAL WORKFLOW RUBRIC.',
+    metricsTitle: 'LEXICAL RUBRIC SIGNALS IN THE OUTPUT',
+    metricsSubtitle: 'ATTESTED ISOLATED RUN, N=1 PER ARM. FORMAT SIGNALS ARE NOT HUMAN JUDGMENT.',
+    latencyTitle: 'WORKFLOW FORMAT LIFT HAS A LATENCY COST',
+    latencySubtitle: 'ATTESTED ISOLATED RUN, N=1 PER ARM, IDENTICAL MODEL AND EFFORT.',
+    disclosure: `RUN ${runId} - ATTESTED ALPHA.3 HARNESS - SEE BENCHMARKS/README.MD`,
+  };
+}
+
+function renderSummary(rows, model, outputPath, qualification) {
   const canvas = createCanvas();
-  drawHeader(canvas, 'FABLE-5 BENCHMARK SNAPSHOT', 'COMPOSITE SCORE BY FIXTURE. ISOLATED CODEX HOMES.', model);
+  const runId = rows[0].run_id;
+  const context = chartContext(qualification, model, runId);
+  drawHeader(canvas, context.summaryTitle, context.summarySubtitle, context.legend);
   const pairs = pairRows(rows);
   const left = 120;
   const top = 210;
@@ -219,17 +256,25 @@ function renderSummary(rows, model, outputPath) {
   canvas.drawText(
     `AVERAGE COMPOSITE: ${baselineAverage.toFixed(1)} -> ${pluginAverage.toFixed(1)} (${delta >= 0 ? '+' : ''}${delta.toFixed(1)} PTS)`,
     120,
-    815,
+    790,
     4,
     COLORS.accent,
     1370,
   );
-  writePng(outputPath, canvas.pixels);
+  canvas.drawText(context.disclosure, 120, 850, 2, COLORS.muted, 1370);
+  writePng(outputPath, canvas.pixels, {
+    Title: context.summaryTitle,
+    Description: context.summaryDescription ?? context.summarySubtitle,
+    Run: runId,
+    Qualification: qualification,
+  });
 }
 
-function renderMetrics(rows, model, outputPath) {
+function renderMetrics(rows, model, outputPath, qualification) {
   const canvas = createCanvas();
-  drawHeader(canvas, 'WHERE THE PLUGIN CHANGES OUTPUT', 'AVERAGE RUBRIC SUBSCORES ACROSS ALL FIXTURES.', model);
+  const runId = rows[0].run_id;
+  const context = chartContext(qualification, model, runId);
+  drawHeader(canvas, context.metricsTitle, context.metricsSubtitle, context.legend);
   const metrics = [
     ['EXPECTED ISSUE RECALL', 'recall_pct'],
     ['EVIDENCE MARKERS', 'evidence_pct'],
@@ -252,13 +297,21 @@ function renderMetrics(rows, model, outputPath) {
     canvas.drawText(plugin.toFixed(1), 1320, y + 44, 3, COLORS.white);
     y += 125;
   }
-  canvas.drawText('SCALE: 0-100', 470, 835, 3, COLORS.muted);
-  writePng(outputPath, canvas.pixels);
+  canvas.drawText('SCALE: 0-100', 470, 805, 3, COLORS.muted);
+  canvas.drawText(context.disclosure, 120, 850, 2, COLORS.muted, 1370);
+  writePng(outputPath, canvas.pixels, {
+    Title: context.metricsTitle,
+    Description: context.metricsDescription ?? context.metricsSubtitle,
+    Run: runId,
+    Qualification: qualification,
+  });
 }
 
-function renderLatency(rows, model, outputPath) {
+function renderLatency(rows, model, outputPath, qualification) {
   const canvas = createCanvas();
-  drawHeader(canvas, 'QUALITY GAIN HAS A LATENCY COST', 'WALL TIME BY FIXTURE. IDENTICAL MODEL AND EFFORT.', model);
+  const runId = rows[0].run_id;
+  const context = chartContext(qualification, model, runId);
+  drawHeader(canvas, context.latencyTitle, context.latencySubtitle, context.legend);
   const pairs = pairRows(rows).map((pair) => ({
     label: pair.caseId,
     baseline: Number(pair.baseline.seconds),
@@ -283,8 +336,14 @@ function renderLatency(rows, model, outputPath) {
     canvas.drawText(`${pair.plugin.toFixed(1)}S`, 1270, y + 44, 3, COLORS.white);
     y += 145;
   }
-  canvas.drawText(`SCALE: 0-${scale} SECONDS`, 480, 835, 3, COLORS.muted);
-  writePng(outputPath, canvas.pixels);
+  canvas.drawText(`SCALE: 0-${scale} SECONDS`, 480, 805, 3, COLORS.muted);
+  canvas.drawText(context.disclosure, 120, 850, 2, COLORS.muted, 1370);
+  writePng(outputPath, canvas.pixels, {
+    Title: context.latencyTitle,
+    Description: context.latencyDescription ?? context.latencySubtitle,
+    Run: runId,
+    Qualification: qualification,
+  });
 }
 
 function parseArgs(argv) {
@@ -292,7 +351,7 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 2) {
     const key = argv[index];
     const value = argv[index + 1];
-    if (!['--input', '--output-dir', '--model'].includes(key) || value === undefined) {
+    if (!['--input', '--output-dir', '--model', '--qualification'].includes(key) || value === undefined) {
       throw new Error(`invalid renderer argument: ${key ?? '<missing>'}`);
     }
     if (Object.hasOwn(values, key)) throw new Error(`duplicate renderer argument: ${key}`);
@@ -314,11 +373,15 @@ function main() {
     throw new Error('benchmark chart input requires one valid run id');
   }
   const model = args['--model'] || rows[0].model;
+  const qualification = args['--qualification'] || 'attested-alpha3';
+  if (!['attested-alpha3', 'historical-pre-alpha3'].includes(qualification)) {
+    throw new Error(`invalid renderer qualification: ${qualification}`);
+  }
   const outputDir = resolve(args['--output-dir']);
   mkdirSync(outputDir, { recursive: true });
-  renderSummary(rows, model, join(outputDir, 'fable5-benchmark-summary.png'));
-  renderMetrics(rows, model, join(outputDir, 'fable5-benchmark-metrics.png'));
-  renderLatency(rows, model, join(outputDir, 'fable5-benchmark-latency.png'));
+  renderSummary(rows, model, join(outputDir, 'fable5-benchmark-summary.png'), qualification);
+  renderMetrics(rows, model, join(outputDir, 'fable5-benchmark-metrics.png'), qualification);
+  renderLatency(rows, model, join(outputDir, 'fable5-benchmark-latency.png'), qualification);
 }
 
 try {

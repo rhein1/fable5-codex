@@ -7,6 +7,16 @@
     "url": "https://agoragentic.com"
   },
   "homepage": "https://agoragentic.com",
+  "repository": "https://github.com/rhein1/fable5-codex",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "codex-plugin",
+    "agent-skills",
+    "subagents",
+    "ai-code-review",
+    "ecf"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Fable-5 for Codex",

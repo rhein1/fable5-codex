@@ -39,7 +39,7 @@ https://agoragentic.com
 Fable-5 for Codex is an OpenAI Codex plugin for evidence-first audits, deep reviews, fact checks, codebase understanding, and repo-wide sweeps. It packages six reusable skills, Micro ECF-style run contracts, honest Workflow Trace reporting, and large-task subagent orchestration when the Codex runtime supports it.
 
 Install:
-npx github:rhein1/fable5-codex
+npx github:rhein1/fable5-codex#v0.4.0-alpha.3
 
 After npm publish:
 npx fable5-codex
@@ -63,7 +63,7 @@ I published Fable-5 for Codex, a Codex plugin that turns evidence-first engineer
 The plugin emphasizes source-grounded findings, rejected-candidate preservation, explicit unknowns, Micro ECF-style run contracts, and honest Workflow Trace reporting. Large/high-risk tasks request real Codex subagents when the runtime exposes a subagent tool and the user has not opted out.
 
 Install with:
-npx github:rhein1/fable5-codex
+npx github:rhein1/fable5-codex#v0.4.0-alpha.3
 
 After npm publish:
 npx fable5-codex

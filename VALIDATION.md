@@ -2,6 +2,44 @@
 
 Date: 2026-07-15
 
+## 2026-07-15 Alpha.3 Release Completeness
+
+This corrective pass closes the post-merge release, benchmark-disclosure, and local-discovery gaps without publishing a tag, GitHub release, or npm package.
+
+Validation commands:
+
+```powershell
+npm test
+npm run validate
+npm run validate:artifact
+npx --yes node@18 scripts/run-tests.mjs
+npx --yes node@18 scripts/validate-package.mjs
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate-package.ps1
+bash -n plugins/fable5-codex/scripts/fable5-codex.sh
+npm run pack:dry-run
+git diff --check
+```
+
+Result:
+
+```text
+Node 24 source suite: 62 tests; 59 passed, 3 platform skips, 0 failed
+Node 18 source suite: 62 tests; 59 passed, 3 platform skips, 0 failed
+Node 24 and Node 18 package validation: passed
+Installed npm tarball: tests, package validation, and installer dry run passed
+PowerShell compatibility validator and Bash syntax check: passed
+Codex plugin validator: passed
+Codex skill validator: all six skills passed
+npm pack dry run: 115 files, 1.1 MB package, qualified benchmark assets included
+git diff --check: no whitespace errors; line-ending normalization warnings only
+```
+
+The new regressions prove that wrappers use the explicit `codex-cli` token even when launcher output contains an earlier semantic version, plugin digests include hidden files, `-BaselineOnly` performs no plugin CLI setup, Windows-backslash Markdown links are rejected, PNGs carry a machine-readable qualification, and transient Windows readiness-file locks do not make the run-lock test flaky.
+
+Local app-host inventory used Codex CLI `0.144.2`. The stale enabled `fable5-codex@personal` alpha.2 install was removed, the repo-local alpha.3 plugin was reinstalled through the Codex CLI, and the final inventory contained exactly one enabled Fable-5 row. The source and cache each contained 31 files with zero path/hash differences; `.codex-plugin/plugin.json` existed and matched in both trees. The PATH npm shim remains `codex-cli 0.142.5` and was not used for this proof.
+
+The current app task had loaded both plugin versions before cleanup, so it cannot prove post-cleanup startup behavior. A fresh app task remains required to attest single-source skill discovery. No model benchmark was rerun: the pre-alpha.3 `20260713T234332Z` data was re-rendered with visible and PNG-metadata qualifications, without changing scores or timings.
+
 ## 2026-07-15 Alpha.3 Hardening
 
 Package and plugin version:
@@ -22,8 +60,11 @@ npx --yes node@18 scripts/run-tests.mjs
 npx --yes node@18 scripts/validate-package.mjs
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate-package.ps1
 bash -n plugins/fable5-codex/scripts/fable5-codex.sh
-python C:\Users\s8972\.codex\skills\.system\plugin-creator\scripts\validate_plugin.py plugins/fable5-codex
-python C:\Users\s8972\.codex\skills\.system\skill-creator\scripts\quick_validate.py <each skill directory>
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
+$pluginValidator = Join-Path $codexHome 'skills\.system\plugin-creator\scripts\validate_plugin.py'
+$skillValidator = Join-Path $codexHome 'skills\.system\skill-creator\scripts\quick_validate.py'
+python $pluginValidator plugins/fable5-codex
+python $skillValidator <each skill directory>
 npm pack --dry-run --json
 git diff --check
 ```
@@ -87,7 +128,9 @@ force pushes: disabled
 branch deletion: disabled
 ```
 
-The measured benchmark was not rerun during this hardening pass. Run `20260713T234332Z` remains published with an explicit pre-alpha.3 isolation qualification; alpha.3 does not claim new model results or replace benchmark images.
+The measured benchmark was not rerun during this hardening pass. Run `20260713T234332Z` remains published with an explicit pre-alpha.3 isolation qualification; alpha.3 does not claim new model results. The same historical data was re-rendered into visibly qualified PNGs without changing scores or timings.
+
+Sections below preserve historical machine-local evidence from earlier development passes. Absolute paths and older versions in those sections describe those runs; they are not portable instructions or current install-state claims.
 
 ## 2026-07-13 GPT-5.6 Sol Ultra Update
 
@@ -261,8 +304,8 @@ bin/install.mjs
 Supported installer modes:
 
 ```powershell
-npx github:rhein1/fable5-codex
-npx github:rhein1/fable5-codex --project
+npx github:rhein1/fable5-codex#v0.3.0-alpha
+npx github:rhein1/fable5-codex#v0.3.0-alpha --project
 node bin/install.mjs --dry-run --no-codex-add
 node bin/install.mjs --project --dry-run --no-codex-add
 ```
@@ -489,67 +532,22 @@ Post-audit fixes:
 
 | Check | Surface | Status | Evidence |
 |---|---|---:|---|
-| Static package validation | PowerShell validator | PASS | `scripts/validate-package.ps1` |
-| Plugin manifest validation | Codex validator | PASS | `validate_plugin.py C:\projects\fable5-codex\plugins\fable5-codex` |
-| Six skill validators | Codex validator | PASS | `quick_validate.py` on each `SKILL.md` directory |
-| Repo marketplace path resolution | Static inspection | PASS | `.agents/plugins/marketplace.json` uses `plugins[].source.path` = `./plugins/fable5-codex` |
-| Personal marketplace path resolution | Static inspection | PASS | `C:\Users\s8972\.agents\plugins\marketplace.json` resolves to `C:\Users\s8972\plugins\fable5-codex` |
+| Source test suite | Node 24 | PASS | 62 tests; 59 passed, 3 platform skips, 0 failed |
+| Compatibility test suite | Node 18 | PASS | 62 tests; 59 passed, 3 platform skips, 0 failed |
+| Static package validation | Node 24, Node 18, PowerShell | PASS | `scripts/validate-package.mjs` and compatibility wrapper |
+| Installed tarball validation | npm artifact | PASS | packed tests, package validator, and installer dry run |
+| Plugin manifest validation | Codex validator | PASS | canonical `plugins/fable5-codex` tree |
+| Six skill validators | Codex validator | PASS | `quick_validate.py` on every skill directory |
 | Manifest website metadata | Static inspection | PASS | `homepage` and `interface.websiteURL` are `https://agoragentic.com` |
-| Personal plugin sync from repo canonical | PowerShell helper | PASS | `scripts/sync-personal-plugin.ps1` |
-| CLI marketplace list | Codex CLI | PASS | `codex-cli 0.142.5`; `codex plugin marketplace list` includes `personal` |
-| Repo marketplace registration | Codex CLI | PASS | `codex plugin marketplace add .` registered `fable5-local` at `C:\projects\fable5-codex` |
-| Repo plugin install | Codex CLI | PASS | `codex plugin add fable5-codex@fable5-local` installed `0.3.0-alpha` cache root |
-| Personal plugin reinstall | Codex CLI | PASS | `codex plugin add fable5-codex@personal` installed `0.3.0-alpha` cache root |
-| `$fable-understand` runs | Codex CLI | PASS | `runtime-smoke/01-understand.md` |
-| `$fable-fact-check` runs | Codex CLI | PASS | `runtime-smoke/02-fact-check.md` |
-| `$fable-audit` runs | Codex CLI | PASS | `runtime-smoke/03-audit.md` |
-| Codex app shows plugin | Codex app | TODO | pending restart/app discovery |
-| `$fable-sweep` fixture edit workflow runs | Codex app | TODO | pending smoke run |
+| Qualified historical charts | Renderer, tests, visual inspection | PASS | visible disclosure plus PNG `Qualification` metadata |
+| App-host plugin inventory | Codex CLI `0.144.2` | PASS | one enabled row: `fable5-codex@fable5-local` `0.4.0-alpha.3` |
+| Installed cache parity | SHA-256 tree comparison | PASS | 31 source files, 31 cache files, 0 differences, hidden manifest matched |
+| Fresh app-task discovery | Codex app | PENDING | required after removing the startup-loaded personal alpha.2 install |
+| Complete alpha.3 model benchmark | Isolated harness | PENDING | historical data only; no new model result claimed |
+| Corrective PR and PR-specific CI | GitHub | PENDING | branch has not yet been published |
+| Signed prerelease tag and GitHub release | GitHub | NOT PUBLISHED | requires clean reviewed `main` and explicit release authorization |
+| npm prerelease | npm | NOT PUBLISHED | `npm whoami` is unauthenticated; no publish attempted |
 
 ## Remaining Runtime Smoke
 
-Codex CLI marketplace discovery and plugin install now pass through the npm CLI shim.
-
-The earlier failed CLI check:
-
-```powershell
-codex plugin marketplace list
-```
-
-failed before plugin discovery because Windows denied execution of:
-
-```text
-C:\Program Files\WindowsApps\OpenAI.Codex_26.623.13972.0_x64__2p2nqsd0c76g0\app\resources\codex.exe
-```
-
-Observed failure:
-
-```text
-Access is denied.
-```
-
-This is a local Codex CLI launch blocker, not evidence that the plugin package is invalid.
-
-That blocker is resolved for the current shell because `codex` now resolves to:
-
-```text
-C:\Users\s8972\AppData\Roaming\npm\codex.ps1
-```
-
-Codex CLI runtime smoke has passed for `$fable-understand`, `$fable-fact-check`, and `$fable-audit`. Codex app UI discovery remains unproven until a fresh app thread runs the skills.
-
-## Remaining Runtime Smoke
-
-Optional final app UI smoke after installing `fable5-codex`:
-
-```text
-Use $fable-understand. Scope: C:\projects\fable5-codex. Question: what does this plugin provide, how is it installed, and what unknowns remain? Include exact file citations.
-```
-
-```text
-Use $fable-fact-check. Doc: C:\projects\fable5-codex\README.md. Check every installed, supported, validated, and works claim against the files on disk.
-```
-
-```text
-Use $fable-audit. Scope: C:\projects\fable5-codex. Focus: Codex plugin compatibility, path assumptions, Windows compatibility, overbroad promises, missing install steps, and schema/reporting gaps.
-```
+After restarting Codex or opening a fresh app task, verify that only the repo-local alpha.3 skill source is discovered. Then run one read-only skill call and record its Workflow Trace. The existing task is not valid evidence because plugin skills are loaded at task startup.

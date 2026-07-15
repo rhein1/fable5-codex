@@ -48,7 +48,7 @@ fs.appendFileSync(process.env.FABLE5_FAKE_LOG, JSON.stringify({
   ),
 }) + "\\n");
 if (args.includes("--version")) {
-  console.log("codex-cli 0.144.3");
+  console.log(process.env.FABLE5_FAKE_VERSION_OUTPUT || "codex-cli 0.144.3");
   process.exit(0);
 }
 if (args[0] === "plugin" && args[1] === "list") {
@@ -101,7 +101,18 @@ throw new Error("unexpected fake Codex invocation: " + args.join(" "));
     await chmod(fakeCodex, 0o755);
   }
 
-  return { root, results, assets, runtime, fakeLog, fakeCodex, authFile, exitCode, delayMs };
+  return {
+    root,
+    results,
+    assets,
+    runtime,
+    fakeLog,
+    fakeCodex,
+    authFile,
+    exitCode,
+    delayMs,
+    versionOutput: 'codex-cli 0.144.3',
+  };
 }
 
 function runHarness(
@@ -147,6 +158,7 @@ function runHarness(
       FABLE5_FAKE_LOG: harness.fakeLog,
       FABLE5_FAKE_EXEC_EXIT: String(harness.exitCode),
       FABLE5_FAKE_DELAY_MS: String(harness.delayMs),
+      FABLE5_FAKE_VERSION_OUTPUT: harness.versionOutput,
       FABLE5_SECRET_SENTINEL: "harmless-test-sentinel",
       OPENAI_API_KEY: "harmless-test-sentinel",
       AWS_SECRET_ACCESS_KEY: "harmless-test-sentinel",
@@ -172,7 +184,7 @@ async function waitForFile(pathname, attempts = 100) {
       await readFile(pathname);
       return;
     } catch (error) {
-      if (error.code !== "ENOENT") throw error;
+      if (!["ENOENT", "EBUSY", "EACCES", "EPERM"].includes(error.code)) throw error;
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
   }
@@ -216,6 +228,7 @@ test("isolated plugin run succeeds without publishing an incomplete comparison",
   assert.ok(execCall.arguments.includes("--ignore-rules"));
   assert.ok(!execCall.arguments.includes("--dangerously-bypass-approvals-and-sandbox"));
   assert.equal(execCall.secret_env_present, false);
+  assert.ok(calls.some((call) => call.arguments[0] === "plugin"));
 });
 
 test("model execution requires an explicit benchmark auth file", async (t) => {
@@ -232,6 +245,39 @@ test("model execution requires an explicit benchmark auth file", async (t) => {
   ], { cwd: repo, encoding: "utf8" });
   assert.notEqual(result.status, 0);
   assert.match(plainResultOutput(result), /AuthFile is required for benchmark execution/);
+});
+
+test("benchmark runner ignores launcher versions before the Codex CLI token", async (t) => {
+  if (!powerShell) return t.skip("PowerShell is unavailable");
+  const harness = await createHarness(0);
+  harness.versionOutput = 'Node.js v20.0.0\ncodex-cli 0.143.9';
+  t.after(() => rm(harness.root, { recursive: true, force: true }));
+
+  const result = runHarness(harness, "baseline");
+  assert.notEqual(result.status, 0);
+  assert.match(plainResultOutput(result), /requires Codex CLI 0\.144\.0 or newer; found 0\.143\.9/);
+  const calls = (await readFile(harness.fakeLog, "utf8"))
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+  assert.equal(calls.filter((call) => call.arguments.includes("exec")).length, 0);
+});
+
+test("benchmark runner rejects extended Codex version tokens", async (t) => {
+  if (!powerShell) return t.skip("PowerShell is unavailable");
+  const harness = await createHarness(0);
+  harness.versionOutput = "codex-cli 0.144.3.1";
+  t.after(() => rm(harness.root, { recursive: true, force: true }));
+
+  const result = runHarness(harness, "baseline");
+  assert.notEqual(result.status, 0);
+  assert.match(plainResultOutput(result), /Unable to determine Codex CLI version/);
+});
+
+test("plugin digest enumeration includes hidden files and dot-directories", async () => {
+  const source = await readFile(runner, "utf8");
+  assert.match(source, /Get-ChildItem\s+-LiteralPath\s+\$path\s+-Force\s+-File\s+-Recurse/);
 });
 
 test("failed baseline run records zero scores and leaves latest artifacts untouched", async (t) => {
@@ -258,6 +304,7 @@ test("failed baseline run records zero scores and leaves latest artifacts untouc
   assert.ok(execCall);
   assert.match(execCall.codex_home, /codex-home-baseline$/);
   assert.equal(execCall.secret_env_present, false);
+  assert.equal(calls.filter((call) => call.arguments[0] === "plugin").length, 0);
 });
 
 test("timed-out run is terminated, scored zero, and cleaned up", async (t) => {
