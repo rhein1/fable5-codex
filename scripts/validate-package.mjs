@@ -13,6 +13,11 @@ import {
   resolve,
 } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  containsAbsoluteLocalMarkdownLink,
+  containsFileUri,
+  containsPlainMachinePath,
+} from './benchmark-path-hygiene.mjs';
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repo = resolve(dirname(scriptPath), '..');
@@ -75,6 +80,36 @@ function readJson(path) {
 
 function fileSha256(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+function readPngText(path) {
+  const buffer = readFileSync(path);
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  assert(buffer.length >= signature.length && buffer.subarray(0, 8).equals(signature),
+    `Invalid PNG signature: ${path}`);
+
+  const entries = new Map();
+  let offset = 8;
+  while (offset + 12 <= buffer.length) {
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.toString('ascii', offset + 4, offset + 8);
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + length;
+    assert(dataEnd + 4 <= buffer.length, `Truncated PNG chunk in ${path}`);
+    if (type === 'tEXt') {
+      const data = buffer.subarray(dataStart, dataEnd);
+      const separator = data.indexOf(0);
+      if (separator > 0) {
+        entries.set(
+          data.toString('latin1', 0, separator),
+          data.toString('latin1', separator + 1),
+        );
+      }
+    }
+    offset = dataEnd + 4;
+    if (type === 'IEND') break;
+  }
+  return entries;
 }
 
 function parseCsv(text) {
@@ -274,6 +309,8 @@ function validate() {
     && benchmarkRunnerText.includes('invocation_selected_modes')
     && benchmarkRunnerText.includes('completed_modes'),
   'Benchmark runner must serialize publication and preserve complete resume coverage metadata');
+  assert(/Get-ChildItem\s+-LiteralPath\s+\$path\s+-Force\s+-File\s+-Recurse/.test(benchmarkRunnerText),
+    'Benchmark plugin digests must include hidden files and dot-directories');
 
   const packageJson = readJson(packageFile);
   assert(packageJson.name === 'fable5-codex', `Unexpected package name: ${packageJson.name}`);
@@ -371,14 +408,22 @@ function validate() {
 
   const rootReadmeText = readFileSync(rootReadme, 'utf8');
   const benchmarkReadmeText = readFileSync(benchmarkReadme, 'utf8');
+  const benchmarkAssetRun = latestRunId === '20260713T234332Z'
+    ? `${latestRunId}-qualified`
+    : latestRunId;
   for (const chartName of ['summary', 'metrics', 'latency']) {
-    const assetName = `fable5-benchmark-${chartName}-${latestRunId}.png`;
+    const assetName = `fable5-benchmark-${chartName}-${benchmarkAssetRun}.png`;
     const versionedAsset = join(repo, 'assets', 'benchmarks', assetName);
     const stableAsset = join(repo, 'assets', 'benchmarks', `fable5-benchmark-${chartName}.png`);
     assertExists(versionedAsset);
     assertExists(stableAsset);
     assert(fileSha256(versionedAsset) === fileSha256(stableAsset),
       `Run-specific benchmark asset does not match its stable counterpart: ${assetName}`);
+    if (benchmarkAssetRun.endsWith('-qualified')) {
+      const pngText = readPngText(versionedAsset);
+      assert(pngText.get('Qualification') === 'historical-pre-alpha3',
+        `Historical benchmark asset lacks its PNG qualification: ${assetName}`);
+    }
     assert(rootReadmeText.includes(`assets/benchmarks/${assetName}`),
       `Root README must reference the run-specific benchmark asset: ${assetName}`);
     assert(benchmarkReadmeText.includes(`../assets/benchmarks/${assetName}`),
@@ -391,10 +436,10 @@ function validate() {
 
   for (const file of readdirSync(latestRunDir).filter((name) => name.endsWith('.md'))) {
     const text = readFileSync(join(latestRunDir, file), 'utf8');
-    assert(!/\((?:\/?[A-Za-z]:\/|\/(?!\/))/.test(text),
+    assert(!containsAbsoluteLocalMarkdownLink(text),
       `Latest benchmark report contains an absolute local link: ${file}`);
-    assert(!/file:\/\//i.test(text), `Latest benchmark report contains a file URI: ${file}`);
-    assert(!/(?:^|[\s`])\/?[A-Za-z]:[\\/]|\/(?:tmp|private\/var|home\/runner|Users)\//m.test(text),
+    assert(!containsFileUri(text), `Latest benchmark report contains a file URI: ${file}`);
+    assert(!containsPlainMachinePath(text),
       `Latest benchmark report contains a plain machine path: ${file}`);
   }
 

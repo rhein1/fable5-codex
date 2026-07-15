@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.local/schemas/fable5.schema.json",
+  "$id": "https://raw.githubusercontent.com/rhein1/fable5-codex/main/plugins/fable5-codex/schemas/fable5.schema.json",
   "title": "Fable-5 Evidence Ledger",
   "type": "object",
   "required": ["run", "coverage", "findings", "unknowns"],

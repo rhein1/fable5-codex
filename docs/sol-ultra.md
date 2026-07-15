@@ -23,7 +23,7 @@ In the Codex app, select **GPT-5.6 Sol** and **Ultra** beneath the composer. If 
 
 ## What Ultra Adds
 
-OpenAI describes Ultra as its highest-capability setting. It uses maximum reasoning and coordinates multiple agents across parallel workstreams, with four agents by default. Fable-5 adds the workflow discipline around that runtime:
+OpenAI describes Ultra as its highest-capability setting. Codex can proactively delegate suitable work to subagents, and the current runtime defaults `agents.max_threads` to `6` with `agents.max_depth` at `1`. Those values are concurrency and nesting limits, not a promise that six workers will run. Fable-5 adds the workflow discipline around that runtime:
 
 - disjoint evidence lenses
 - ECF scope and authority contracts
@@ -32,7 +32,7 @@ OpenAI describes Ultra as its highest-capability setting. It uses maximum reason
 - real subagent IDs in the Workflow Trace
 - explicit unknowns and coverage gaps
 
-Ultra does not guarantee that every task should fan out. Small, tightly coupled, or immediately blocking work may stay local. Fable skills explicitly request delegation for large or high-risk tasks so behavior does not depend only on proactive model judgment.
+Ultra does not guarantee that every task should fan out. Small, tightly coupled, or immediately blocking work may stay local. Fable skills explicitly request delegation for large or high-risk tasks so behavior does not depend only on proactive model judgment. The four-lens audit prompt is a Fable workflow example, not Codex's default worker count.
 
 ## Wrapper Commands
 

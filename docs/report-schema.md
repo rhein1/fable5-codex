@@ -6,6 +6,12 @@ The JSON schema lives at:
 plugins/fable5-codex/schemas/fable5.schema.json
 ```
 
+Canonical schema identifier:
+
+```text
+https://raw.githubusercontent.com/rhein1/fable5-codex/main/plugins/fable5-codex/schemas/fable5.schema.json
+```
+
 It models:
 
 - run metadata

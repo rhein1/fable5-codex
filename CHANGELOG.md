@@ -14,6 +14,7 @@
 
 - The installer now rejects unknown, split-value, and duplicate options, including invalid combinations with help, before selecting or mutating a destination.
 - PowerShell and Bash wrappers now preflight the Codex executable and reject GPT-5.6 on CLI versions older than `0.144.0`.
+- Wrapper preflight reads the explicit `codex-cli` version token instead of accepting the first unrelated semantic version in noisy launcher output.
 - Bash wrapper flags can appear before or after positional arguments without being misread as focus text.
 - Benchmark runs now use separate temporary Codex homes, an external fixture workspace, a read-only sandbox, ignored policy rules, an exact plugin digest, and ephemeral copied auth material.
 - Benchmark model processes now receive a minimal environment and `shell_environment_policy.inherit=none`; unique private runtimes remove copied auth before publication and reject links across runtime-controlled ancestors up to the verified OS temp-root boundary.
@@ -23,15 +24,17 @@
 - Render-only chart labels are derived from the attested summary instead of a caller-supplied model override.
 - Concurrent benchmark runs are serialized for per-run mutation and latest publication; post-commit staging cleanup cannot downgrade a published manifest.
 - Benchmark scoring accepts UTF-8 BOM-prefixed JSON from Windows PowerShell, and public-output normalization redacts workspace roots even when path separators are mixed.
+- Plugin digests include hidden files such as `.codex-plugin`, `-BaselineOnly` no longer provisions the plugin arm, and package validation rejects absolute Markdown links that use Windows backslashes.
+- Historical benchmark charts carry an on-image and PNG-metadata pre-alpha.3 qualification; public docs describe the `n=1` lexical rubric and prompt/isolation limitations.
 - GitHub Actions dependencies are pinned to full commit SHAs.
 - CI whitespace checks compare committed PR/push ranges instead of an always-clean checkout.
 - CI now exposes one aggregate `Release gate` over the six-job matrix and packed-artifact job.
-- Release instructions now require a clean, CI-green `origin/main` before creating a tag, and issue reports prompt for the current package version.
+- Release instructions now require review completion, runtime discovery evidence, a clean CI-green `origin/main`, signed-tag verification, and explicit prerelease/non-latest GitHub release flags.
 - The npm tarball now includes the repo marketplace, eval fixtures, benchmark/validation scripts, and private vulnerability reporting policy.
 
 ### Notes
 
-- The committed `20260713T234332Z` charts remain the latest measured result, but they were produced by the pre-alpha.3 harness and are retained as historical workflow evidence rather than clean plugin-only causal proof.
+- The committed `20260713T234332Z` charts remain the latest measured result, but they were produced by the pre-alpha.3 harness and are retained as historical workflow-format evidence rather than clean plugin-only causal proof.
 - No new model benchmark is claimed by this release until a complete alpha.3 isolated run succeeds.
 
 ## 0.4.0-alpha.2 - 2026-07-14

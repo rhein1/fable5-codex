@@ -92,6 +92,40 @@ test('Bash wrapper compares multi-digit version components semantically', () => 
   }
 });
 
+test('Bash wrapper ignores launcher versions before the Codex CLI token', () => {
+  const testRoot = join(repoRoot, 'tmp');
+  mkdirSync(testRoot, { recursive: true });
+  const target = mkdtempSync(join(testRoot, 'fable5-wrapper-noisy-version-'));
+  try {
+    const fakeCodex = join(target, 'codex');
+    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "Node.js v20.0.0"\necho "codex-cli 0.143.9"\n');
+    chmodSync(fakeCodex, 0o755);
+    const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
+    const result = runBash(['audit', '.', `--codex-executable=${bashFakeCodex}`]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /reports 0\.143\.9/);
+  } finally {
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
+test('Bash wrapper rejects extended Codex version tokens', () => {
+  const testRoot = join(repoRoot, 'tmp');
+  mkdirSync(testRoot, { recursive: true });
+  const target = mkdtempSync(join(testRoot, 'fable5-wrapper-extended-version-'));
+  try {
+    const fakeCodex = join(target, 'codex');
+    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "codex-cli 0.144.3.1"\n');
+    chmodSync(fakeCodex, 0o755);
+    const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
+    const result = runBash(['audit', '.', `--codex-executable=${bashFakeCodex}`]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Could not parse Codex CLI version/);
+  } finally {
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
 test('Bash wrapper is directly executable on non-Windows checkouts', { skip: process.platform === 'win32' }, () => {
   const result = spawnSync(join(repoRoot, bashWrapper), ['audit', '.', '--dry-run'], {
     cwd: repoRoot,
@@ -158,6 +192,52 @@ test('PowerShell wrapper rejects a GPT-5.6 launch on an outdated Codex CLI', (co
     const result = runPowerShell(powerShell, ['-CodexExecutable', fakeCodex]);
     assert.notEqual(result.status, 0);
     assert.match(`${result.stdout}\n${result.stderr}`, /requires Codex CLI 0\.144\.0 or newer/);
+  } finally {
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
+test('PowerShell wrapper ignores launcher versions before the Codex CLI token', (context) => {
+  const powerShell = findPowerShell();
+  if (!powerShell) {
+    context.skip('PowerShell is unavailable');
+    return;
+  }
+  const target = mkdtempSync(join(repoRoot, 'tmp', 'fable5-wrapper-pwsh-noisy-version-'));
+  try {
+    const fakeCodex = join(target, 'codex.ps1');
+    writeFileSync(fakeCodex, [
+      'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)',
+      'if ($Rest[0] -eq "--version") { Write-Output "Node.js v20.0.0"; Write-Output "codex-cli 0.143.9"; exit 0 }',
+      'exit 0',
+      '',
+    ].join('\n'));
+    const result = runPowerShell(powerShell, ['-CodexExecutable', fakeCodex]);
+    assert.notEqual(result.status, 0);
+    assert.match(`${result.stdout}\n${result.stderr}`, /reports 0\.143\.9/);
+  } finally {
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
+test('PowerShell wrapper rejects extended Codex version tokens', (context) => {
+  const powerShell = findPowerShell();
+  if (!powerShell) {
+    context.skip('PowerShell is unavailable');
+    return;
+  }
+  const target = mkdtempSync(join(repoRoot, 'tmp', 'fable5-wrapper-pwsh-extended-version-'));
+  try {
+    const fakeCodex = join(target, 'codex.ps1');
+    writeFileSync(fakeCodex, [
+      'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)',
+      'if ($Rest[0] -eq "--version") { Write-Output "codex-cli 0.144.3.1"; exit 0 }',
+      'exit 0',
+      '',
+    ].join('\n'));
+    const result = runPowerShell(powerShell, ['-CodexExecutable', fakeCodex]);
+    assert.notEqual(result.status, 0);
+    assert.match(`${result.stdout}\n${result.stderr}`, /Could not determine Codex CLI version/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }

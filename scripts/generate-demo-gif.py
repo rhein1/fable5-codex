@@ -84,18 +84,18 @@ def flow_cards(draw, cards):
 
 frames = []
 
-sol_ultra, draw = base("GPT-5.6 Sol Ultra", "Fable-5 coordinates evidence-first work across real Codex subagents.")
+sol_ultra, draw = base("GPT-5.6 Sol Ultra", "Fable-5 requests runtime-supported subagents for large, parallel work.")
 flow_cards(draw, [
     ("Coordinator", ["gpt-5.6-sol", "ultra effort", "scope first"], BLUE),
-    ("Parallel 4", ["disjoint lenses", "real agent IDs", "read-only default"], ORANGE),
+    ("Parallel lenses", ["task-driven fan-out", "real agent IDs", "read-only default"], ORANGE),
     ("ECF", ["authority", "evidence rules", "receipts"], GREEN),
     ("Verify", ["spot-check claims", "preserve unknowns", "truthful trace"], "#FACC15"),
 ])
 frames.append(sol_ultra)
 
-img, draw = base("Install in one command", "The GitHub installer is live; the shorter npm name follows publication.")
+img, draw = base("Install the tagged alpha", "Windows prints a separate activation command; npm follows publication.")
 code_panel(draw, [
-    "> npx github:rhein1/fable5-codex",
+    "> npx github:rhein1/fable5-codex#v0.4.0-alpha.3",
     "> codex plugin add fable5-codex@personal",
     "> start a new Codex thread",
 ])
@@ -147,7 +147,7 @@ draw_lines(draw, [
 ], 130, 260, fill=WHITE, spacing=20, fnt=BODY)
 frames.append(img)
 
-img, draw = base("Measured Sol Ultra workflow lift", "Matched tiny fixtures; subagents disabled to isolate workflow discipline.")
+img, draw = base("Historical workflow-format snapshot", "Pre-alpha.3, n=1, lexical rubric; not plugin-only causal evidence.")
 rounded(draw, (110, 250, 560, 510), PANEL, outline=MUTED, radius=24)
 rounded(draw, (720, 250, 1170, 510), PANEL, outline=ORANGE, radius=24)
 draw.text((170, 300), "Sol Ultra baseline", fill=MUTED, font=SUB)
@@ -158,9 +158,9 @@ draw.text((516, 566), "+18.3 pts", fill=GREEN, font=font(44, True))
 draw.text((443, 630), "Average time: 144.5s -> 344.0s", fill=MUTED, font=SMALL)
 frames.append(img)
 
-img, draw = base("Fable-5 for Codex", "Evidence-first multi-pass workflows for serious codebase work.")
+img, draw = base("Fable-5 for Codex", "Evidence-first governed workflows for serious codebase work.")
 code_panel(draw, [
-    "> npx github:rhein1/fable5-codex",
+    "> npx github:rhein1/fable5-codex#v0.4.0-alpha.3",
     "> select GPT-5.6 Sol + Ultra",
     "> Use $fable-audit with an ECF run contract.",
 ], h=260)

@@ -85,14 +85,14 @@ version_output="$("$codex_executable" --version 2>&1)" || {
   echo "Could not determine Codex CLI version from '$codex_executable --version': $version_output" >&2
   exit 1
 }
-if [[ ! "$version_output" =~ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+if [[ ! "$version_output" =~ (^|[[:space:]])codex-cli[[:space:]]+v?([0-9]+)\.([0-9]+)\.([0-9]+)([[:space:]]|$) ]]; then
   echo "Could not parse Codex CLI version from: $version_output" >&2
   exit 1
 fi
-installed_major=$((10#${BASH_REMATCH[1]}))
-installed_minor=$((10#${BASH_REMATCH[2]}))
-installed_patch=$((10#${BASH_REMATCH[3]}))
-installed_version_text="${BASH_REMATCH[0]}"
+installed_major=$((10#${BASH_REMATCH[2]}))
+installed_minor=$((10#${BASH_REMATCH[3]}))
+installed_patch=$((10#${BASH_REMATCH[4]}))
+installed_version_text="${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.${BASH_REMATCH[4]}"
 
 if [[ "$model" == gpt-5.6-* ]]; then
   minimum_major=0

@@ -22,8 +22,16 @@ Fable-5 for Codex is an OpenAI Codex plugin for evidence-first AI code review, c
 Install directly from GitHub:
 
 ```powershell
-npx github:rhein1/fable5-codex
+npx github:rhein1/fable5-codex#v0.4.0-alpha.3
 ```
+
+On Windows, activate the copied plugin after the installer completes:
+
+```powershell
+codex plugin add fable5-codex@personal
+```
+
+The installer prints that command because it does not launch the Codex shim through a Windows command shell.
 
 The npm package metadata is publish-ready. After npm authentication is available and the package is published, the shorter install path will be:
 
@@ -68,7 +76,7 @@ For the highest-capability profile, select **GPT-5.6 Sol** and **Ultra** in Code
 
 ## GPT-5.6 Sol Ultra
 
-Fable-5 v0.4 is tuned for `gpt-5.6-sol` with `ultra` reasoning on large or high-risk work. OpenAI describes Ultra as its highest-capability setting: it coordinates multiple agents across parallel workstreams, using four agents by default. The plugin pairs that runtime with explicit Fable lenses, ECF authority boundaries, local verification, and a truthful Workflow Trace.
+Fable-5 v0.4 is tuned for `gpt-5.6-sol` with `ultra` reasoning on large or high-risk work. Codex Ultra can proactively delegate suitable work to subagents; the current Codex runtime defaults `agents.max_threads` to `6`. Fable-5 supplies explicit lenses, ECF authority boundaries, local verification, and a truthful Workflow Trace, while the runtime decides how many useful parallel workers to schedule within that limit.
 
 Use the ready-to-copy config at `plugins/fable5-codex/templates/sol-ultra.config.toml`, or run the wrapper directly:
 
@@ -106,18 +114,18 @@ Public OSS boundary: this package includes Micro ECF-style contracts and reporti
 ## Benchmark Snapshot
 
 <p align="center">
-  <img src="assets/benchmarks/fable5-benchmark-summary-20260713T234332Z.png" alt="Fable-5 Sol Ultra benchmark composite score by fixture, run 20260713T234332Z" width="920">
+  <img src="assets/benchmarks/fable5-benchmark-summary-20260713T234332Z-qualified.png" alt="Qualified historical Fable-5 Sol Ultra workflow-format score by fixture, run 20260713T234332Z" width="920">
 </p>
 
 <p align="center">
-  <img src="assets/benchmarks/fable5-benchmark-metrics-20260713T234332Z.png" alt="Fable-5 Sol Ultra benchmark metric subscores, run 20260713T234332Z" width="920">
+  <img src="assets/benchmarks/fable5-benchmark-metrics-20260713T234332Z-qualified.png" alt="Qualified historical Fable-5 Sol Ultra lexical rubric signals, run 20260713T234332Z" width="920">
 </p>
 
 <p align="center">
-  <img src="assets/benchmarks/fable5-benchmark-latency-20260713T234332Z.png" alt="Fable-5 Sol Ultra benchmark wall time by fixture, run 20260713T234332Z" width="920">
+  <img src="assets/benchmarks/fable5-benchmark-latency-20260713T234332Z-qualified.png" alt="Qualified historical Fable-5 Sol Ultra wall time by fixture, run 20260713T234332Z" width="920">
 </p>
 
-Latest published measured run: `20260713T234332Z`, `gpt-5.6-sol`, matched `ultra` reasoning effort, 600s per trial. Across three intentionally tiny fixtures, the Fable-5 path raised average composite from `81.7` to `100.0` (`+18.3` points), expected-concept recall from `93.3` to `100.0`, evidence markers from `78.3` to `100.0`, and explicit unknowns from `0.0` to `100.0`. Average wall time increased from `144.5s` to `344.0s` (`2.38x`). All six final trials completed successfully.
+Latest published measured run: `20260713T234332Z`, `gpt-5.6-sol`, matched `ultra` reasoning effort, 600s per trial. Across three intentionally tiny fixtures, the Fable-5 path raised the workflow-format/lexical rubric composite from `81.7` to `100.0` (`+18.3` points), expected-concept recall from `93.3` to `100.0`, evidence markers from `78.3` to `100.0`, and explicit unknowns from `0.0` to `100.0`. Average wall time increased from `144.5s` to `344.0s` (`2.38x`). All six final trials completed successfully.
 
 Subagents were explicitly disabled in this run to isolate workflow discipline on small fixtures. These results do not measure broad model quality or prove multi-agent gains. This run predates the alpha.3 isolation hardening: its baseline ignored user config, while its plugin arm used the active installed-plugin environment. The outputs and timings remain valid historical measurements, but they are not clean plugin-only causal attribution. One plugin trial initially hit provider capacity and was retried in place with the same model, effort, fixture, and mode; the run record preserves that qualification note. A complete alpha.3 isolated run is required before replacing these charts.
 
@@ -128,13 +136,13 @@ See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw out
 - `assets/brand/fable5-hero.png`: README and social-preview banner
 - `assets/brand/fable5-sol-ultra.png`: GPT-5.6 Sol Ultra profile banner
 - `assets/brand/fable5-mark.png`: compact repo mark for plugin cards or docs
-- `assets/benchmarks/fable5-benchmark-*-20260713T234332Z.png`: cache-stable charts for the latest measured run
+- `assets/benchmarks/fable5-benchmark-*-20260713T234332Z-qualified.png`: visibly qualified, cache-stable charts for the latest measured run
 - `plugins/fable5-codex/assets/fable5-demo.gif`: short install/run/trace demo for README and plugin screenshots
 
 ## Install From GitHub
 
 ```powershell
-codex plugin marketplace add rhein1/fable5-codex --ref main
+codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.3
 codex plugin add fable5-codex@fable5-local
 ```
 
@@ -149,7 +157,7 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 This repo ships a copy-based installer for users who prefer a single command. The live public install path is GitHub:
 
 ```powershell
-npx github:rhein1/fable5-codex
+npx github:rhein1/fable5-codex#v0.4.0-alpha.3
 ```
 
 The npm package metadata is ready, but npm publishing requires an authenticated npm account. After publish, this shorter command will work:
@@ -169,7 +177,7 @@ On Windows, the installer deliberately does not launch `codex` through a command
 For a repo-local marketplace in the current directory:
 
 ```powershell
-npx github:rhein1/fable5-codex --project
+npx github:rhein1/fable5-codex#v0.4.0-alpha.3 --project
 ```
 
 After npm publish:
@@ -241,4 +249,4 @@ If you maintain a personal install on the same machine, treat `plugins/fable5-co
 
 ## Status
 
-This is a v0.4 alpha repo-scoped package. Static validation and Codex CLI skill smokes are captured in `VALIDATION.md`; Codex app UI smoke remains a separate manual check before calling it production-ready.
+This is a v0.4 alpha repo-scoped package. Static validation, Codex CLI skill smokes, and app-task skill discovery are captured in `VALIDATION.md`. A fresh app task after local plugin deduplication remains the final manual discovery check before calling the install production-ready.

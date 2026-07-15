@@ -218,7 +218,7 @@ function Get-StringDigest([string]$value) {
 
 function Get-DirectoryDigest([string]$path) {
   $entries = @(
-    Get-ChildItem -LiteralPath $path -File -Recurse |
+    Get-ChildItem -LiteralPath $path -Force -File -Recurse |
       Sort-Object FullName |
       ForEach-Object {
         $relative = Get-RelativePath $path $_.FullName
@@ -228,6 +228,13 @@ function Get-DirectoryDigest([string]$path) {
       }
   )
   return Get-StringDigest ($entries -join "`n")
+}
+
+function Get-SelectedCodexHomes {
+  $homes = @()
+  if (-not $PluginOnly) { $homes += $baselineHome }
+  if (-not $BaselineOnly) { $homes += $pluginHome }
+  return $homes
 }
 
 function Assert-NoReparseAncestors([string]$path, [string]$label) {
@@ -335,21 +342,23 @@ function Initialize-BenchmarkRuntime {
 
   $marketplaceMetadataDir = Join-Path $marketplaceRoot ".agents/plugins"
   $marketplacePluginsDir = Join-Path $marketplaceRoot "plugins"
-  New-Item -ItemType Directory -Force -Path @(
+  $runtimeDirectories = @(
     $runDir,
     $assetsDir,
     $workRoot,
-    $controlDir,
-    $baselineHome,
-    $pluginHome,
-    $marketplaceMetadataDir,
-    $marketplacePluginsDir
-  ) | Out-Null
+    $controlDir
+  ) + @(Get-SelectedCodexHomes)
+  if (-not $BaselineOnly) {
+    $runtimeDirectories += @($marketplaceMetadataDir, $marketplacePluginsDir)
+  }
+  New-Item -ItemType Directory -Force -Path $runtimeDirectories | Out-Null
 
   Copy-Item -LiteralPath (Join-Path $repo "evals") -Destination (Join-Path $workRoot "evals") -Recurse
   Copy-Item -LiteralPath (Join-Path $repo "examples") -Destination (Join-Path $workRoot "examples") -Recurse
-  Copy-Item -LiteralPath (Join-Path $repo ".agents/plugins/marketplace.json") -Destination (Join-Path $marketplaceMetadataDir "marketplace.json")
-  Copy-Item -LiteralPath $pluginSource -Destination (Join-Path $marketplacePluginsDir "fable5-codex") -Recurse
+  if (-not $BaselineOnly) {
+    Copy-Item -LiteralPath (Join-Path $repo ".agents/plugins/marketplace.json") -Destination (Join-Path $marketplaceMetadataDir "marketplace.json")
+    Copy-Item -LiteralPath $pluginSource -Destination (Join-Path $marketplacePluginsDir "fable5-codex") -Recurse -Force
+  }
 }
 
 function Install-IsolatedPlugin([string]$command) {
@@ -390,7 +399,7 @@ function Copy-IsolatedAuth {
     throw "Codex auth.json was not found. Run 'codex login' before starting an isolated benchmark."
   }
 
-  foreach ($isolatedHome in @($baselineHome, $pluginHome)) {
+  foreach ($isolatedHome in @(Get-SelectedCodexHomes)) {
     [void](Assert-RuntimePath $runtimeDir)
     Assert-NoReparseAncestors $isolatedHome "Isolated Codex home"
     $target = Join-Path $isolatedHome "auth.json"
@@ -403,7 +412,7 @@ function Copy-IsolatedAuth {
 }
 
 function Remove-IsolatedAuth {
-  foreach ($isolatedHome in @($baselineHome, $pluginHome)) {
+  foreach ($isolatedHome in @(Get-SelectedCodexHomes)) {
     $target = Join-Path $isolatedHome "auth.json"
     if (Test-Path -LiteralPath $target -PathType Leaf) {
       Remove-Item -LiteralPath $target -Force
@@ -1132,10 +1141,15 @@ if (-not (Test-Path -LiteralPath $benchmarkWorker -PathType Leaf)) {
 
 $codexCommand = (Get-Command $CodexExecutable -ErrorAction Stop).Source
 $codexVersionOutput = (& $codexCommand --version 2>&1 | Out-String).Trim()
-if ($LASTEXITCODE -ne 0 -or $codexVersionOutput -notmatch '(\d+\.\d+\.\d+)') {
+$codexVersionExitCode = $LASTEXITCODE
+$codexVersionMatch = [regex]::Match(
+  $codexVersionOutput,
+  '(?im)^\s*codex-cli\s+v?(\d+\.\d+\.\d+)(?=\s|$)'
+)
+if ($codexVersionExitCode -ne 0 -or -not $codexVersionMatch.Success) {
   throw "Unable to determine Codex CLI version from '$CodexExecutable --version'"
 }
-$codexCliVersion = $Matches[1]
+$codexCliVersion = $codexVersionMatch.Groups[1].Value
 if ($Model -match '^gpt-5\.6-' -and [version]$codexCliVersion -lt [version]"0.144.0") {
   throw "Model $Model requires Codex CLI 0.144.0 or newer; found $codexCliVersion at $codexCommand"
 }
@@ -1249,7 +1263,9 @@ try {
   }
 
   Initialize-BenchmarkRuntime
-  Install-IsolatedPlugin $codexCommand
+  if (-not $BaselineOnly) {
+    Install-IsolatedPlugin $codexCommand
+  }
   Copy-IsolatedAuth
   Write-RunManifest "running" $false
 

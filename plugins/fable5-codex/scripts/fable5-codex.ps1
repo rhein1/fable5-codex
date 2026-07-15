@@ -65,10 +65,15 @@ if (-not (Get-Command $CodexExecutable -ErrorAction SilentlyContinue)) {
 }
 
 $versionOutput = (& $CodexExecutable --version 2>&1 | Out-String).Trim()
-if ($LASTEXITCODE -ne 0 -or $versionOutput -notmatch '(\d+\.\d+\.\d+)') {
+$versionExitCode = $LASTEXITCODE
+$versionMatch = [regex]::Match(
+  $versionOutput,
+  '(?im)^\s*codex-cli\s+v?(\d+\.\d+\.\d+)(?=\s|$)'
+)
+if ($versionExitCode -ne 0 -or -not $versionMatch.Success) {
   throw "Could not determine Codex CLI version from '$CodexExecutable --version': $versionOutput"
 }
-$installedCliVersion = [version]$Matches[1]
+$installedCliVersion = [version]$versionMatch.Groups[1].Value
 if ($Model -match '^gpt-5\.6-' -and $installedCliVersion -lt $minimumGpt56CliVersion) {
   throw "GPT-5.6 requires Codex CLI $minimumGpt56CliVersion or newer; $CodexExecutable reports $installedCliVersion."
 }

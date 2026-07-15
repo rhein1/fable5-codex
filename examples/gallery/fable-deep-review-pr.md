@@ -26,7 +26,7 @@ A user follows the first install path and receives an npm resolution error or in
 
 Safest fix:
 
-Publish the npm package, or mark npm install as pending and keep `npx github:rhein1/fable5-codex` as the primary command until publish succeeds.
+Publish the npm package, or mark npm install as pending and keep the release-pinned `npx github:rhein1/fable5-codex#v0.4.0-alpha.3` command as the primary path until publish succeeds.
 
 ## Workflow Trace
 

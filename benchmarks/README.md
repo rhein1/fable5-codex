@@ -56,15 +56,15 @@ The alpha.3 runner copies `evals/` and `examples/` into the operating system's t
 
 The final run completed all six trials. The first `understand-toy-repo` plugin attempt returned a provider-capacity error. It was retried in place with the same model, effort, timeout, fixture, and plugin mode using the pre-alpha.3 runner's `-ResumeRunId`, without rerunning successful rows. That historical run cannot be resumed by the alpha.3 harness because it predates attested `run.json` manifests. See `benchmarks/results/20260713T234332Z/RUN.md`.
 
-Qualification: `20260713T234332Z` was produced by the pre-alpha.3 harness. Its baseline used `--ignore-user-config`, but its plugin arm inherited the active user/plugin environment, and its workspace lived under `tmp/benchmarks/`. The six final rows all exited zero and the reported scores/timings are preserved, but this run should be read as historical workflow evidence rather than clean plugin-only causal proof. No new alpha.3 benchmark is claimed yet.
+Qualification: `20260713T234332Z` was produced by the pre-alpha.3 harness. Its baseline used `--ignore-user-config`, but its plugin arm inherited the active user/plugin environment, and its workspace lived under `tmp/benchmarks/`. The prompts also expose task focus areas, while the plugin arm explicitly requests several report features counted by the lexical rubric. The six final rows all exited zero and the reported scores/timings are preserved, but this run should be read as historical workflow-format evidence rather than clean plugin-only causal proof. No new alpha.3 benchmark is claimed yet.
 
 ## Charts
 
-![Fable-5 Sol Ultra benchmark summary, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-summary-20260713T234332Z.png)
+![Qualified historical Fable-5 Sol Ultra workflow-format summary, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-summary-20260713T234332Z-qualified.png)
 
-![Fable-5 Sol Ultra benchmark metrics, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-metrics-20260713T234332Z.png)
+![Qualified historical Fable-5 Sol Ultra lexical rubric signals, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-metrics-20260713T234332Z-qualified.png)
 
-![Fable-5 Sol Ultra benchmark latency, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-latency-20260713T234332Z.png)
+![Qualified historical Fable-5 Sol Ultra latency observation, run 20260713T234332Z](../assets/benchmarks/fable5-benchmark-latency-20260713T234332Z-qualified.png)
 
 ## Scoring Rubric
 
@@ -75,7 +75,7 @@ Composite score:
 - 10% explicit unknowns / coverage-gap language
 - 10% structured report language
 
-Expected concept recall is regex-scored against fixed fixture-specific concepts in `scripts/run-benchmarks.ps1`. This is intentionally transparent and lightweight; it should not be treated as a substitute for a larger human-reviewed eval suite.
+Expected concept recall is regex-scored against fixed fixture-specific concepts in `scripts/run-benchmarks.ps1`. The scorer measures lexical and structural compliance, not semantic correctness, and can be improved by echoing expected terms or requested headings. The prompts are not blind: they name focus areas, and the plugin prompt requests some rubric-visible sections. Treat this as transparent harness evidence only, not a substitute for repeated trials, blinded prompts, adversarial fixtures, or human/independent semantic adjudication.
 
 ## Result Summary
 
@@ -85,9 +85,9 @@ Expected concept recall is regex-scored against fixed fixture-specific concepts 
 | `audit-payment-attempts` | 86.0 | 100.0 | Fable-5 retained full issue recall while closing evidence and coverage gaps. |
 | `understand-toy-repo` | 74.0 | 100.0 | Fable-5 recovered the missing entrypoint and completed evidence/unknowns reporting. |
 
-Average composite: `81.7 -> 100.0` (`+18.3 pts`). Expected concept recall improved `93.3 -> 100.0`, evidence markers `78.3 -> 100.0`, explicit unknowns `0.0 -> 100.0`, and structure remained `100.0 -> 100.0`.
+Average workflow-format/lexical composite: `81.7 -> 100.0` (`+18.3 pts`). Expected concept recall improved `93.3 -> 100.0`, evidence markers `78.3 -> 100.0`, explicit unknowns `0.0 -> 100.0`, and structure remained `100.0 -> 100.0`.
 
-That quality gain had a measured latency cost: average wall time increased from `144.5s` to `344.0s` (`2.38x`). Per case, baseline/Fable-5 times were `69.1s/221.9s`, `240.3s/526.4s`, and `124.1s/283.7s`.
+That rubric lift had a measured latency cost: average wall time increased from `144.5s` to `344.0s` (`2.38x`). Per case, baseline/Fable-5 times were `69.1s/221.9s`, `240.3s/526.4s`, and `124.1s/283.7s`.
 
 ## Raw Outputs
 

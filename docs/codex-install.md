@@ -27,7 +27,7 @@ Codex resolves that path from the marketplace root for the repo, so cloned copie
 Register and install from the local repo:
 
 ```powershell
-cd C:\projects\fable5-codex
+cd <path-to-fable5-codex>
 codex plugin marketplace add .
 codex plugin add fable5-codex@fable5-local
 codex plugin list
@@ -36,7 +36,7 @@ codex plugin list
 For a published GitHub repo, use the Git-backed marketplace path:
 
 ```powershell
-codex plugin marketplace add rhein1/fable5-codex --ref main
+codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.3
 codex plugin add fable5-codex@fable5-local
 ```
 
@@ -45,7 +45,7 @@ codex plugin add fable5-codex@fable5-local
 For a live copy-based personal install from GitHub:
 
 ```powershell
-npx github:rhein1/fable5-codex
+npx github:rhein1/fable5-codex#v0.4.0-alpha.3
 ```
 
 The npm package metadata is ready, but npm publishing requires an authenticated npm account. After publish, this shorter command will work:
@@ -66,18 +66,18 @@ and writes or updates:
 ~/.agents/plugins/marketplace.json
 ```
 
-On macOS and Linux it then runs:
+On Windows, automatic Codex invocation is skipped so installer-controlled paths are never passed through a command shell. Activate the copied plugin with the exact command printed by the installer:
 
 ```powershell
 codex plugin add fable5-codex@personal
 ```
 
-On Windows, automatic Codex invocation is skipped so installer-controlled paths are never passed through a command shell. Run the printed `codex plugin add` command yourself. For `--project`, change to the target root and run `codex plugin marketplace add .` followed by the printed plugin-add command.
+On macOS and Linux the installer runs that command automatically. For `--project` on Windows, change to the target root and run `codex plugin marketplace add .` followed by the printed plugin-add command.
 
 For a project-local marketplace in the current directory:
 
 ```powershell
-npx github:rhein1/fable5-codex --project
+npx github:rhein1/fable5-codex#v0.4.0-alpha.3 --project
 ```
 
 After npm publish:
@@ -133,10 +133,10 @@ Use `--codex-executable=<path>` or `FABLE5_CODEX_EXECUTABLE=<path>` to select a 
 
 ## Personal Install
 
-The checked-out repo copy is canonical. In this checkout that path is:
+The checked-out repo copy is canonical. Its plugin path is:
 
 ```text
-C:\projects\fable5-codex\plugins\fable5-codex
+<repo>\plugins\fable5-codex
 ```
 
 For a personal marketplace, use:
@@ -145,10 +145,10 @@ For a personal marketplace, use:
 ~/.agents/plugins/marketplace.json
 ```
 
-and point the entry at wherever the local plugin folder lives, using a relative `./` path from the marketplace root. On this machine, the personal MVP uses:
+and point the entry at wherever the local plugin folder lives, using a relative `./` path from the marketplace root. On Windows, a typical personal copy is:
 
 ```text
-C:\Users\s8972\plugins\fable5-codex
+%USERPROFILE%\plugins\fable5-codex
 ```
 
 through:
