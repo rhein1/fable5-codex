@@ -42,6 +42,77 @@ test('accepts a bounded marketplace name in dry-run mode', () => {
   assert.match(result.stdout, /dry run: no files changed/);
 });
 
+test('rejects unknown arguments before selecting a personal or project target', () => {
+  const result = run(['--dry-run', '--no-codex-add', '--projectx']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /unknown argument: --projectx/);
+  assert.doesNotMatch(result.stdout, /target root:/);
+});
+
+test('help still rejects unknown or duplicate options', () => {
+  const unknown = run(['--help', '--unknown']);
+  assert.equal(unknown.status, 1);
+  assert.match(unknown.stderr, /unknown argument: --unknown/);
+
+  const duplicate = run(['--help', '-h']);
+  assert.equal(duplicate.status, 1);
+  assert.match(duplicate.stderr, /--help may only be provided once/);
+
+  const help = run(['--help']);
+  assert.equal(help.status, 0, help.stderr);
+  assert.match(help.stdout, /^Usage: fable5-codex/m);
+});
+
+test('rejects split-form and duplicate marketplace-name arguments', () => {
+  const split = run(['--dry-run', '--marketplace-name', 'personal']);
+  assert.equal(split.status, 1);
+  assert.match(split.stderr, /unknown argument: --marketplace-name/);
+
+  const duplicate = run([
+    '--dry-run',
+    '--marketplace-name=personal',
+    '--marketplace-name=second',
+  ]);
+  assert.equal(duplicate.status, 1);
+  assert.match(duplicate.stderr, /may only be provided once/);
+});
+
+test('rejects duplicate boolean options', () => {
+  const result = run(['--dry-run', '--project', '--project']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /--project may only be provided once/);
+});
+
+test('rejects an empty marketplace-name override', () => {
+  const result = run(['--dry-run', '--marketplace-name=']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /marketplace name must be 1-64 characters/);
+});
+
+test('explicit marketplace-name overrides existing marketplace metadata', () => {
+  const target = mkdtempSync(join(tmpdir(), 'fable5-marketplace-rename-'));
+  try {
+    const metadataDir = join(target, '.agents', 'plugins');
+    mkdirSync(metadataDir, { recursive: true });
+    writeFileSync(
+      join(metadataDir, 'marketplace.json'),
+      `${JSON.stringify({ name: 'old-name', interface: {}, plugins: [] }, null, 2)}\n`,
+    );
+    const result = run([
+      '--project',
+      '--force',
+      '--no-codex-add',
+      '--marketplace-name=new-name',
+    ], target);
+    assert.equal(result.status, 0, result.stderr);
+    const marketplace = JSON.parse(readFileSync(join(metadataDir, 'marketplace.json'), 'utf8'));
+    assert.equal(marketplace.name, 'new-name');
+    assert.match(result.stdout, /installed plugin files and marketplace entry for fable5-codex@new-name/);
+  } finally {
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
 test('requires --force before replacing an existing copied plugin', () => {
   const target = mkdtempSync(join(tmpdir(), 'fable5-installer-'));
   try {

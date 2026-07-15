@@ -2,7 +2,7 @@
 
 Fable-5 v0.4 uses `gpt-5.6-sol` with `ultra` reasoning as its highest-capability profile for large or high-risk work.
 
-GPT-5.6 requires Codex CLI `0.144.0` or newer. Upgrade the CLI before using the packaged wrappers if `codex --version` reports an older build.
+GPT-5.6 requires Codex CLI `0.144.0` or newer. The packaged wrappers inspect the selected executable and stop with an upgrade message before launching an older CLI.
 
 ## Exact Configuration
 
@@ -42,11 +42,15 @@ PowerShell:
 .\plugins\fable5-codex\scripts\fable5-codex.ps1 -Mode audit -Scope . -Subagents
 ```
 
+Pass `-CodexExecutable <path>` to use an isolated or non-default CLI.
+
 Bash:
 
 ```bash
-./plugins/fable5-codex/scripts/fable5-codex.sh audit . "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
+bash ./plugins/fable5-codex/scripts/fable5-codex.sh audit . "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
 ```
+
+Pass `--codex-executable=<path>` or set `FABLE5_CODEX_EXECUTABLE` to use a non-default CLI.
 
 Inspect the generated configuration without starting Codex:
 

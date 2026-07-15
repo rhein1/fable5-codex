@@ -11,35 +11,38 @@ permissions:
   contents: read
 
 jobs:
-  package:
-    name: Package validation
-    runs-on: windows-latest
+  validation:
+    name: Validation (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [18, 24]
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: "24"
+          node-version: ${{ matrix.node }}
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
+      - name: Require PowerShell
+        shell: pwsh
+        run: $PSVersionTable.PSVersion.ToString()
+
+      - name: Test
+        run: npm test
 
       - name: Validate package
-        shell: pwsh
-        run: .\scripts\validate-package.ps1
+        run: npm run validate
 
       - name: Check JavaScript syntax
         run: node --check bin/install.mjs
-
-      - name: Check JSON files
-        shell: pwsh
-        run: |
-          node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); JSON.parse(require('fs').readFileSync('plugins/fable5-codex/.codex-plugin/plugin.json','utf8')); JSON.parse(require('fs').readFileSync('plugins/fable5-codex/templates/fable-ecf-run-contract.json','utf8')); JSON.parse(require('fs').readFileSync('benchmarks/results/latest-summary.json','utf8')); console.log('json ok')"
 
       - name: Check shell wrapper syntax
         shell: bash
@@ -49,19 +52,48 @@ jobs:
         run: npm pack --dry-run
 
       - name: Whitespace check
-        run: git diff --check
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            git diff --check "$PR_BASE_SHA"...HEAD
+          elif [[ "$EVENT_NAME" == "push" && ! "$PUSH_BEFORE_SHA" =~ ^0+$ ]]; then
+            git diff --check "$PUSH_BEFORE_SHA" HEAD
+          else
+            git show --check --format= HEAD
+          fi
 
-  installer:
-    name: Installer safety (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+  artifact:
+    name: Packed artifact
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: "24"
-      - run: npm test
-      - run: node bin/install.mjs --dry-run --no-codex-add
+          node-version: 24
+
+      - name: Require PowerShell
+        shell: pwsh
+        run: $PSVersionTable.PSVersion.ToString()
+
+      - name: Validate installed tarball
+        run: npm run validate:artifact
+
+  release-gate:
+    name: Release gate
+    if: ${{ always() }}
+    needs: [validation, artifact]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every validation job
+        shell: bash
+        run: |
+          if [[ "${{ needs.validation.result }}" != "success" || "${{ needs.artifact.result }}" != "success" ]]; then
+            exit 1
+          fi

@@ -76,13 +76,13 @@ PowerShell with ECF contract and explicit subagent authorization:
 Bash:
 
 ```bash
-./scripts/fable5-codex.sh audit src "correctness and integration"
+bash ./scripts/fable5-codex.sh audit src "correctness and integration"
 ```
 
 Bash with ECF contract and explicit subagent authorization:
 
 ```bash
-./scripts/fable5-codex.sh audit src "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
+bash ./scripts/fable5-codex.sh audit src "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
 ```
 
-The wrappers call `codex exec` in read-only mode with GPT-5.6 Sol Ultra by default. PowerShell supports `-Model`, `-ReasoningEffort`, and `-DryRun`; Bash supports `FABLE5_MODEL`, `FABLE5_REASONING_EFFORT`, `--model=`, `--reasoning=`, and `--dry-run`. Pass the write flag only for controlled edits. Large/high-risk tasks request real subagents automatically when the runtime exposes a subagent tool; `-Subagents` / `--subagents` adds an explicit authorization phrase for smaller scopes. The report must still fall back to `single-agent multi-lens` if the active Codex runtime does not expose subagents.
+The wrappers call `codex exec` in read-only mode with GPT-5.6 Sol Ultra by default and reject GPT-5.6 when the selected CLI is older than `0.144.0`. PowerShell supports `-Model`, `-ReasoningEffort`, `-CodexExecutable`, and `-DryRun`; Bash supports `FABLE5_MODEL`, `FABLE5_REASONING_EFFORT`, `FABLE5_CODEX_EXECUTABLE`, `--model=`, `--reasoning=`, `--codex-executable=`, and `--dry-run`. Bash flags may appear before or after positional arguments. Pass the write flag only for controlled edits. Large/high-risk tasks request real subagents automatically when the runtime exposes a subagent tool; `-Subagents` / `--subagents` adds an explicit authorization phrase for smaller scopes. The report must still fall back to `single-agent multi-lens` if the active Codex runtime does not expose subagents.

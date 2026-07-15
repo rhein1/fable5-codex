@@ -8,8 +8,7 @@ Fable-5 for Codex is currently alpha software. Security fixes target the latest 
 
 Please report security issues privately instead of opening a public issue with exploit details.
 
-- GitHub: use private vulnerability reporting if available on the repository.
-- Email: contact the maintainer listed on the GitHub profile or package metadata.
+- GitHub: submit a [private security advisory](https://github.com/rhein1/fable5-codex/security/advisories/new).
 
 Include:
 

@@ -6,6 +6,7 @@ param(
   [string]$Model = "gpt-5.6-sol",
   [ValidateSet("low", "medium", "high", "xhigh", "max", "ultra")]
   [string]$ReasoningEffort = "ultra",
+  [string]$CodexExecutable = "codex",
   [switch]$Write,
   [switch]$Ecf,
   [switch]$Subagents,
@@ -13,6 +14,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$minimumGpt56CliVersion = [version]"0.144.0"
 
 $skillByMode = @{
   "audit" = '$fable-audit'
@@ -50,12 +52,26 @@ if ($DryRun) {
   [pscustomobject]@{
     model = $Model
     reasoningEffort = $ReasoningEffort
-    minimumCliVersion = "0.144.0"
+    codexExecutable = $CodexExecutable
+    minimumCliVersion = $minimumGpt56CliVersion.ToString()
     sandbox = $sandbox
     prompt = $prompt
   } | ConvertTo-Json -Depth 3
   return
 }
 
-& codex @codexArgs
+if (-not (Get-Command $CodexExecutable -ErrorAction SilentlyContinue)) {
+  throw "Codex executable not found: $CodexExecutable"
+}
+
+$versionOutput = (& $CodexExecutable --version 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $versionOutput -notmatch '(\d+\.\d+\.\d+)') {
+  throw "Could not determine Codex CLI version from '$CodexExecutable --version': $versionOutput"
+}
+$installedCliVersion = [version]$Matches[1]
+if ($Model -match '^gpt-5\.6-' -and $installedCliVersion -lt $minimumGpt56CliVersion) {
+  throw "GPT-5.6 requires Codex CLI $minimumGpt56CliVersion or newer; $CodexExecutable reports $installedCliVersion."
+}
+
+& $CodexExecutable @codexArgs
 exit $LASTEXITCODE

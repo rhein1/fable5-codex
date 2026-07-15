@@ -4,6 +4,8 @@ Thumbs.db
 .codex-log/
 *.log
 tmp/
+benchmarks/results/.latest-publish.lock
+benchmarks/results/.run-*.lock
 dist/
 .env
 .env.*
