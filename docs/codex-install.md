@@ -88,6 +88,8 @@ npx fable5-codex --project
 
 Use `--no-codex-add` to only copy files and write marketplace metadata. If a copied plugin destination already exists, review it and pass `--force` explicitly to replace it. The installer rejects marketplace names with unsafe characters or non-string JSON types and refuses destination paths that resolve outside the selected personal/project root.
 
+Supported installer options are `--project`, `--dry-run`, `--force`, `--no-codex-add`, `--marketplace-name=<name>`, and `--help`/`-h`. Unknown options, split marketplace-name values, and duplicate options are rejected before target selection, even when help is requested.
+
 Start a new Codex thread after install. Use this prompt when you want Fable-5 styled multi-subagent work:
 
 ```text
@@ -100,7 +102,7 @@ The installed skill will use real subagents only when Codex exposes a subagent t
 
 In the Codex app, select **GPT-5.6 Sol** and **Ultra** beneath the composer. If Ultra is hidden, open **Settings > Configuration** and enable it in the model picker. Ultra availability depends on the active plan and surface.
 
-GPT-5.6 requires Codex CLI `0.144.0` or newer. Check with `codex --version` before using the wrappers.
+GPT-5.6 requires Codex CLI `0.144.0` or newer. The wrappers check the selected executable before launching Codex and fail with an upgrade message when it is too old.
 
 For CLI and repo defaults, copy the values from `plugins/fable5-codex/templates/sol-ultra.config.toml` into `~/.codex/config.toml` or a trusted repo's `.codex/config.toml`:
 
@@ -121,9 +123,13 @@ The packaged CLI wrappers can generate the same prompt:
 .\plugins\fable5-codex\scripts\fable5-codex.ps1 -Mode audit -Scope . -Focus "correctness, security, data, operations, tests, and docs-vs-reality" -Subagents
 ```
 
+Use `-CodexExecutable <path>` when the current CLI is installed somewhere other than `PATH`.
+
 ```bash
-./plugins/fable5-codex/scripts/fable5-codex.sh audit . "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
+bash ./plugins/fable5-codex/scripts/fable5-codex.sh audit . "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
 ```
+
+Use `--codex-executable=<path>` or `FABLE5_CODEX_EXECUTABLE=<path>` to select a non-default CLI. Bash flags may appear before or after the positional mode, scope, and optional focus.
 
 ## Personal Install
 

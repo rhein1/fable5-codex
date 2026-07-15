@@ -53,7 +53,8 @@ For the highest-capability profile, select **GPT-5.6 Sol** and **Ultra** in Code
 - `examples/gallery/`: polished sample outputs for audits, reviews, fact checks, and understanding
 - `evals/`: fixtures for fact-check, audit, and sweep validation
 - `docs/`: method, install, architecture, and schema notes
-- `scripts/validate-package.ps1`: local package validation
+- `scripts/validate-package.mjs`: cross-platform package validation (`validate-package.ps1` remains a compatibility wrapper)
+- `scripts/render-benchmark-charts.mjs`: dependency-free cross-platform PNG benchmark renderer
 - `scripts/sync-personal-plugin.ps1`: copy the canonical repo plugin into the personal plugin location
 
 ## Skills
@@ -77,7 +78,7 @@ Use the ready-to-copy config at `plugins/fable5-codex/templates/sol-ultra.config
 
 The wrapper defaults to `gpt-5.6-sol` plus `ultra`. Override with `-Model` and `-ReasoningEffort` when a smaller task does not justify Ultra. See [Sol Ultra setup and behavior](docs/sol-ultra.md) and the [official GPT-5.6 announcement](https://openai.com/index/gpt-5-6/).
 
-CLI requirement: GPT-5.6 needs Codex CLI `0.144.0` or newer.
+CLI requirement: GPT-5.6 needs Codex CLI `0.144.0` or newer. The packaged wrappers enforce this before launch.
 
 ## Subagents
 
@@ -118,7 +119,7 @@ Public OSS boundary: this package includes Micro ECF-style contracts and reporti
 
 Latest published measured run: `20260713T234332Z`, `gpt-5.6-sol`, matched `ultra` reasoning effort, 600s per trial. Across three intentionally tiny fixtures, the Fable-5 path raised average composite from `81.7` to `100.0` (`+18.3` points), expected-concept recall from `93.3` to `100.0`, evidence markers from `78.3` to `100.0`, and explicit unknowns from `0.0` to `100.0`. Average wall time increased from `144.5s` to `344.0s` (`2.38x`). All six final trials completed successfully.
 
-Subagents were explicitly disabled in this run to isolate workflow discipline on small fixtures. These results do not measure broad model quality or prove multi-agent gains; they show the output-quality and latency difference between matched Sol Ultra runs with plugins disabled versus explicit Fable skill invocation. One plugin trial initially hit provider capacity and was retried in place with the same configuration; the run record preserves that qualification note.
+Subagents were explicitly disabled in this run to isolate workflow discipline on small fixtures. These results do not measure broad model quality or prove multi-agent gains. This run predates the alpha.3 isolation hardening: its baseline ignored user config, while its plugin arm used the active installed-plugin environment. The outputs and timings remain valid historical measurements, but they are not clean plugin-only causal attribution. One plugin trial initially hit provider capacity and was retried in place with the same model, effort, fixture, and mode; the run record preserves that qualification note. A complete alpha.3 isolated run is required before replacing these charts.
 
 See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw outputs.
 
@@ -163,7 +164,7 @@ The installer copies `plugins/fable5-codex` into the Codex personal marketplace 
 codex plugin add fable5-codex@personal
 ```
 
-On Windows, the installer deliberately does not launch `codex` through a command shell; it prints the exact `codex plugin add` command for you to run. Replacing an existing copied plugin directory requires an explicit `--force`. A project-local install run from this repository recognizes that the source is already in place and never deletes or recopies it.
+On Windows, the installer deliberately does not launch `codex` through a command shell; it prints the exact `codex plugin add` command for you to run. Replacing an existing copied plugin directory requires an explicit `--force`. Supported options are `--project`, `--dry-run`, `--force`, `--no-codex-add`, `--marketplace-name=<name>`, and `--help`/`-h`; unknown or duplicate options fail before target selection, including when help is requested. A project-local install run from this repository recognizes that the source is already in place and never deletes or recopies it.
 
 For a repo-local marketplace in the current directory:
 
@@ -228,7 +229,8 @@ For file-only package validation:
 
 ```powershell
 npm test
-.\scripts\validate-package.ps1
+npm run validate
+npm run validate:artifact
 ```
 
 If you maintain a personal install on the same machine, treat `plugins/fable5-codex/` in this repo as canonical and sync the personal copy from it:

@@ -25,6 +25,24 @@ const valueFor = (name) => {
   return match ? match.slice(prefix.length) : undefined;
 };
 
+const supportedFlags = new Set(['--project', '--dry-run', '--force', '--no-codex-add', '--help', '-h']);
+const seenFlags = new Set();
+let marketplaceNameCount = 0;
+for (const arg of args) {
+  if (supportedFlags.has(arg)) {
+    const canonicalFlag = arg === '-h' ? '--help' : arg;
+    if (seenFlags.has(canonicalFlag)) fail(`${canonicalFlag} may only be provided once`);
+    seenFlags.add(canonicalFlag);
+    continue;
+  }
+  if (arg.startsWith('--marketplace-name=')) {
+    marketplaceNameCount += 1;
+    if (marketplaceNameCount > 1) fail('--marketplace-name may only be provided once');
+    continue;
+  }
+  fail(`unknown argument: ${arg}`);
+}
+
 if (has('--help') || has('-h')) {
   console.log(`Usage: fable5-codex [--project] [--dry-run] [--force] [--no-codex-add] [--marketplace-name=<name>]
 
@@ -49,7 +67,10 @@ const dryRun = has('--dry-run');
 const force = has('--force');
 const noCodexAdd = has('--no-codex-add');
 const targetRoot = resolve(project ? process.cwd() : homedir());
-const marketplaceName = valueFor('--marketplace-name') || (project ? 'fable5-local' : 'personal');
+const marketplaceNameOption = valueFor('--marketplace-name');
+const marketplaceName = marketplaceNameOption === undefined
+  ? (project ? 'fable5-local' : 'personal')
+  : marketplaceNameOption;
 const displayName = project ? 'Fable-5 Local Plugins' : 'Personal';
 const pluginDest = join(targetRoot, 'plugins', pluginName);
 const marketplacePath = join(targetRoot, '.agents', 'plugins', 'marketplace.json');
@@ -178,7 +199,8 @@ if (!dryRun) {
   if (!marketplace || typeof marketplace !== 'object' || Array.isArray(marketplace)) {
     fail(`marketplace metadata must be a JSON object: ${marketplacePath}`);
   }
-  if (!Object.hasOwn(marketplace, 'name')) marketplace.name = marketplaceName;
+  if (marketplaceNameOption !== undefined) marketplace.name = marketplaceName;
+  else if (!Object.hasOwn(marketplace, 'name')) marketplace.name = marketplaceName;
   if (!Object.hasOwn(marketplace, 'interface')) marketplace.interface = {};
   if (!marketplace.interface || typeof marketplace.interface !== 'object' || Array.isArray(marketplace.interface)) {
     fail(`marketplace interface must be an object: ${marketplacePath}`);

@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.4.0-alpha.3 - 2026-07-15
+
+### Added
+
+- Cross-platform Node package validation on Windows, macOS, and Linux with Node 18 and Node 24 CI coverage.
+- Wrapper and benchmark regression tests, including a complete fake-CLI comparison that renders and publishes charts without model calls.
+- Cross-platform explicit test enumeration and installed-tarball validation for the npm artifact.
+- Dependency-free Node benchmark chart rendering for Windows, macOS, and Linux.
+- Dependabot configuration and repository ownership metadata.
+
+### Fixed
+
+- The installer now rejects unknown, split-value, and duplicate options, including invalid combinations with help, before selecting or mutating a destination.
+- PowerShell and Bash wrappers now preflight the Codex executable and reject GPT-5.6 on CLI versions older than `0.144.0`.
+- Bash wrapper flags can appear before or after positional arguments without being misread as focus text.
+- Benchmark runs now use separate temporary Codex homes, an external fixture workspace, a read-only sandbox, ignored policy rules, an exact plugin digest, and ephemeral copied auth material.
+- Benchmark model processes now receive a minimal environment and `shell_environment_policy.inherit=none`; unique private runtimes remove copied auth before publication and reject links across the full runtime ancestor chain.
+- Benchmark retries delete stale output first; nonzero exits, timeouts, and empty outputs score zero; failed or incomplete runs cannot replace `latest-*` summaries or charts.
+- Benchmark resume requires a matching schema-2 run attestation bound to prior summary and output digests.
+- Benchmark process cleanup is bounded, report path normalization covers Windows/POSIX links and plain paths, render-only mode is limited to the attested latest run, and chart/manifest/latest publication is staged and rollback-protected with `latest-run.txt` written last.
+- Render-only chart labels are derived from the attested summary instead of a caller-supplied model override.
+- Concurrent benchmark runs are serialized for per-run mutation and latest publication; post-commit staging cleanup cannot downgrade a published manifest.
+- GitHub Actions dependencies are pinned to full commit SHAs.
+- CI whitespace checks compare committed PR/push ranges instead of an always-clean checkout.
+- CI now exposes one aggregate `Release gate` over the six-job matrix and packed-artifact job.
+- Release instructions now require a clean, CI-green `origin/main` before creating a tag, and issue reports prompt for the current package version.
+- The npm tarball now includes the repo marketplace, eval fixtures, benchmark/validation scripts, and private vulnerability reporting policy.
+
+### Notes
+
+- The committed `20260713T234332Z` charts remain the latest measured result, but they were produced by the pre-alpha.3 harness and are retained as historical workflow evidence rather than clean plugin-only causal proof.
+- No new model benchmark is claimed by this release until a complete alpha.3 isolated run succeeds.
+
 ## 0.4.0-alpha.2 - 2026-07-14
 
 ### Fixed

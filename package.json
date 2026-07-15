@@ -1,18 +1,22 @@
 {
   "name": "fable5-codex",
-  "version": "0.4.0-alpha.2",
+  "version": "0.4.0-alpha.3",
   "description": "GPT-5.6 Sol Ultra Codex plugin for evidence-first AI code review, audits, ECF run contracts, and multi-agent workflows.",
   "type": "module",
   "bin": {
     "fable5-codex": "bin/install.mjs"
   },
   "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "validate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-package.ps1",
+    "test": "node scripts/run-tests.mjs",
+    "validate": "node scripts/validate-package.mjs",
+    "validate:artifact": "node scripts/validate-packed-artifact.mjs",
     "pack:dry-run": "npm pack --dry-run",
     "generate:demo": "python scripts/generate-demo-gif.py"
   },
   "files": [
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/workflows/validate.yml",
+    ".agents/plugins/marketplace.json",
     "assets",
     "benchmarks/README.md",
     "benchmarks/results/20260713T234332Z/*.md",
@@ -23,10 +27,14 @@
     "benchmarks/results/latest-summary.json",
     "bin",
     "docs",
+    "evals",
     "examples",
     "plugins",
+    "scripts",
+    "test",
     "README.md",
     "CHANGELOG.md",
+    "SECURITY.md",
     "LICENSE"
   ],
   "engines": {

@@ -1,6 +1,90 @@
 # Validation
 
-Date: 2026-07-13
+Date: 2026-07-15
+
+## 2026-07-15 Alpha.3 Hardening
+
+Package and plugin version:
+
+```text
+fable5-codex: 0.4.0-alpha.3
+minimum Node: 18
+minimum Codex CLI for GPT-5.6: 0.144.0
+```
+
+Validation commands:
+
+```powershell
+npm test
+npm run validate
+npm run validate:artifact
+npx --yes node@18 scripts/run-tests.mjs
+npx --yes node@18 scripts/validate-package.mjs
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate-package.ps1
+bash -n plugins/fable5-codex/scripts/fable5-codex.sh
+python C:\Users\s8972\.codex\skills\.system\plugin-creator\scripts\validate_plugin.py plugins/fable5-codex
+python C:\Users\s8972\.codex\skills\.system\skill-creator\scripts\quick_validate.py <each skill directory>
+npm pack --dry-run --json
+git diff --check
+```
+
+Result:
+
+```text
+Node 24 tests: 47 passed, 3 skipped, 0 failed
+Node 18 tests: 47 passed, 3 skipped, 0 failed
+Node 24 package validation: passed
+Node 18 package validation: passed
+Installed npm tarball validation: tests, package validator, and installer dry run passed
+PowerShell compatibility validator: passed
+Plugin validation: passed
+Skill validation: all six passed
+Isolated Codex CLI marketplace/install probe: alpha.3 enabled in a temporary CODEX_HOME and cleaned up
+Bash and PowerShell syntax: passed
+npm pack dry run: 110 alpha.3 entries; SECURITY.md, workflow metadata, tests, marketplace, evals, scripts, plugin, docs, and benchmark evidence included
+git diff --check: no whitespace errors; line-ending normalization warnings only
+```
+
+The benchmark regression suite uses a fake Codex CLI and proves thirteen runner scenarios without model calls:
+
+```text
+successful isolated plugin arm: stripped caller secrets, passed, and remained partial/unpublished
+missing explicit auth file: rejected before setup or model execution
+nonzero baseline arm: failed, scored zero, and left latest artifacts unchanged
+timed-out baseline arm: process tree terminated, scored zero, and temporary runtime removed
+active run lock: concurrent same-id invocation rejected before setup or cleanup
+linked runtime root: rejected before auth material was copied
+linked runtime root ancestor: rejected before a descendant runtime directory was created
+matching partial resume: preserved the completed plugin arm and ran only the baseline arm
+resume to complete: final manifest separated invocation scope from all accumulated cases and modes
+mismatched resume: rejected before another benchmark trial executed
+changed prior summary: digest mismatch rejected before another benchmark trial executed
+changed prior output: digest mismatch rejected before another benchmark trial executed
+complete six-arm comparison: rendered nonblank charts, published one attested latest run, derived render-only labels from attested rows, and rejected a latest-run path outside ResultsRoot
+```
+
+The scorer unit suite also proves that an exit-zero trial with empty output fails and receives a zero score. The dependency-free Node renderer produces three nonblank 1600x900 PNGs on Node 18 and Node 24. Public summary rows omit non-public diagnostic log paths, normalize Windows/POSIX/file-URI workspace paths, and attest each retained output with a SHA-256 digest.
+
+Codex CLI argument compatibility was checked without a model call:
+
+```text
+codex-cli: 0.144.3
+--ask-for-approval never exec --help: accepted
+required exec flags: sandbox, ephemeral, ignore-rules, and output-last-message present
+```
+
+Live GitHub repository settings were verified after update:
+
+```text
+private vulnerability reporting: enabled
+Actions SHA pinning required: true
+main branch protection: enabled
+required linear history: true
+force pushes: disabled
+branch deletion: disabled
+```
+
+The measured benchmark was not rerun during this hardening pass. Run `20260713T234332Z` remains published with an explicit pre-alpha.3 isolation qualification; alpha.3 does not claim new model results or replace benchmark images.
 
 ## 2026-07-13 GPT-5.6 Sol Ultra Update
 

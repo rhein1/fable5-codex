@@ -7,7 +7,7 @@
 - Subagents allowed: `false`
 - Timeout: 600 seconds per trial
 - Codex CLI: `0.144.3`, installed under the ignored repo-local `tmp/codex-cli` path
-- Comparison: matched baseline with user plugins disabled versus explicit Fable-5 skill invocation
+- Comparison: baseline with user config ignored versus explicit Fable-5 invocation in the active installed-plugin environment
 
 ```powershell
 .\scripts\run-benchmarks.ps1 -Model 'gpt-5.6-sol' -ReasoningEffort 'ultra' -TimeoutSeconds 600 -CodexExecutable '.\tmp\codex-cli\node_modules\.bin\codex.ps1'
@@ -18,6 +18,8 @@ The fixtures are intentionally small. The runner disabled subagents to isolate w
 The committed report citations point to the canonical repository fixtures. The runner normalizes only Markdown link destinations from the isolated execution workspace; report prose, scores, and timings are unchanged.
 
 ## Qualification Note
+
+This run predates the alpha.3 benchmark hardening. The baseline passed `--ignore-user-config`, while the plugin arm inherited the user's active Codex configuration and installed plugins. The workspace was also a copy under the repository's ignored `tmp/benchmarks/` directory. All final outputs and timings below came from successful exit-code-zero trials, but the environment difference means these results are historical workflow evidence, not clean causal proof that Fable-5 alone produced the measured delta. The alpha.3 harness now uses separate newly created Codex homes, an external temporary workspace, an exact plugin digest, and fail-closed publication; a fresh complete run is required for new charts.
 
 The first `understand-toy-repo` plugin attempt returned `Selected model is at capacity`. The successful baseline rows and other plugin rows were retained. Only the failed row was retried with the same configuration:
 
