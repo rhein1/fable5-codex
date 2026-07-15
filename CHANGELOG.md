@@ -16,7 +16,7 @@
 - PowerShell and Bash wrappers now preflight the Codex executable and reject GPT-5.6 on CLI versions older than `0.144.0`.
 - Bash wrapper flags can appear before or after positional arguments without being misread as focus text.
 - Benchmark runs now use separate temporary Codex homes, an external fixture workspace, a read-only sandbox, ignored policy rules, an exact plugin digest, and ephemeral copied auth material.
-- Benchmark model processes now receive a minimal environment and `shell_environment_policy.inherit=none`; unique private runtimes remove copied auth before publication and reject links across the full runtime ancestor chain.
+- Benchmark model processes now receive a minimal environment and `shell_environment_policy.inherit=none`; unique private runtimes remove copied auth before publication and reject links across runtime-controlled ancestors up to the verified OS temp-root boundary.
 - Benchmark retries delete stale output first; nonzero exits, timeouts, and empty outputs score zero; failed or incomplete runs cannot replace `latest-*` summaries or charts.
 - Benchmark resume requires a matching schema-2 run attestation bound to prior summary and output digests.
 - Benchmark process cleanup is bounded, report path normalization covers Windows/POSIX links and plain paths, render-only mode is limited to the attested latest run, and chart/manifest/latest publication is staged and rollback-protected with `latest-run.txt` written last.

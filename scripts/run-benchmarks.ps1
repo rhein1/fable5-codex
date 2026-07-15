@@ -223,6 +223,24 @@ function Get-DirectoryDigest([string]$path) {
 
 function Assert-NoReparseAncestors([string]$path, [string]$label) {
   $candidate = [System.IO.Path]::GetFullPath($path)
+  $comparison = if ($env:OS -eq "Windows_NT") {
+    [System.StringComparison]::OrdinalIgnoreCase
+  } else {
+    [System.StringComparison]::Ordinal
+  }
+  $tempRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd(
+    [System.IO.Path]::DirectorySeparatorChar,
+    [System.IO.Path]::AltDirectorySeparatorChar
+  )
+  $tempPrefix = $tempRoot + [System.IO.Path]::DirectorySeparatorChar
+  $trustedRoot = if (
+    [string]::Equals($candidate, $tempRoot, $comparison) -or
+    $candidate.StartsWith($tempPrefix, $comparison)
+  ) {
+    $tempRoot
+  } else {
+    $null
+  }
   while (-not (Test-Path -LiteralPath $candidate)) {
     $parent = Split-Path -Parent $candidate
     if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $candidate) {
@@ -235,6 +253,12 @@ function Assert-NoReparseAncestors([string]$path, [string]$label) {
   while ($null -ne $item) {
     if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
       throw "${label} must not contain a symbolic link or reparse point: $($item.FullName)"
+    }
+    if (
+      $null -ne $trustedRoot -and
+      [string]::Equals([System.IO.Path]::GetFullPath($item.FullName), $trustedRoot, $comparison)
+    ) {
+      break
     }
     $item = $item.Parent
   }

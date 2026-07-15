@@ -344,7 +344,7 @@ test("runtime root links are rejected before auth material is copied", async (t)
 
   const result = runHarness(harness, "plugin");
   assert.notEqual(result.status, 0);
-  assert.match(plainResultOutput(result), /symbolic link or reparse point/);
+  assert.match(plainResultOutput(result), /symbolic link or reparse\s+point/);
   assert.deepEqual(await readdir(outside), []);
 });
 
@@ -367,7 +367,7 @@ test("runtime root ancestor links are rejected before creating descendants", asy
 
   const result = runHarness(harness, "plugin");
   assert.notEqual(result.status, 0);
-  assert.match(plainResultOutput(result), /symbolic link or reparse point/);
+  assert.match(plainResultOutput(result), /symbolic link or reparse\s+point/);
   assert.deepEqual(await readdir(outside), []);
 });
 
