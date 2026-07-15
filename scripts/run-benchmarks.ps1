@@ -181,6 +181,15 @@ function Get-RelativePath([string]$basePath, [string]$targetPath) {
   return [uri]::UnescapeDataString($relativeUri.ToString()) -replace '/', [System.IO.Path]::DirectorySeparatorChar
 }
 
+function Get-RecordedBenchmarkPath([string]$path) {
+  $candidate = if ([System.IO.Path]::IsPathRooted($path)) {
+    $path
+  } else {
+    Join-Path $repo $path
+  }
+  return [System.IO.Path]::GetFullPath($candidate)
+}
+
 function Set-Utf8NoBom([string]$path, [string]$content) {
   $encoding = New-Object System.Text.UTF8Encoding($false)
   [System.IO.File]::WriteAllText($path, $content, $encoding)
@@ -1039,8 +1048,8 @@ if (-not [string]::IsNullOrWhiteSpace($RenderSummaryPath)) {
   if (-not (Test-Path -LiteralPath $latestRunPath -PathType Leaf)) {
     throw "RenderSummaryPath requires an existing latest-run.txt"
   }
-  $latestRunRelative = (Get-Content -LiteralPath $latestRunPath -Raw).Trim()
-  $latestRunDir = [System.IO.Path]::GetFullPath((Join-Path $repo $latestRunRelative))
+  $latestRunReference = (Get-Content -LiteralPath $latestRunPath -Raw).Trim()
+  $latestRunDir = Get-RecordedBenchmarkPath $latestRunReference
   $resultsRootFull = [System.IO.Path]::GetFullPath($ResultsRoot).TrimEnd(
     [System.IO.Path]::DirectorySeparatorChar,
     [System.IO.Path]::AltDirectorySeparatorChar
@@ -1084,8 +1093,8 @@ if (-not [string]::IsNullOrWhiteSpace($RenderSummaryPath)) {
     throw "RenderSummaryPath configuration does not match the attested latest run"
   }
   $revalidateLatestBeforePublish = {
-    $currentLatestRelative = (Get-Content -LiteralPath $latestRunPath -Raw).Trim()
-    $currentLatestDir = [System.IO.Path]::GetFullPath((Join-Path $repo $currentLatestRelative))
+    $currentLatestReference = (Get-Content -LiteralPath $latestRunPath -Raw).Trim()
+    $currentLatestDir = Get-RecordedBenchmarkPath $currentLatestReference
     if (-not [string]::Equals($currentLatestDir, $latestRunDir, $pathComparison)) {
       throw "The latest benchmark run changed before chart publication"
     }
@@ -1290,12 +1299,7 @@ try {
       }
 
       $expectedOutputPath = [System.IO.Path]::GetFullPath((Join-Path $runDir "$($row.case_id)-$($row.mode).md"))
-      $recordedOutputInput = if ([System.IO.Path]::IsPathRooted($row.output_path)) {
-        $row.output_path
-      } else {
-        Join-Path $repo $row.output_path
-      }
-      $recordedOutputPath = [System.IO.Path]::GetFullPath($recordedOutputInput)
+      $recordedOutputPath = Get-RecordedBenchmarkPath $row.output_path
       $pathComparison = if ($env:OS -eq "Windows_NT") {
         [System.StringComparison]::OrdinalIgnoreCase
       } else {
