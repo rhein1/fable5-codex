@@ -434,13 +434,16 @@ function ConvertTo-PublicBenchmarkLinks([string]$outputPath) {
 
   foreach ($rootPath in @($workRoot, $repo)) {
     $forwardRoot = ($rootPath -replace '\\', '/').TrimEnd('/')
-    $backwardRoot = ($rootPath -replace '/', '\\').TrimEnd('\\')
     $encodedRoot = $forwardRoot.Replace(" ", "%20")
-    foreach ($variant in @($forwardRoot, $backwardRoot, $encodedRoot) | Select-Object -Unique) {
-      if ([string]::IsNullOrWhiteSpace($variant)) { continue }
+    $rootPatterns = @(
+      ([regex]::Escape($forwardRoot) -replace '/', '[\\/]'),
+      ([regex]::Escape($encodedRoot) -replace '/', '[\\/]')
+    ) | Select-Object -Unique
+    foreach ($rootPattern in $rootPatterns) {
+      if ([string]::IsNullOrWhiteSpace($rootPattern)) { continue }
       $rewritten = [regex]::Replace(
         $rewritten,
-        [regex]::Escape($variant),
+        $rootPattern,
         ".",
         [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
       )

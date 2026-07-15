@@ -7,7 +7,8 @@ async function readStdin() {
 }
 
 try {
-  const request = JSON.parse(await readStdin());
+  const input = (await readStdin()).replace(/^\uFEFF/, "");
+  const request = JSON.parse(input);
   process.stdout.write(JSON.stringify(scoreBenchmarkOutput(request)));
 } catch (error) {
   process.stderr.write(`${error.stack ?? error.message}\n`);

@@ -66,12 +66,17 @@ if (args.includes("exec")) {
   if (delayMs > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs);
   const workspace = args[workIndex + 1].replaceAll("\\\\", "/");
   const backwardWorkspace = args[workIndex + 1].replaceAll("/", "\\\\");
+  const mixedWorkspace = workspace
+    .split("/")
+    .map((segment, index) => index === 0 ? segment : (index % 2 === 0 ? "/" : "\\\\") + segment)
+    .join("");
   const fileUri = "file://" + (workspace.startsWith("/") ? "" : "/") + workspace;
   const encodedWorkspace = workspace.replaceAll(" ", "%20");
   fs.writeFileSync(args[outputIndex + 1], [
     "Finding: retry safety is missing. Evidence and coverage gap noted at [STATUS.md](" + workspace + "/evals/fact-check-fixture/STATUS.md:1).",
     "Plain path: " + workspace + "/evals/fact-check-fixture/src/paymentAttempts.js",
     "Code path: \`" + backwardWorkspace + "\\\\evals\\\\fact-check-fixture\\\\tests\\\\paymentAttempts.test.js\`",
+    "Mixed path: " + mixedWorkspace + "\\\\evals/fact-check-fixture/src/paymentAttempts.js",
     "URI path: [STATUS URI](" + fileUri + "/evals/fact-check-fixture/STATUS.md:1)",
     "Encoded path: [STATUS encoded](" + encodedWorkspace + "/evals/fact-check-fixture/STATUS.md:1)",
     "",
@@ -140,6 +145,10 @@ function runHarness(harness, mode, timeoutSeconds = 30, resumeRunId = "", caseId
     },
     timeout: 60_000,
   });
+}
+
+function plainResultOutput(result) {
+  return `${result.stderr}\n${result.stdout}`.replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, "");
 }
 
 async function readOnlyRun(results) {
@@ -214,7 +223,7 @@ test("model execution requires an explicit benchmark auth file", async (t) => {
     path.join(root, "results"),
   ], { cwd: repo, encoding: "utf8" });
   assert.notEqual(result.status, 0);
-  assert.match(`${result.stderr}\n${result.stdout}`, /AuthFile is required for benchmark execution/);
+  assert.match(plainResultOutput(result), /AuthFile is required for benchmark execution/);
 });
 
 test("failed baseline run records zero scores and leaves latest artifacts untouched", async (t) => {
@@ -298,7 +307,7 @@ try {
     await waitForFile(readyFile);
     const result = runHarness(harness, "plugin");
     assert.notEqual(result.status, 0);
-    assert.match(`${result.stderr}\n${result.stdout}`, /already active/);
+    assert.match(plainResultOutput(result), /already active/);
     const runIds = (await readdir(harness.results)).filter((entry) => /^\d{8}T\d{6}Z$/.test(entry));
     assert.deepEqual(runIds, []);
     const calls = (await readFile(harness.fakeLog, "utf8"))
@@ -335,7 +344,7 @@ test("runtime root links are rejected before auth material is copied", async (t)
 
   const result = runHarness(harness, "plugin");
   assert.notEqual(result.status, 0);
-  assert.match(`${result.stderr}\n${result.stdout}`, /symbolic link or reparse point/);
+  assert.match(plainResultOutput(result), /symbolic link or reparse point/);
   assert.deepEqual(await readdir(outside), []);
 });
 
@@ -358,7 +367,7 @@ test("runtime root ancestor links are rejected before creating descendants", asy
 
   const result = runHarness(harness, "plugin");
   assert.notEqual(result.status, 0);
-  assert.match(`${result.stderr}\n${result.stdout}`, /symbolic link or reparse point/);
+  assert.match(plainResultOutput(result), /symbolic link or reparse point/);
   assert.deepEqual(await readdir(outside), []);
 });
 

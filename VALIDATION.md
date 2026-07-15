@@ -31,8 +31,8 @@ git diff --check
 Result:
 
 ```text
-Node 24 tests: 47 passed, 3 skipped, 0 failed
-Node 18 tests: 47 passed, 3 skipped, 0 failed
+Node 24 tests: 48 passed, 3 skipped, 0 failed
+Node 18 tests: 48 passed, 3 skipped, 0 failed
 Node 24 package validation: passed
 Node 18 package validation: passed
 Installed npm tarball validation: tests, package validator, and installer dry run passed
@@ -63,7 +63,7 @@ changed prior output: digest mismatch rejected before another benchmark trial ex
 complete six-arm comparison: rendered nonblank charts, published one attested latest run, derived render-only labels from attested rows, and rejected a latest-run path outside ResultsRoot
 ```
 
-The scorer unit suite also proves that an exit-zero trial with empty output fails and receives a zero score. The dependency-free Node renderer produces three nonblank 1600x900 PNGs on Node 18 and Node 24. Public summary rows omit non-public diagnostic log paths, normalize Windows/POSIX/file-URI workspace paths, and attest each retained output with a SHA-256 digest.
+The scorer unit suite also proves that an exit-zero trial with empty output fails and receives a zero score, and that the CLI accepts UTF-8 BOM-prefixed JSON from Windows PowerShell. The dependency-free Node renderer produces three nonblank 1600x900 PNGs on Node 18 and Node 24. Public summary rows omit non-public diagnostic log paths, normalize Windows/POSIX/file-URI and mixed-separator workspace paths, and attest each retained output with a SHA-256 digest.
 
 Codex CLI argument compatibility was checked without a model call:
 

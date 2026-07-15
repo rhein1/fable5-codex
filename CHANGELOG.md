@@ -22,6 +22,7 @@
 - Benchmark process cleanup is bounded, report path normalization covers Windows/POSIX links and plain paths, render-only mode is limited to the attested latest run, and chart/manifest/latest publication is staged and rollback-protected with `latest-run.txt` written last.
 - Render-only chart labels are derived from the attested summary instead of a caller-supplied model override.
 - Concurrent benchmark runs are serialized for per-run mutation and latest publication; post-commit staging cleanup cannot downgrade a published manifest.
+- Benchmark scoring accepts UTF-8 BOM-prefixed JSON from Windows PowerShell, and public-output normalization redacts workspace roots even when path separators are mixed.
 - GitHub Actions dependencies are pinned to full commit SHAs.
 - CI whitespace checks compare committed PR/push ranges instead of an always-clean checkout.
 - CI now exposes one aggregate `Release gate` over the six-job matrix and packed-artifact job.

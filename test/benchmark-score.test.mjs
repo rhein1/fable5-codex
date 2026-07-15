@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import { scoreBenchmarkOutput } from "../scripts/benchmark-score.mjs";
 
@@ -59,6 +61,26 @@ test("treats empty exit-zero output as a failed zero", () => {
   assert.equal(score.compositePct, 0);
   assert.deepEqual(score.expectedHits, []);
   assert.deepEqual(score.evidenceHits, []);
+});
+
+test("scorer CLI accepts a UTF-8 BOM from Windows PowerShell", () => {
+  const request = JSON.stringify({
+    exitCode: 0,
+    text: "Finding: retry safety is missing.",
+    expected,
+    evidence: [],
+  });
+  const result = spawnSync(
+    process.execPath,
+    [fileURLToPath(new URL("../scripts/benchmark-score-cli.mjs", import.meta.url))],
+    {
+      input: `\uFEFF${request}`,
+      encoding: "utf8",
+    },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).status, "passed");
 });
 
 test("runner keeps both arms isolated and removes the unsafe bypass", async () => {
