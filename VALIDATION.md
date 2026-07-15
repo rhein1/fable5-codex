@@ -39,6 +39,7 @@ Installed npm tarball validation: tests, package validator, and installer dry ru
 PowerShell compatibility validator: passed
 Plugin validation: passed
 Skill validation: all six passed
+Windows cross-drive resume simulation: passed with the checkout on Z: and temporary results on C:
 Isolated Codex CLI marketplace/install probe: alpha.3 enabled in a temporary CODEX_HOME and cleaned up
 Bash and PowerShell syntax: passed
 npm pack dry run: 110 alpha.3 entries; SECURITY.md, workflow metadata, tests, marketplace, evals, scripts, plugin, docs, and benchmark evidence included
@@ -64,6 +65,8 @@ complete six-arm comparison: rendered nonblank charts, published one attested la
 ```
 
 The scorer unit suite also proves that an exit-zero trial with empty output fails and receives a zero score, and that the CLI accepts UTF-8 BOM-prefixed JSON from Windows PowerShell. The dependency-free Node renderer produces three nonblank 1600x900 PNGs on Node 18 and Node 24. Public summary rows omit non-public diagnostic log paths, normalize Windows/POSIX/file-URI and mixed-separator workspace paths, and attest each retained output with a SHA-256 digest.
+
+The changed-output resume regression was also run with the repository exposed through a substituted `Z:` drive while temporary benchmark results remained on `C:`. Resume resolved the recorded rooted output path, retained the exact expected-path comparison, and rejected the changed report on its SHA-256 digest before another trial executed.
 
 Codex CLI argument compatibility was checked without a model call:
 

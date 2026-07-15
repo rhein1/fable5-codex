@@ -1290,7 +1290,12 @@ try {
       }
 
       $expectedOutputPath = [System.IO.Path]::GetFullPath((Join-Path $runDir "$($row.case_id)-$($row.mode).md"))
-      $recordedOutputPath = [System.IO.Path]::GetFullPath((Join-Path $repo $row.output_path))
+      $recordedOutputInput = if ([System.IO.Path]::IsPathRooted($row.output_path)) {
+        $row.output_path
+      } else {
+        Join-Path $repo $row.output_path
+      }
+      $recordedOutputPath = [System.IO.Path]::GetFullPath($recordedOutputInput)
       $pathComparison = if ($env:OS -eq "Windows_NT") {
         [System.StringComparison]::OrdinalIgnoreCase
       } else {

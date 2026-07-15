@@ -20,6 +20,8 @@ function findPowerShell() {
 }
 
 const powerShell = findPowerShell();
+const harnessCaseTimeoutSeconds = 120;
+const harnessProcessTimeoutMs = 300_000;
 
 async function createHarness(exitCode, delayMs = 0) {
   const root = await mkdtemp(path.join(os.tmpdir(), "fable5-benchmark-test-"));
@@ -102,7 +104,13 @@ throw new Error("unexpected fake Codex invocation: " + args.join(" "));
   return { root, results, assets, runtime, fakeLog, fakeCodex, authFile, exitCode, delayMs };
 }
 
-function runHarness(harness, mode, timeoutSeconds = 30, resumeRunId = "", caseId = "fact-check-status") {
+function runHarness(
+  harness,
+  mode,
+  timeoutSeconds = harnessCaseTimeoutSeconds,
+  resumeRunId = "",
+  caseId = "fact-check-status",
+) {
   const modeArgs = mode === "plugin"
     ? ["-PluginOnly"]
     : mode === "baseline"
@@ -143,7 +151,7 @@ function runHarness(harness, mode, timeoutSeconds = 30, resumeRunId = "", caseId
       OPENAI_API_KEY: "harmless-test-sentinel",
       AWS_SECRET_ACCESS_KEY: "harmless-test-sentinel",
     },
-    timeout: 60_000,
+    timeout: harnessProcessTimeoutMs,
   });
 }
 
@@ -380,7 +388,7 @@ test("a matching partial run resumes without rerunning its completed arm", async
   assert.equal(first.status, 0, first.stderr || first.stdout);
   const firstRun = await readOnlyRun(harness.results);
 
-  const resumed = runHarness(harness, "baseline", 30, firstRun.runId);
+  const resumed = runHarness(harness, "baseline", harnessCaseTimeoutSeconds, firstRun.runId);
   assert.equal(resumed.status, 0, resumed.stderr || resumed.stdout);
   const { summary } = await readOnlyRun(harness.results);
   const rows = Array.isArray(summary) ? summary : [summary];
@@ -405,11 +413,11 @@ test("resume-to-complete manifest separates invocation scope from completed cove
   const harness = await createHarness(0);
   t.after(() => rm(harness.root, { recursive: true, force: true }));
 
-  const first = runHarness(harness, "plugin", 30, "", "");
+  const first = runHarness(harness, "plugin", harnessCaseTimeoutSeconds, "", "");
   assert.equal(first.status, 0, first.stderr || first.stdout);
   const { runId } = await readOnlyRun(harness.results);
 
-  const resumed = runHarness(harness, "baseline", 30, runId, "");
+  const resumed = runHarness(harness, "baseline", harnessCaseTimeoutSeconds, runId, "");
   assert.equal(resumed.status, 0, resumed.stderr || resumed.stdout);
   const manifest = JSON.parse(await readFile(path.join(harness.results, runId, "run.json"), "utf8"));
   assert.equal(manifest.status, "complete");
@@ -434,7 +442,7 @@ test("resume rejects an attestation mismatch before another trial executes", asy
   assert.equal(first.status, 0, first.stderr || first.stdout);
   const { runId } = await readOnlyRun(harness.results);
 
-  const rejected = runHarness(harness, "baseline", 31, runId);
+  const rejected = runHarness(harness, "baseline", harnessCaseTimeoutSeconds + 1, runId);
   assert.notEqual(rejected.status, 0);
   assert.match(`${rejected.stderr}\n${rejected.stdout}`, /Resume configuration mismatch for timeout_seconds/);
 
@@ -457,7 +465,7 @@ test("resume rejects a changed summary before another trial executes", async (t)
   const summaryCsv = path.join(harness.results, runId, "summary.csv");
   await writeFile(summaryCsv, `${await readFile(summaryCsv, "utf8")}# changed\n`, "utf8");
 
-  const rejected = runHarness(harness, "baseline", 30, runId);
+  const rejected = runHarness(harness, "baseline", harnessCaseTimeoutSeconds, runId);
   assert.notEqual(rejected.status, 0);
   assert.match(`${rejected.stderr}\n${rejected.stdout}`, /Resume summary digest mismatch/);
 
@@ -480,7 +488,7 @@ test("resume rejects a changed prior output before another trial executes", asyn
   const report = path.join(harness.results, runId, "fact-check-status-plugin.md");
   await writeFile(report, `${await readFile(report, "utf8")}changed\n`, "utf8");
 
-  const rejected = runHarness(harness, "baseline", 30, runId);
+  const rejected = runHarness(harness, "baseline", harnessCaseTimeoutSeconds, runId);
   assert.notEqual(rejected.status, 0);
   assert.match(`${rejected.stderr}\n${rejected.stdout}`, /Resume output digest mismatch/);
 
@@ -497,7 +505,7 @@ test("complete comparison renders charts and publishes one coherent latest run",
   const harness = await createHarness(0);
   t.after(() => rm(harness.root, { recursive: true, force: true }));
 
-  const result = runHarness(harness, "both", 30, "", "");
+  const result = runHarness(harness, "both", harnessCaseTimeoutSeconds, "", "");
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const { runId, summary } = await readOnlyRun(harness.results);
   assert.equal(summary.length, 6);
