@@ -38,6 +38,8 @@ The new regressions prove that wrappers use the explicit `codex-cli` token even 
 
 Local app-host inventory used Codex CLI `0.144.2`. The stale enabled `fable5-codex@personal` alpha.2 install was removed, the repo-local alpha.3 plugin was reinstalled through the Codex CLI, and the final inventory contained exactly one enabled Fable-5 row. The source and cache each contained 31 files with zero path/hash differences; `.codex-plugin/plugin.json` existed and matched in both trees. The PATH npm shim remains `codex-cli 0.142.5` and was not used for this proof.
 
+GitHub delivery used reviewed PR `#13`. PR run `29458729892` passed all six OS/Node jobs, the packed-artifact job, and the aggregate `Release gate`; Windows/Node 24 specifically passed the readiness-file regression that had failed on the prior `main` run. The approved PR was squash-merged as GitHub-verified commit `61a548673e8ff48b47fa0ceaa036c36dd7b34752`. Post-merge run `29459202047` passed the same matrix and aggregate gate on that exact `main` SHA. Main protection now enforces one approval, stale-review dismissal, last-push approval, admin enforcement, strict `Release gate` status, conversation resolution, linear history, and no force push or deletion.
+
 The current app task had loaded both plugin versions before cleanup, so it cannot prove post-cleanup startup behavior. A fresh app task remains required to attest single-source skill discovery. No model benchmark was rerun: the pre-alpha.3 `20260713T234332Z` data was re-rendered with visible and PNG-metadata qualifications, without changing scores or timings.
 
 ## 2026-07-15 Alpha.3 Hardening
@@ -544,7 +546,8 @@ Post-audit fixes:
 | Installed cache parity | SHA-256 tree comparison | PASS | 31 source files, 31 cache files, 0 differences, hidden manifest matched |
 | Fresh app-task discovery | Codex app | PENDING | required after removing the startup-loaded personal alpha.2 install |
 | Complete alpha.3 model benchmark | Isolated harness | PENDING | historical data only; no new model result claimed |
-| Corrective PR and PR-specific CI | GitHub | PENDING | branch has not yet been published |
+| Corrective PR and PR-specific CI | GitHub | PASS | PR `#13`; approved SHA `2e26ca9`; run `29458729892` and aggregate gate passed |
+| Merged `main` verification | GitHub | PASS | verified SHA `61a548673e8ff48b47fa0ceaa036c36dd7b34752`; run `29459202047` and aggregate gate passed |
 | Signed prerelease tag and GitHub release | GitHub | NOT PUBLISHED | requires clean reviewed `main` and explicit release authorization |
 | npm prerelease | npm | NOT PUBLISHED | `npm whoami` is unauthenticated; no publish attempted |
 
