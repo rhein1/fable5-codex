@@ -4,10 +4,12 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 <p align="center">
-  <img src="assets/brand/fable5-hero.png" alt="Fable-5 evidence-first review workflow" width="920">
+  <img src="assets/brand/fable5-social.png" alt="Fable-5 evidence-first engineering workflows for Codex" width="920">
 </p>
 
 Fable-5 for Codex is an OpenAI Codex plugin for evidence-first AI code review, codebase audits, fact checks, codebase understanding, design options, repo-wide sweeps, ECF run contracts, and subagent workflows. It packages six reusable Codex skills for serious software engineering work where source-backed proof matters. The current alpha ships Micro ECF-style run contracts so Codex can record scope, authority, lenses, evidence policy, verification policy, and a final Workflow Trace.
+
+**Release status:** `v0.4.0-alpha.2` is the latest public tagged release. `main` contains the `0.4.0-alpha.3` release candidate and must not be cited as published until its signed tag and GitHub prerelease exist.
 
 <p align="center">
   <img src="assets/brand/fable5-sol-ultra.png" alt="Fable-5 configured for GPT-5.6 Sol Ultra multi-agent workflows" width="920">
@@ -22,7 +24,7 @@ Fable-5 for Codex is an OpenAI Codex plugin for evidence-first AI code review, c
 Install directly from GitHub:
 
 ```powershell
-npx github:rhein1/fable5-codex#v0.4.0-alpha.3
+npx github:rhein1/fable5-codex#v0.4.0-alpha.2
 ```
 
 On Windows, activate the copied plugin after the installer completes:
@@ -133,7 +135,8 @@ See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw out
 
 ## Brand Assets
 
-- `assets/brand/fable5-hero.png`: README and social-preview banner
+- `assets/brand/fable5-hero.png`: original 1600x900 README banner
+- `assets/brand/fable5-social.png`: 1280x640 repository and link-card preview
 - `assets/brand/fable5-sol-ultra.png`: GPT-5.6 Sol Ultra profile banner
 - `assets/brand/fable5-mark.png`: compact repo mark for plugin cards or docs
 - `assets/benchmarks/fable5-benchmark-*-20260713T234332Z-qualified.png`: visibly qualified, cache-stable charts for the latest measured run
@@ -142,7 +145,7 @@ See `benchmarks/README.md` for the command, scoring rubric, caveats, and raw out
 ## Install From GitHub
 
 ```powershell
-codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.3
+codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.2
 codex plugin add fable5-codex@fable5-local
 ```
 
@@ -157,7 +160,7 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 This repo ships a copy-based installer for users who prefer a single command. The live public install path is GitHub:
 
 ```powershell
-npx github:rhein1/fable5-codex#v0.4.0-alpha.3
+npx github:rhein1/fable5-codex#v0.4.0-alpha.2
 ```
 
 The npm package metadata is ready, but npm publishing requires an authenticated npm account. After publish, this shorter command will work:
@@ -177,7 +180,7 @@ On Windows, the installer deliberately does not launch `codex` through a command
 For a repo-local marketplace in the current directory:
 
 ```powershell
-npx github:rhein1/fable5-codex#v0.4.0-alpha.3 --project
+npx github:rhein1/fable5-codex#v0.4.0-alpha.2 --project
 ```
 
 After npm publish:
@@ -246,6 +249,17 @@ If you maintain a personal install on the same machine, treat `plugins/fable5-co
 ```powershell
 .\scripts\sync-personal-plugin.ps1
 ```
+
+## Agoragentic Ecosystem
+
+| Repository | Use it for |
+|---|---|
+| [agoragentic-integrations](https://github.com/rhein1/agoragentic-integrations) | 93 public integration surfaces across agent frameworks, protocols, SDKs, and governance tools |
+| [agoragentic-micro-ecf](https://github.com/rhein1/agoragentic-micro-ecf) | Bounded local context and no-spend Agent OS Harness exports |
+| [agoragentic-ecf-core](https://github.com/rhein1/agoragentic-ecf-core) | Self-hosted context governance and source-grounded local MCP |
+| [agoragentic-premortem-golden-loop](https://github.com/rhein1/agoragentic-premortem-golden-loop) | Local pre-launch premortems and release-readiness receipts |
+
+Triptych OS (Agent OS): [agoragentic.com/agent-os/](https://agoragentic.com/agent-os/) · Developers: [agoragentic.com/developers/](https://agoragentic.com/developers/)
 
 ## Status
 

@@ -95,7 +95,7 @@ frames.append(sol_ultra)
 
 img, draw = base("Install the tagged alpha", "Windows prints a separate activation command; npm follows publication.")
 code_panel(draw, [
-    "> npx github:rhein1/fable5-codex#v0.4.0-alpha.3",
+    "> npx github:rhein1/fable5-codex#v0.4.0-alpha.2",
     "> codex plugin add fable5-codex@personal",
     "> start a new Codex thread",
 ])
@@ -160,7 +160,7 @@ frames.append(img)
 
 img, draw = base("Fable-5 for Codex", "Evidence-first governed workflows for serious codebase work.")
 code_panel(draw, [
-    "> npx github:rhein1/fable5-codex#v0.4.0-alpha.3",
+    "> npx github:rhein1/fable5-codex#v0.4.0-alpha.2",
     "> select GPT-5.6 Sol + Ultra",
     "> Use $fable-audit with an ECF run contract.",
 ], h=260)

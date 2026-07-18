@@ -36,7 +36,7 @@ codex plugin list
 For a published GitHub repo, use the Git-backed marketplace path:
 
 ```powershell
-codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.3
+codex plugin marketplace add rhein1/fable5-codex --ref v0.4.0-alpha.2
 codex plugin add fable5-codex@fable5-local
 ```
 
@@ -45,7 +45,7 @@ codex plugin add fable5-codex@fable5-local
 For a live copy-based personal install from GitHub:
 
 ```powershell
-npx github:rhein1/fable5-codex#v0.4.0-alpha.3
+npx github:rhein1/fable5-codex#v0.4.0-alpha.2
 ```
 
 The npm package metadata is ready, but npm publishing requires an authenticated npm account. After publish, this shorter command will work:
@@ -77,7 +77,7 @@ On macOS and Linux the installer runs that command automatically. For `--project
 For a project-local marketplace in the current directory:
 
 ```powershell
-npx github:rhein1/fable5-codex#v0.4.0-alpha.3 --project
+npx github:rhein1/fable5-codex#v0.4.0-alpha.2 --project
 ```
 
 After npm publish:
