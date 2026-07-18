@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use Fable-5 for Codex, please cite the latest tagged release."
+title: "Fable-5 for Codex"
+version: "0.4.0-alpha.2"
+date-released: "2026-07-14"
+url: "https://github.com/rhein1/fable5-codex"
+repository-code: "https://github.com/rhein1/fable5-codex"
+license: "MIT"
+authors:
+  - family-names: "Borden"
+    given-names: "J.M."
+keywords:
+  - OpenAI Codex
+  - code review
+  - software audit
+  - agent skills
+  - multi-agent workflows

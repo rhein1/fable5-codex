@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">Fable-5 for Codex</title>
+  <desc id="desc">Evidence-first audits, reviews, fact checks, and repo sweeps for OpenAI Codex.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b1020"/><stop offset="1" stop-color="#172038"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#55d7de"/><stop offset="1" stop-color="#e8613a"/></linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <path d="M0 96H1280M0 320H1280M0 544H1280M160 0V640M640 0V640M1120 0V640" stroke="#26334c" opacity="0.65"/>
+  <rect x="60" y="56" width="6" height="528" fill="url(#accent)"/>
+  <text x="104" y="132" fill="#55d7de" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">OPENAI CODEX PLUGIN</text>
+  <text x="104" y="238" fill="#f7f9fc" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="700">Fable-5</text>
+  <text x="104" y="322" fill="#f7f9fc" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="600">Evidence before verdict.</text>
+  <text x="104" y="404" fill="#bbc7da" font-family="Inter, Arial, sans-serif" font-size="24">Audits, reviews, fact checks, understanding,</text>
+  <text x="104" y="438" fill="#bbc7da" font-family="Inter, Arial, sans-serif" font-size="24">design options, and repo-wide sweeps.</text>
+  <text x="104" y="536" fill="#ff8a70" font-family="JetBrains Mono, Consolas, monospace" font-size="20">citations  |  unknowns  |  workflow trace</text>
+  <g transform="translate(820 104)">
+    <rect x="88" y="118" width="230" height="150" rx="6" fill="#111a2e" stroke="#e8613a" stroke-width="5"/>
+    <text x="142" y="187" fill="#f7f9fc" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">PROVE</text>
+    <text x="126" y="228" fill="#9cc7ff" font-family="Consolas, monospace" font-size="18">source + receipt</text>
+    <rect x="0" y="6" width="154" height="54" rx="6" fill="#111a2e" stroke="#55d7de" stroke-width="3"/>
+    <rect x="252" y="0" width="154" height="54" rx="6" fill="#111a2e" stroke="#e8613a" stroke-width="3"/>
+    <rect x="0" y="350" width="154" height="54" rx="6" fill="#111a2e" stroke="#e8613a" stroke-width="3"/>
+    <rect x="252" y="354" width="154" height="54" rx="6" fill="#111a2e" stroke="#55d7de" stroke-width="3"/>
+    <text x="25" y="40" fill="#f7f9fc" font-family="Consolas, monospace" font-size="19">UNDERSTAND</text>
+    <text x="296" y="34" fill="#f7f9fc" font-family="Consolas, monospace" font-size="19">AUDIT</text>
+    <text x="48" y="384" fill="#f7f9fc" font-family="Consolas, monospace" font-size="19">SWEEP</text>
+    <text x="280" y="388" fill="#f7f9fc" font-family="Consolas, monospace" font-size="19">REVIEW</text>
+    <path d="M126 61L168 117M302 55L245 117M126 349L167 268M303 354L246 268" stroke="#7788a5" stroke-width="4"/>
+  </g>
+</svg>

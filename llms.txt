@@ -1,0 +1,31 @@
+# Fable-5 for Codex
+
+Fable-5 is an OpenAI Codex plugin for evidence-first audits, deep code review, fact checks, codebase understanding, design options, and repo-wide sweeps.
+
+Latest public tagged release: `v0.4.0-alpha.2`.
+
+```powershell
+npx github:rhein1/fable5-codex#v0.4.0-alpha.2
+codex plugin add fable5-codex@personal
+```
+
+Installed skills:
+
+- `$fable-audit`
+- `$fable-deep-review`
+- `$fable-fact-check`
+- `$fable-understand`
+- `$fable-design-options`
+- `$fable-sweep`
+
+Fable workflows require source-backed evidence, explicit unknowns, local verification, and a truthful Workflow Trace. They use real subagents only when the runtime exposes them; otherwise they report single-agent multi-lens execution.
+
+Docs:
+
+- README: https://github.com/rhein1/fable5-codex#readme
+- Install: https://github.com/rhein1/fable5-codex/blob/main/docs/codex-install.md
+- Method: https://github.com/rhein1/fable5-codex/blob/main/docs/method.md
+- Examples: https://github.com/rhein1/fable5-codex/tree/main/examples/gallery
+- Benchmarks and limitations: https://github.com/rhein1/fable5-codex/blob/main/benchmarks/README.md
+
+Boundary: subagents may research and verify, but the main agent owns edits, commits, pushes, reviews, deploys, publication, credentials, and money or wallet actions.
