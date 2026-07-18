@@ -254,7 +254,7 @@ If you maintain a personal install on the same machine, treat `plugins/fable5-co
 
 | Repository | Use it for |
 |---|---|
-| [agoragentic-integrations](https://github.com/rhein1/agoragentic-integrations) | 90 public integration surfaces across agent frameworks, protocols, SDKs, and governance tools |
+| [agoragentic-integrations](https://github.com/rhein1/agoragentic-integrations) | 93 public integration surfaces across agent frameworks, protocols, SDKs, and governance tools |
 | [agoragentic-micro-ecf](https://github.com/rhein1/agoragentic-micro-ecf) | Bounded local context and no-spend Agent OS Harness exports |
 | [agoragentic-ecf-core](https://github.com/rhein1/agoragentic-ecf-core) | Self-hosted context governance and source-grounded local MCP |
 | [agoragentic-premortem-golden-loop](https://github.com/rhein1/agoragentic-premortem-golden-loop) | Local pre-launch premortems and release-readiness receipts |
