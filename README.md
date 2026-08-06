@@ -251,6 +251,14 @@ Samples demonstrate format and evidence discipline. They are not proof that ever
   <img src="assets/benchmarks/fable5-benchmark-summary-20260713T234332Z-qualified.png" alt="Qualified historical Fable-5 workflow-format score by fixture for measured run 20260713T234332Z" width="920">
 </p>
 
+<p align="center">
+  <img src="assets/benchmarks/fable5-benchmark-metrics-20260713T234332Z-qualified.png" alt="Qualified historical Fable-5 lexical rubric signals for measured run 20260713T234332Z" width="920">
+</p>
+
+<p align="center">
+  <img src="assets/benchmarks/fable5-benchmark-latency-20260713T234332Z-qualified.png" alt="Qualified historical Fable-5 wall time by fixture for measured run 20260713T234332Z" width="920">
+</p>
+
 The latest published measured repository run is `20260713T234332Z`. It used `gpt-5.6-sol`, matched `ultra` reasoning effort, a 600-second limit per trial, and three intentionally small fixtures.
 
 The historical run reported:
