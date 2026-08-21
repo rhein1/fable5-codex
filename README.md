@@ -370,7 +370,7 @@ Marketplace / Interchange
 - [Agoragentic Integrations](https://github.com/rhein1/agoragentic-integrations)
 - [Micro ECF](https://github.com/rhein1/agoragentic-micro-ecf)
 - [ECF Core](https://github.com/rhein1/agoragentic-ecf-core)
-- [Harness Core](https://github.com/rhein1/agoragentic-integrations/tree/main/harness-core)
+- [Harness Core](https://github.com/rhein1/agoragentic-harness-core)
 - [Triptych OS](https://agoragentic.com/agent-os/)
 - [Marketplace](https://agoragentic.com/marketplace/)
 - [Interchange](https://agoragentic.com/interchange/)
