@@ -27,3 +27,21 @@ Use $fable-design-options. Decision: how should we add versioned migrations for 
 ```text
 Use $fable-sweep. Task: rename OldMetricName to NewMetricName everywhere, preserving serialized compatibility where required.
 ```
+
+## Indexed development recipes
+
+Use the [development index](development-index.md) to select one recipe or a
+suggested playbook. Read the [shared contract](../references/development-playbooks.md)
+first. These are original Fable adaptations with source provenance, not an import
+of every GitLab prompt. They reuse the existing six skills and authority rules.
+
+```text
+Use $fable-sweep with the finish-existing playbook from the development prompt index. Scope: the feature I identify. Inspect the existing code and current PRs first. Load one recipe at a time, complete only the authorized vertical slice, and finish with completion-proof. Preserve current model, worker, and ECF settings.
+```
+
+```text
+Use $fable-understand with the pipeline-triage recipe. Inspect the failing job at its exact SHA, distinguish code from runner failures, and return a minimal repair plan. Do not weaken any gate or perform external actions.
+```
+
+The bundled `scripts/development-prompts.mjs` selector supports `search`, `show`,
+and `playbook`; it prints guidance and never executes Codex or grants permissions.

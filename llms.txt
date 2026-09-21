@@ -25,6 +25,7 @@ Docs:
 - README: https://github.com/rhein1/fable5-codex#readme
 - Install: https://github.com/rhein1/fable5-codex/blob/main/docs/codex-install.md
 - Method: https://github.com/rhein1/fable5-codex/blob/main/docs/method.md
+- Development recipes (development branch/main, not the tagged alpha.2 release): https://github.com/rhein1/fable5-codex/blob/main/docs/development-prompts.md
 - Examples: https://github.com/rhein1/fable5-codex/tree/main/examples/gallery
 - Benchmarks and limitations: https://github.com/rhein1/fable5-codex/blob/main/benchmarks/README.md
 
