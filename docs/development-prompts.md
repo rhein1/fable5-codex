@@ -12,8 +12,9 @@ The [human index](../plugins/fable5-codex/prompts/development-index.md) and
 March 4, 2026 delivery article are mapped individually. Twelve more recipes cover
 selected themes in its public library; three Fable-native recipes address bounded
 repairs, unfinished scaffolds, and completion evidence. This is a curated
-adaptation, not a mirror of the 126 upstream prompts observed September 21, 2026.
-Full upstream prompt bodies were not imported. Provenance is recorded per recipe.
+adaptation, not a mirror of the upstream prompt count recorded in the catalog for
+September 21, 2026. Full upstream prompt bodies were not imported. Provenance is
+recorded per recipe.
 
 ## Select the next useful step
 

@@ -54,6 +54,7 @@ const malformed = [
   ['untrusted source host', (c) => { c.sources[0].url = 'https://about.gitlab.com.attacker.invalid/'; }],
   ['non-HTTPS source URL', (c) => { c.sources[0].url = 'http://about.gitlab.com/'; }],
   ['invalid upstream count', (c) => { c.sources[0].observed_prompt_count = 0; }],
+  ['missing library prompt count', (c) => { delete c.sources.find((source) => source.id === 'gitlab-library').observed_prompt_count; }],
   ['duplicate recipe ID', (c) => { c.recipes[1].id = c.recipes[0].id; }],
   ['path-like recipe ID', (c) => { c.recipes[0].id = '../../etc/passwd'; }],
   ['unknown recipe field', (c) => { c.recipes[0].execute = 'anything'; }],
@@ -84,6 +85,8 @@ for (const [name, mutate] of malformed) {
 test('ranks pipeline evidence first for CI failures', () => {
   assert.equal(searchRecipes(catalog, { query: 'failing CI' })[0].id, 'pipeline-triage');
   assert.equal(searchRecipes(catalog, { query: 'GitHub Actions failure' })[0].id, 'pipeline-triage');
+  assert.equal(searchRecipes(catalog, { query: 'GitHub-Actions failure' })[0].id, 'pipeline-triage');
+  assert.equal(searchRecipes(catalog, { query: 'pull-request' })[0].id, 'pr-logic');
 });
 test('finds unfinished implementations and behavioral coverage', () => {
   assert.equal(searchRecipes(catalog, { query: 'unfinished scaffold' })[0].id, 'finish-scaffold');
@@ -125,6 +128,11 @@ test('playbooks print ordered gates and explicitly do not execute them', () => {
 test('generated human index stays synchronized with machine catalog', () => {
   assert.equal(readFileSync(resolve(plugin, 'prompts/development-index.md'), 'utf8'), renderIndex(catalog));
 });
+test('generated index derives the observed upstream count from the catalog', () => {
+  const changed = copy();
+  changed.sources.find((source) => source.id === 'gitlab-library').observed_prompt_count = 127;
+  assert.match(renderIndex(validateCatalog(changed)), /The 127 upstream entries/);
+});
 test('shared contract preserves authority, evidence, and real-runtime qualifications', () => {
   for (const phrase of ['untrusted task data', 'single-agent multi-lens', 'unrelated dirty changes', 'not runtime enforcement', 'thread/depth', 'persistent Memory', 'money/wallet', 'exact head', 'failing-before/passing-after']) {
     assert.ok(contract.includes(phrase), phrase);
@@ -136,7 +144,10 @@ test('CLI supports structured and human output', () => {
   assert.equal(shown.id, 'unit-proof'); assert.equal(shown.contract, contract);
   assert.equal(JSON.parse(runCli(['playbook', 'ci-rescue', '--json'], catalog, contract)).steps[0], 'pipeline-triage');
   assert.match(runCli(['validate'], catalog, contract), /25 recipes, 6 playbooks/);
-  assert.match(runCli([], catalog, contract), /local, read-only/);
+  const help = runCli([], catalog, contract);
+  assert.match(help, /local, read-only/);
+  assert.match(help, /repository checkout:\n  node plugins\/fable5-codex\/scripts\/development-prompts\.mjs/);
+  assert.match(help, /installed plugin root:\n  node scripts\/development-prompts\.mjs/);
   assert.match(runCli(['search', 'zzzznonexistent'], catalog, contract), /No matching recipes/);
 });
 test('CLI fails closed on malformed options, IDs, and unsupported commands', () => {
@@ -160,4 +171,13 @@ test('CLI works from an unrelated working directory without writing there', () =
     assert.equal(failure.status, 1); assert.match(failure.stderr, /Unknown recipe/);
     assert.deepEqual(readdirSync(cwd), []);
   } finally { rmSync(cwd, { recursive: true, force: true }); }
+});
+test('CLI command advertised for an installed plugin root is executable', () => {
+  const result = spawnSync(process.execPath, ['scripts/development-prompts.mjs', 'search', 'pull-request', '--limit=1', '--json'], {
+    cwd: plugin,
+    encoding: 'utf8',
+    shell: false,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout)[0].id, 'pr-logic');
 });

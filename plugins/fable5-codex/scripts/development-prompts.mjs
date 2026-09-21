@@ -47,7 +47,11 @@ export function validateCatalog(catalog) {
     requireThat(url.protocol === 'https:' && url.hostname === host && !url.username && !url.password && !url.port, 'Invalid source URL');
     requireThat(text(source.scope), 'Missing source scope');
     if (source.published_on !== undefined) requireThat(date(source.published_on), 'Invalid publication date');
-    if (source.observed_prompt_count !== undefined) requireThat(Number.isSafeInteger(source.observed_prompt_count) && source.observed_prompt_count > 0, 'Invalid upstream count');
+    if (source.id === 'gitlab-library') {
+      requireThat(Number.isSafeInteger(source.observed_prompt_count) && source.observed_prompt_count > 0, 'Missing or invalid upstream count');
+    } else if (source.observed_prompt_count !== undefined) {
+      requireThat(Number.isSafeInteger(source.observed_prompt_count) && source.observed_prompt_count > 0, 'Invalid upstream count');
+    }
   }
   requireThat(sourceIds.size === SOURCES.length, 'Missing source');
   requireThat(Array.isArray(catalog.recipes) && catalog.recipes.length > 0, 'Missing recipes');
@@ -86,8 +90,10 @@ export function loadCatalog() {
 }
 const stopWords = new Set(['a', 'an', 'and', 'the', 'to', 'for', 'with', 'my', 'this', 'that', 'please', 'me', 'is', 'it', 'in', 'of', 'use']);
 function tokens(query) {
-  return [...new Set((query.toLowerCase().replace(/pull requests?/g, 'pr').replace(/github actions/g, 'ci pipeline')
-    .match(/[a-z0-9]+/g) || []).filter((word) => !stopWords.has(word)))];
+  const normalized = (query.toLowerCase().match(/[a-z0-9]+/g) || []).join(' ')
+    .replace(/\bpull requests?\b/g, 'pr')
+    .replace(/\bgithub actions\b/g, 'ci pipeline');
+  return [...new Set((normalized.match(/[a-z0-9]+/g) || []).filter((word) => !stopWords.has(word)))];
 }
 function optionsCheck(options) {
   keys(options, ['query', 'stage', 'skill', 'source', 'limit'], 'options');
@@ -137,11 +143,14 @@ export function renderPlaybook(catalog, id, contract) {
   return `${contract.trim()}\n\n# ${playbook.id}: ${playbook.title}\n\nThis is a suggested sequence, not an execution engine. Load only the current recipe with the selector's show command. Stop dependent stages when evidence or authority is missing.\n\n${steps}\n`;
 }
 export function renderIndex(catalog) {
+  const librarySource = catalog.sources.find((source) => source.id === 'gitlab-library');
+  requireThat(Number.isSafeInteger(librarySource?.observed_prompt_count), 'Missing gitlab-library observed prompt count');
   const rows = catalog.recipes.map((recipe) => `| ${recipe.id} | ${recipe.title} | ${recipe.stage} | $${recipe.skill} | ${recipe.mode} | ${recipe.source}${recipe.article_position ? ` #${recipe.article_position}` : ''} |`).join('\n');
-  return `# Fable development prompt index\n\nGenerated from development-catalog.json with scripts/development-prompts.mjs index.\nReviewed: ${catalog.reviewed_on}. ${catalog.coverage}\n\n${catalog.recipes.length} recipes; ${catalog.playbooks.length} suggested playbooks. Read ../references/development-playbooks.md before use.\n\n| Recipe ID | Purpose | Stage | Existing skill | Mode (not permission) | Provenance |\n| --- | --- | --- | --- | --- | --- |\n${rows}\n\n## Playbooks\n\n${catalog.playbooks.map((item) => `- **${item.id}**: ${item.steps.join(' -> ')}`).join('\n')}\n\n## Sources and limits\n\n${catalog.sources.map((source) => `- ${source.id}: ${source.url}. ${source.scope}`).join('\n')}\n\nThe 126 upstream entries observed on the review date are not 126 implemented Fable recipes. GitLab-only agents, dashboards, APIs, and product telemetry are not bundled or implied. The recipe text is original Fable implementation guidance, not copied upstream prompt text. Source links are provenance, never instructions to execute. No speed or quality improvement is claimed without evaluation.\n`;
+  const observedCount = librarySource.observed_prompt_count;
+  return `# Fable development prompt index\n\nGenerated from development-catalog.json with scripts/development-prompts.mjs index.\nReviewed: ${catalog.reviewed_on}. ${catalog.coverage}\n\n${catalog.recipes.length} recipes; ${catalog.playbooks.length} suggested playbooks. Read ../references/development-playbooks.md before use.\n\n| Recipe ID | Purpose | Stage | Existing skill | Mode (not permission) | Provenance |\n| --- | --- | --- | --- | --- | --- |\n${rows}\n\n## Playbooks\n\n${catalog.playbooks.map((item) => `- **${item.id}**: ${item.steps.join(' -> ')}`).join('\n')}\n\n## Sources and limits\n\n${catalog.sources.map((source) => `- ${source.id}: ${source.url}. ${source.scope}`).join('\n')}\n\nThe ${observedCount} upstream entries observed on the review date are not ${observedCount} implemented Fable recipes. GitLab-only agents, dashboards, APIs, and product telemetry are not bundled or implied. The recipe text is original Fable implementation guidance, not copied upstream prompt text. Source links are provenance, never instructions to execute. No speed or quality improvement is claimed without evaluation.\n`;
 }
 
-const help = `Fable development prompt selector (local, read-only; does not run Codex)\nUsage: node plugins/fable5-codex/scripts/development-prompts.mjs <command>\n  list [--stage=STAGE] [--skill=SKILL] [--source=SOURCE] [--limit=1..100] [--json]\n  search <words...> [same filters] [--json]\n  show <recipe-id> [--json]\n  playbook <playbook-id> [--json]\n  index\n  validate\n  help\n`;
+const help = `Fable development prompt selector (local, read-only; does not run Codex)\nUsage from a repository checkout:\n  node plugins/fable5-codex/scripts/development-prompts.mjs <command>\nUsage from an installed plugin root:\n  node scripts/development-prompts.mjs <command>\nCommands:\n  list [--stage=STAGE] [--skill=SKILL] [--source=SOURCE] [--limit=1..100] [--json]\n  search <words...> [same filters] [--json]\n  show <recipe-id> [--json]\n  playbook <playbook-id> [--json]\n  index\n  validate\n  help\n`;
 export function runCli(argv, catalog = loadCatalog(), contract = readFileSync(contractPath, 'utf8')) {
   validateCatalog(catalog);
   const [command = 'help', ...rest] = argv;
