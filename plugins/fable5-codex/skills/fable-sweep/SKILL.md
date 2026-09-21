@@ -40,3 +40,18 @@ Stop and ask before irreversible changes, external publishing, deploys, credenti
 For write-enabled parallel sweeps, assign each worker a disjoint write scope and tell workers they are not alone in the codebase. The main agent owns final integration, conflict resolution, validation, staging, commits, pushes, and external side effects.
 
 When requested, include a compact `Workflow Trace` with mode, ECF contract status, lenses covered, spawned agents or no-subagent reason, verification method, and coverage gaps.
+
+## Optional development playbooks
+
+When the user requests an indexed delivery workflow, scaffold completion, or a
+named development recipe, consult `../../prompts/development-index.md` and
+`../../references/development-playbooks.md`. Use
+`../../scripts/development-prompts.mjs` to search or show one recipe when Node is
+available; otherwise read the matching entry in the bundled catalog. Do not load
+all recipe bodies by default. Route each stage to the existing skill named in its
+entry and retain the normal discovery, edit, and verification workflow above.
+
+A playbook is guidance, not an execution engine or an authorization grant. Resolve
+actual refs and edit scope, preserve current ECF/model/worker limits, stop dependent
+stages when prerequisites fail, and end with the completion-proof reconciliation.
+For read-only requests, return a plan rather than executing scoped-edit stages.
