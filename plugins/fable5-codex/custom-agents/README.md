@@ -4,7 +4,7 @@ These files are role templates. They are included so a repo or Codex surface tha
 
 They are not automatically registered by the Fable-5 plugin manifest. The plugin's guaranteed runtime surface is the six skills under `skills/`.
 
-The templates intentionally omit `model` and `model_reasoning_effort`. When copied into `.codex/agents/`, they inherit the parent task's configuration, including GPT-5.6 Sol Ultra. Keep `agents.max_depth = 1` so an Ultra coordinator can fan out to workers without recursive delegation.
+The templates intentionally omit `model` and `model_reasoning_effort`. When copied into `.codex/agents/`, they use the runtime's configured worker defaults. The packaged profile keeps the parent on GPT-5.6 Sol Ultra and sets GPT-5.6 Luna with medium reasoning as the worker default. Keep `agents.max_depth = 1` so the coordinator can fan out without recursive delegation.
 
 ## Roles
 

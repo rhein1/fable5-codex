@@ -144,13 +144,13 @@ Question: What are the main execution paths, trust boundaries, and unresolved un
 Cite exact files and include an UNKNOWNS section.
 ```
 
-## GPT-5.6 Sol Ultra profile
+## Sol Ultra coordinator with Luna workers
 
 <p align="center">
   <img src="assets/brand/fable5-sol-ultra.png" alt="Fable-5 configured for GPT-5.6 Sol Ultra multi-agent workflows" width="920">
 </p>
 
-The repository includes a high-capability profile for `gpt-5.6-sol` with `ultra` reasoning on large or high-risk work. The packaged wrappers enforce the repository's declared minimum Codex CLI version before launch.
+The repository includes a cost-aware multi-agent profile for large or high-risk work: `gpt-5.6-sol` with `ultra` reasoning coordinates, while bounded workers default to `gpt-5.6-luna` with `medium` reasoning. The coordinator retains synthesis and final verification. Interactive use must select the coordinator profile before the run; Workflow Traces record requested and actual coordinator and worker profiles. The packaged wrappers enforce the repository's declared minimum Codex CLI version before launch.
 
 Use the ready-to-copy template:
 
@@ -167,13 +167,13 @@ Or run the PowerShell wrapper:
   -Subagents
 ```
 
-Override model and reasoning settings when a smaller task does not justify the highest-cost profile. The model/runtime configuration does not weaken Fable-5's evidence, authority, and truthful-reporting requirements.
+Override coordinator or worker settings when a task needs a different cost/capability balance. The model/runtime configuration does not weaken Fable-5's evidence, authority, and truthful-reporting requirements.
 
 See [Sol Ultra setup and behavior](docs/sol-ultra.md).
 
 ## Subagents without fake parallelism
 
-Fable-5 requests real Codex subagents for suitable large or high-risk work when the runtime exposes a subagent tool and the user has not opted out.
+Fable-5 requests real Codex subagents for suitable large or high-risk work when the runtime exposes a subagent tool and the user has not opted out. It requests Luna medium for each worker and records the requested and actual worker model plus any fallback.
 
 Large/high-risk includes work such as:
 

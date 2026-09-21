@@ -1,7 +1,7 @@
 {
   "name": "fable5-codex",
   "version": "0.4.0-alpha.3",
-  "description": "GPT-5.6 Sol Ultra Codex plugin for evidence-first AI code review, audits, ECF run contracts, and multi-agent workflows.",
+  "description": "Evidence-first Codex plugin with a Sol Ultra coordinator, Luna subagents, ECF run contracts, and multi-agent workflows.",
   "type": "module",
   "bin": {
     "fable5-codex": "bin/install.mjs"

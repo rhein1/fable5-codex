@@ -4,6 +4,8 @@
 
 ### Added
 
+- Cost-aware multi-agent defaults that keep the coordinator on GPT-5.6 Sol Ultra, run bounded subagents on GPT-5.6 Luna with medium reasoning, and cap concurrent threads at three.
+- Worker-only wrapper overrides and truthful requested/actual worker model fields in Workflow Traces and ECF receipts.
 - Cross-platform Node package validation on Windows, macOS, and Linux with Node 18 and Node 24 CI coverage.
 - Wrapper and benchmark regression tests, including a complete fake-CLI comparison that renders and publishes charts without model calls.
 - Cross-platform explicit test enumeration and installed-tarball validation for the npm artifact.
@@ -12,8 +14,9 @@
 
 ### Fixed
 
+- Packaged skills, configuration, wrappers, schemas, and docs now apply the Luna worker policy consistently instead of inheriting the coordinator model for every subagent.
 - The installer now rejects unknown, split-value, and duplicate options, including invalid combinations with help, before selecting or mutating a destination.
-- PowerShell and Bash wrappers now preflight the Codex executable and reject GPT-5.6 on CLI versions older than `0.144.0`.
+- PowerShell and Bash wrappers now preflight the Codex executable and require CLI `0.152.0` or newer for the Luna worker-default configuration.
 - Wrapper preflight reads the explicit `codex-cli` version token instead of accepting the first unrelated semantic version in noisy launcher output.
 - Bash wrapper flags can appear before or after positional arguments without being misread as focus text.
 - Benchmark runs now use separate temporary Codex homes, an external fixture workspace, a read-only sandbox, ignored policy rules, an exact plugin digest, and ephemeral copied auth material.

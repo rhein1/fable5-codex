@@ -47,6 +47,8 @@ test('Bash wrapper recognizes flags when optional focus is omitted', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /^model=gpt-5\.6-sol$/m);
   assert.match(result.stdout, /^reasoning_effort=ultra$/m);
+  assert.match(result.stdout, /^subagent_model=gpt-5\.6-luna$/m);
+  assert.match(result.stdout, /^subagent_reasoning_effort=medium$/m);
   assert.match(result.stdout, /I explicitly authorize parallel subagents/);
   assert.doesNotMatch(result.stdout, /Focus: --subagents/);
 });
@@ -58,18 +60,32 @@ test('Bash wrapper accepts flags before positional arguments', () => {
   assert.match(result.stdout, /Include an ECF run contract/);
 });
 
-test('Bash wrapper rejects a GPT-5.6 launch on an outdated Codex CLI', () => {
+test('Bash wrapper accepts explicit subagent model overrides', () => {
+  const result = runBash([
+    '--dry-run',
+    '--subagent-model=gpt-5.6-sol',
+    '--subagent-reasoning=high',
+    'deep-review',
+    '.',
+  ]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /^subagent_model=gpt-5\.6-sol$/m);
+  assert.match(result.stdout, /^subagent_reasoning_effort=high$/m);
+  assert.match(result.stdout, /Use gpt-5\.6-sol with high reasoning for each delegated worker/);
+});
+
+test('Bash wrapper rejects Luna worker defaults on an outdated Codex CLI', () => {
   const testRoot = join(repoRoot, 'tmp');
   mkdirSync(testRoot, { recursive: true });
   const target = mkdtempSync(join(testRoot, 'fable5-wrapper-'));
   try {
     const fakeCodex = join(target, 'codex');
-    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "codex-cli 0.143.9"\n');
+    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "codex-cli 0.151.9"\n');
     chmodSync(fakeCodex, 0o755);
     const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
     const result = runBash(['audit', '.', `--codex-executable=${bashFakeCodex}`]);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /requires Codex CLI 0\.144\.0 or newer/);
+    assert.match(result.stderr, /require Codex CLI 0\.152\.0 or newer/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
@@ -81,12 +97,12 @@ test('Bash wrapper compares multi-digit version components semantically', () => 
   const target = mkdtempSync(join(testRoot, 'fable5-wrapper-semver-'));
   try {
     const fakeCodex = join(target, 'codex');
-    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "codex-cli 0.143.1000"\n');
+    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "codex-cli 0.151.1000"\n');
     chmodSync(fakeCodex, 0o755);
     const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
     const result = runBash(['audit', '.', `--codex-executable=${bashFakeCodex}`]);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /requires Codex CLI 0\.144\.0 or newer/);
+    assert.match(result.stderr, /require Codex CLI 0\.152\.0 or newer/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
@@ -98,12 +114,12 @@ test('Bash wrapper ignores launcher versions before the Codex CLI token', () => 
   const target = mkdtempSync(join(testRoot, 'fable5-wrapper-noisy-version-'));
   try {
     const fakeCodex = join(target, 'codex');
-    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "Node.js v20.0.0"\necho "codex-cli 0.143.9"\n');
+    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "Node.js v20.0.0"\necho "codex-cli 0.151.9"\n');
     chmodSync(fakeCodex, 0o755);
     const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
     const result = runBash(['audit', '.', `--codex-executable=${bashFakeCodex}`]);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /reports 0\.143\.9/);
+    assert.match(result.stderr, /reports 0\.151\.9/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
@@ -115,7 +131,7 @@ test('Bash wrapper rejects extended Codex version tokens', () => {
   const target = mkdtempSync(join(testRoot, 'fable5-wrapper-extended-version-'));
   try {
     const fakeCodex = join(target, 'codex');
-    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "codex-cli 0.144.3.1"\n');
+    writeFileSync(fakeCodex, '#!/usr/bin/env bash\necho "codex-cli 0.152.3.1"\n');
     chmodSync(fakeCodex, 0o755);
     const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
     const result = runBash(['audit', '.', `--codex-executable=${bashFakeCodex}`]);
@@ -142,22 +158,26 @@ test('Bash wrapper preflights a supported CLI and passes literal arguments', () 
   try {
     const fakeCodex = join(target, 'codex');
     const capture = join(target, 'args.txt');
-    writeFileSync(fakeCodex, `#!/usr/bin/env bash\nif [[ \"\${1:-}\" == \"--version\" ]]; then\n  echo \"codex-cli 0.144.0\"\n  exit 0\nfi\nprintf '%s\\n' \"$@\" > \"$(dirname \"$0\")/args.txt\"\n`);
+    writeFileSync(fakeCodex, `#!/usr/bin/env bash\nif [[ \"\${1:-}\" == \"--version\" ]]; then\n  echo \"codex-cli 0.152.0\"\n  exit 0\nfi\nprintf '%s\\n' \"$@\" > \"$(dirname \"$0\")/args.txt\"\n`);
     chmodSync(fakeCodex, 0o755);
     const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
     const result = runBash(['audit', 'src', '--codex-executable=' + bashFakeCodex]);
     assert.equal(result.status, 0, result.stderr);
     const args = readFileSync(capture, 'utf8').trim().split(/\r?\n/);
-    assert.deepEqual(args.slice(0, 6), [
+    assert.deepEqual(args.slice(0, 10), [
       'exec',
       '--model',
       'gpt-5.6-sol',
       '-c',
       'model_reasoning_effort="ultra"',
+      '-c',
+      'agents.default_subagent_model="gpt-5.6-luna"',
+      '-c',
+      'agents.default_subagent_reasoning_effort="medium"',
       '--sandbox',
     ]);
-    assert.equal(args[6], 'read-only');
-    assert.match(args[7], /^Use \$fable-audit\. Scope: src/);
+    assert.equal(args[10], 'read-only');
+    assert.match(args[11], /^Use \$fable-audit\. Scope: src/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
@@ -174,12 +194,14 @@ test('PowerShell wrapper dry-run exposes executable and subagent authorization',
   const output = JSON.parse(result.stdout);
   assert.equal(output.model, 'gpt-5.6-sol');
   assert.equal(output.reasoningEffort, 'ultra');
+  assert.equal(output.subagentModel, 'gpt-5.6-luna');
+  assert.equal(output.subagentReasoningEffort, 'medium');
   assert.equal(output.codexExecutable, 'custom-codex');
-  assert.equal(output.minimumCliVersion, '0.144.0');
+  assert.equal(output.minimumCliVersion, '0.152.0');
   assert.match(output.prompt, /I explicitly authorize parallel subagents/);
 });
 
-test('PowerShell wrapper rejects a GPT-5.6 launch on an outdated Codex CLI', (context) => {
+test('PowerShell wrapper rejects Luna worker defaults on an outdated Codex CLI', (context) => {
   const powerShell = findPowerShell();
   if (!powerShell) {
     context.skip('PowerShell is unavailable');
@@ -188,10 +210,10 @@ test('PowerShell wrapper rejects a GPT-5.6 launch on an outdated Codex CLI', (co
   const target = mkdtempSync(join(repoRoot, 'tmp', 'fable5-wrapper-pwsh-'));
   try {
     const fakeCodex = join(target, 'codex.ps1');
-    writeFileSync(fakeCodex, 'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)\nif ($Rest[0] -eq "--version") { Write-Output "codex-cli 0.143.9"; exit 0 }\nexit 0\n');
+    writeFileSync(fakeCodex, 'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)\nif ($Rest[0] -eq "--version") { Write-Output "codex-cli 0.151.9"; exit 0 }\nexit 0\n');
     const result = runPowerShell(powerShell, ['-CodexExecutable', fakeCodex]);
     assert.notEqual(result.status, 0);
-    assert.match(`${result.stdout}\n${result.stderr}`, /requires Codex CLI 0\.144\.0 or newer/);
+    assert.match(`${result.stdout}\n${result.stderr}`, /require Codex CLI 0\.152\.0 or newer/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
@@ -208,13 +230,13 @@ test('PowerShell wrapper ignores launcher versions before the Codex CLI token', 
     const fakeCodex = join(target, 'codex.ps1');
     writeFileSync(fakeCodex, [
       'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)',
-      'if ($Rest[0] -eq "--version") { Write-Output "Node.js v20.0.0"; Write-Output "codex-cli 0.143.9"; exit 0 }',
+      'if ($Rest[0] -eq "--version") { Write-Output "Node.js v20.0.0"; Write-Output "codex-cli 0.151.9"; exit 0 }',
       'exit 0',
       '',
     ].join('\n'));
     const result = runPowerShell(powerShell, ['-CodexExecutable', fakeCodex]);
     assert.notEqual(result.status, 0);
-    assert.match(`${result.stdout}\n${result.stderr}`, /reports 0\.143\.9/);
+    assert.match(`${result.stdout}\n${result.stderr}`, /reports 0\.151\.9/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
@@ -231,7 +253,7 @@ test('PowerShell wrapper rejects extended Codex version tokens', (context) => {
     const fakeCodex = join(target, 'codex.ps1');
     writeFileSync(fakeCodex, [
       'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)',
-      'if ($Rest[0] -eq "--version") { Write-Output "codex-cli 0.144.3.1"; exit 0 }',
+      'if ($Rest[0] -eq "--version") { Write-Output "codex-cli 0.152.3.1"; exit 0 }',
       'exit 0',
       '',
     ].join('\n'));
@@ -256,7 +278,7 @@ test('PowerShell wrapper preflights a supported CLI and passes literal arguments
     const escapedCapture = capture.replaceAll("'", "''");
     writeFileSync(fakeCodex, [
       'param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)',
-      'if ($Rest[0] -eq "--version") { Write-Output "codex-cli 0.144.0"; exit 0 }',
+      'if ($Rest[0] -eq "--version") { Write-Output "codex-cli 0.152.0"; exit 0 }',
       `$Rest | Set-Content -LiteralPath '${escapedCapture}' -Encoding UTF8`,
       'exit 0',
       '',
@@ -270,16 +292,20 @@ test('PowerShell wrapper preflights a supported CLI and passes literal arguments
     ]);
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const args = readFileSync(capture, 'utf8').replace(/^\uFEFF/, '').trim().split(/\r?\n/);
-    assert.deepEqual(args.slice(0, 7), [
+    assert.deepEqual(args.slice(0, 11), [
       'exec',
       '--model',
       'gpt-5.6-sol',
       '-c',
       'model_reasoning_effort="ultra"',
+      '-c',
+      'agents.default_subagent_model="gpt-5.6-luna"',
+      '-c',
+      'agents.default_subagent_reasoning_effort="medium"',
       '--sandbox',
       'read-only',
     ]);
-    assert.match(args[7], /^Use \$fable-audit\. Scope: src path Focus: money safety\./);
+    assert.match(args[11], /^Use \$fable-audit\. Scope: src path Focus: money safety\./);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }

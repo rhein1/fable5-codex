@@ -9,7 +9,7 @@ Run an evidence-first audit. Default to read-only unless the user explicitly ask
 
 For ECF-style governed runs, use the plugin reference at `../../references/ecf-run-contract.md` and the starter template at `../../templates/fable-ecf-run-contract.json`. The contract records scope, authority, required lenses, delegation policy, authority split, evidence policy, verification policy, and the final receipt. It does not itself spawn subagents.
 
-For large or high-risk Fable tasks, recommend running the parent task on `gpt-5.6-sol` with Ultra (`model_reasoning_effort = "ultra"`) when available. Ultra may delegate proactively, but still explicitly request parallel delegation for disjoint Fable lenses when the runtime supports subagents; otherwise use `single-agent multi-lens` and report the reason.
+For large or high-risk Fable tasks, use `gpt-5.6-sol` with Ultra (`model_reasoning_effort = "ultra"`) for the parent coordinator when it is selected or can be configured before the run. Record the requested and actual coordinator model and effort plus any fallback; never imply Sol Ultra was active when it was not. Request parallel delegation for disjoint Fable lenses. Use `gpt-5.6-luna` with `medium` reasoning for every delegated subagent by default, setting the model and effort explicitly on each spawn when the runtime supports it. Keep load-bearing synthesis and final verification with the Sol Ultra coordinator. If the runtime cannot honor the worker selection, report the requested and actual worker model plus the fallback; never claim Luna was used without runtime evidence. Otherwise use `single-agent multi-lens` and report the reason.
 
 ## Workflow
 
