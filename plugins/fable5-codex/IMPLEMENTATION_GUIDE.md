@@ -13,10 +13,12 @@ This plugin translates a Claude-style multi-agent workflow kit into Codex-native
 
 Subagent behavior:
 
+- Keep the demanding-run coordinator on GPT-5.6 Sol Ultra and use GPT-5.6 Luna with medium reasoning for bounded subagents by default. Set the worker model and effort explicitly when the runtime supports per-spawn selection.
 - Codex should use real subagents for large or high-risk Fable tasks when the runtime exposes a subagent tool and the user has not opted out. Explicit user subagent requests still trigger the same path for smaller scopes.
 - `$fable-audit` must still show the workflow every time through a `Workflow Trace` section and should declare the ECF run contract when the user asks for ECF, subagents, repeatable evidence, CI ledgers, or durable receipts.
 - When subagents are not available, the task is small/routine, or the user opted out, the audit should run as `single-agent multi-lens` and say that directly instead of implying independent review happened.
 - Do not claim `multi-agent` unless real subagent IDs or runtime-visible handles exist.
+- Record the requested and actual worker model and any fallback. Do not claim Luna was used without runtime evidence.
 - Keep authority split explicit: subagents research/plan/find/verify; the main agent spot-checks and owns final findings plus side effects.
 
 Suggested rollout:

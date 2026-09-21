@@ -7,6 +7,8 @@ subagents=""
 dry_run=""
 model="${FABLE5_MODEL:-gpt-5.6-sol}"
 reasoning="${FABLE5_REASONING_EFFORT:-ultra}"
+subagent_model="${FABLE5_SUBAGENT_MODEL:-gpt-5.6-luna}"
+subagent_reasoning="${FABLE5_SUBAGENT_REASONING_EFFORT:-medium}"
 codex_executable="${FABLE5_CODEX_EXECUTABLE:-codex}"
 minimum_gpt56_cli_version="0.144.0"
 positionals=()
@@ -19,10 +21,12 @@ for arg in "$@"; do
     --dry-run) dry_run="1" ;;
     --model=*) model="${arg#--model=}" ;;
     --reasoning=*) reasoning="${arg#--reasoning=}" ;;
+    --subagent-model=*) subagent_model="${arg#--subagent-model=}" ;;
+    --subagent-reasoning=*) subagent_reasoning="${arg#--subagent-reasoning=}" ;;
     --codex-executable=*) codex_executable="${arg#--codex-executable=}" ;;
     --*)
       echo "Unknown flag: $arg" >&2
-      echo "Expected flags: --write, --ecf, --subagents, --dry-run, --model=<id>, --reasoning=<effort>, --codex-executable=<path>" >&2
+      echo "Expected flags: --write, --ecf, --subagents, --dry-run, --model=<id>, --reasoning=<effort>, --subagent-model=<id>, --subagent-reasoning=<effort>, --codex-executable=<path>" >&2
       exit 2
       ;;
     *) positionals+=("$arg") ;;
@@ -65,14 +69,14 @@ fi
 if [[ -n "$ecf" ]]; then
   prompt="${prompt} Include an ECF run contract and Workflow Trace."
 fi
-prompt="${prompt} For large or high-risk Fable tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out; otherwise report single-agent multi-lens with the no-subagent reason."
+prompt="${prompt} For large or high-risk Fable tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out. Use ${subagent_model} with ${subagent_reasoning} reasoning for each delegated worker when supported, and report the requested and actual worker model plus any fallback; otherwise report single-agent multi-lens with the no-subagent reason."
 if [[ -n "$subagents" ]]; then
   prompt="${prompt} I explicitly authorize parallel subagents for this run. Spawn four independent read-only lenses when the runtime exposes a subagent tool: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist."
 fi
 
 if [[ -n "$dry_run" ]]; then
-  printf 'model=%s\nreasoning_effort=%s\ncodex_executable=%s\nminimum_cli_version=%s\nsandbox=%s\nprompt=%s\n' \
-    "$model" "$reasoning" "$codex_executable" "$minimum_gpt56_cli_version" "$sandbox" "$prompt"
+  printf 'model=%s\nreasoning_effort=%s\nsubagent_model=%s\nsubagent_reasoning_effort=%s\ncodex_executable=%s\nminimum_cli_version=%s\nsandbox=%s\nprompt=%s\n' \
+    "$model" "$reasoning" "$subagent_model" "$subagent_reasoning" "$codex_executable" "$minimum_gpt56_cli_version" "$sandbox" "$prompt"
   exit 0
 fi
 
@@ -94,7 +98,7 @@ installed_minor=$((10#${BASH_REMATCH[3]}))
 installed_patch=$((10#${BASH_REMATCH[4]}))
 installed_version_text="${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.${BASH_REMATCH[4]}"
 
-if [[ "$model" == gpt-5.6-* ]]; then
+if [[ "$model" == gpt-5.6-* || "$subagent_model" == gpt-5.6-* ]]; then
   minimum_major=0
   minimum_minor=144
   minimum_patch=0
@@ -108,4 +112,10 @@ if [[ "$model" == gpt-5.6-* ]]; then
   fi
 fi
 
-"$codex_executable" exec --model "$model" -c "model_reasoning_effort=\"$reasoning\"" --sandbox "$sandbox" "$prompt"
+"$codex_executable" exec \
+  --model "$model" \
+  -c "model_reasoning_effort=\"$reasoning\"" \
+  -c "agents.default_subagent_model=\"$subagent_model\"" \
+  -c "agents.default_subagent_reasoning_effort=\"$subagent_reasoning\"" \
+  --sandbox "$sandbox" \
+  "$prompt"

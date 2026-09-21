@@ -47,6 +47,8 @@ test('Bash wrapper recognizes flags when optional focus is omitted', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /^model=gpt-5\.6-sol$/m);
   assert.match(result.stdout, /^reasoning_effort=ultra$/m);
+  assert.match(result.stdout, /^subagent_model=gpt-5\.6-luna$/m);
+  assert.match(result.stdout, /^subagent_reasoning_effort=medium$/m);
   assert.match(result.stdout, /I explicitly authorize parallel subagents/);
   assert.doesNotMatch(result.stdout, /Focus: --subagents/);
 });
@@ -56,6 +58,20 @@ test('Bash wrapper accepts flags before positional arguments', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Scope: src Focus: correctness\./);
   assert.match(result.stdout, /Include an ECF run contract/);
+});
+
+test('Bash wrapper accepts explicit subagent model overrides', () => {
+  const result = runBash([
+    '--dry-run',
+    '--subagent-model=gpt-5.6-sol',
+    '--subagent-reasoning=high',
+    'deep-review',
+    '.',
+  ]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /^subagent_model=gpt-5\.6-sol$/m);
+  assert.match(result.stdout, /^subagent_reasoning_effort=high$/m);
+  assert.match(result.stdout, /Use gpt-5\.6-sol with high reasoning for each delegated worker/);
 });
 
 test('Bash wrapper rejects a GPT-5.6 launch on an outdated Codex CLI', () => {
@@ -148,16 +164,20 @@ test('Bash wrapper preflights a supported CLI and passes literal arguments', () 
     const result = runBash(['audit', 'src', '--codex-executable=' + bashFakeCodex]);
     assert.equal(result.status, 0, result.stderr);
     const args = readFileSync(capture, 'utf8').trim().split(/\r?\n/);
-    assert.deepEqual(args.slice(0, 6), [
+    assert.deepEqual(args.slice(0, 10), [
       'exec',
       '--model',
       'gpt-5.6-sol',
       '-c',
       'model_reasoning_effort="ultra"',
+      '-c',
+      'agents.default_subagent_model="gpt-5.6-luna"',
+      '-c',
+      'agents.default_subagent_reasoning_effort="medium"',
       '--sandbox',
     ]);
-    assert.equal(args[6], 'read-only');
-    assert.match(args[7], /^Use \$fable-audit\. Scope: src/);
+    assert.equal(args[10], 'read-only');
+    assert.match(args[11], /^Use \$fable-audit\. Scope: src/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
@@ -174,6 +194,8 @@ test('PowerShell wrapper dry-run exposes executable and subagent authorization',
   const output = JSON.parse(result.stdout);
   assert.equal(output.model, 'gpt-5.6-sol');
   assert.equal(output.reasoningEffort, 'ultra');
+  assert.equal(output.subagentModel, 'gpt-5.6-luna');
+  assert.equal(output.subagentReasoningEffort, 'medium');
   assert.equal(output.codexExecutable, 'custom-codex');
   assert.equal(output.minimumCliVersion, '0.144.0');
   assert.match(output.prompt, /I explicitly authorize parallel subagents/);
@@ -270,16 +292,20 @@ test('PowerShell wrapper preflights a supported CLI and passes literal arguments
     ]);
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const args = readFileSync(capture, 'utf8').replace(/^\uFEFF/, '').trim().split(/\r?\n/);
-    assert.deepEqual(args.slice(0, 7), [
+    assert.deepEqual(args.slice(0, 11), [
       'exec',
       '--model',
       'gpt-5.6-sol',
       '-c',
       'model_reasoning_effort="ultra"',
+      '-c',
+      'agents.default_subagent_model="gpt-5.6-luna"',
+      '-c',
+      'agents.default_subagent_reasoning_effort="medium"',
       '--sandbox',
       'read-only',
     ]);
-    assert.match(args[7], /^Use \$fable-audit\. Scope: src path Focus: money safety\./);
+    assert.match(args[11], /^Use \$fable-audit\. Scope: src path Focus: money safety\./);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }

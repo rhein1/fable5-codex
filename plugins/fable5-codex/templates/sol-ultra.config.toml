@@ -3,7 +3,9 @@ model = "gpt-5.6-sol"
 model_reasoning_effort = "ultra"
 
 [agents]
-# Codex defaults to six concurrently open agent threads. Keep that cap and
-# prevent recursive fan-out; Fable prompts assign only the lenses a task needs.
-max_threads = 6
+# Keep the Sol Ultra coordinator for synthesis and final verification. Use
+# Luna medium for bounded workers to reduce delegated-run cost and latency.
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "medium"
+max_concurrent_threads_per_session = 3
 max_depth = 1

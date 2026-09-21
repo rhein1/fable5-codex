@@ -98,20 +98,22 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 
 The installed skill will use real subagents only when Codex exposes a subagent tool in that runtime. If not, it should report `single-agent multi-lens` with a no-subagent reason.
 
-## Select GPT-5.6 Sol Ultra
+## Select Sol Ultra With Luna Workers
 
 In the Codex app, select **GPT-5.6 Sol** and **Ultra** beneath the composer. If Ultra is hidden, open **Settings > Configuration** and enable it in the model picker. Ultra availability depends on the active plan and surface.
 
 GPT-5.6 requires Codex CLI `0.144.0` or newer. The wrappers check the selected executable before launching Codex and fail with an upgrade message when it is too old.
 
-For CLI and repo defaults, copy the values from `plugins/fable5-codex/templates/sol-ultra.config.toml` into `~/.codex/config.toml` or a trusted repo's `.codex/config.toml`:
+For CLI and repo defaults, copy the values from `plugins/fable5-codex/templates/sol-ultra.config.toml` into `~/.codex/config.toml` or a trusted repo's `.codex/config.toml`. The coordinator stays on Sol Ultra while bounded workers use Luna medium:
 
 ```toml
 model = "gpt-5.6-sol"
 model_reasoning_effort = "ultra"
 
 [agents]
-max_threads = 6
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "medium"
+max_concurrent_threads_per_session = 3
 max_depth = 1
 ```
 
@@ -123,13 +125,13 @@ The packaged CLI wrappers can generate the same prompt:
 .\plugins\fable5-codex\scripts\fable5-codex.ps1 -Mode audit -Scope . -Focus "correctness, security, data, operations, tests, and docs-vs-reality" -Subagents
 ```
 
-Use `-CodexExecutable <path>` when the current CLI is installed somewhere other than `PATH`.
+Use `-CodexExecutable <path>` when the current CLI is installed somewhere other than `PATH`. Override workers with `-SubagentModel` and `-SubagentReasoningEffort` only when needed.
 
 ```bash
 bash ./plugins/fable5-codex/scripts/fable5-codex.sh audit . "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
 ```
 
-Use `--codex-executable=<path>` or `FABLE5_CODEX_EXECUTABLE=<path>` to select a non-default CLI. Bash flags may appear before or after the positional mode, scope, and optional focus.
+Use `--codex-executable=<path>` or `FABLE5_CODEX_EXECUTABLE=<path>` to select a non-default CLI. Worker overrides are `--subagent-model=`, `--subagent-reasoning=`, `FABLE5_SUBAGENT_MODEL`, and `FABLE5_SUBAGENT_REASONING_EFFORT`. Bash flags may appear before or after the positional mode, scope, and optional focus.
 
 ## Personal Install
 

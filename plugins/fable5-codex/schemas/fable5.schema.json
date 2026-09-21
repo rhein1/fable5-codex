@@ -77,6 +77,9 @@
         "artifactPath": { "type": "string" },
         "authorizationPhrase": { "type": "string" },
         "subagentTool": { "type": "string" },
+        "requestedWorkerModel": { "type": "string" },
+        "requestedWorkerReasoningEffort": { "type": "string" },
+        "workerFallbackReason": { "type": "string" },
         "spawnedAgents": {
           "type": "array",
           "items": { "$ref": "#/$defs/spawnedAgent" }
@@ -130,7 +133,12 @@
       "properties": {
         "id": { "type": "string" },
         "lens": { "type": "string" },
-        "status": { "type": "string" }
+        "status": { "type": "string" },
+        "requestedModel": { "type": "string" },
+        "requestedReasoningEffort": { "type": "string" },
+        "actualModel": { "type": "string" },
+        "actualReasoningEffort": { "type": "string" },
+        "fallbackReason": { "type": "string" }
       },
       "additionalProperties": false
     },

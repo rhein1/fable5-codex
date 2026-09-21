@@ -455,22 +455,37 @@ function validate() {
   assert(schema.$schema === 'https://json-schema.org/draft/2020-12/schema', 'Unexpected JSON Schema draft');
   assert(schema.type === 'object' && schema.$defs?.finding && schema.$defs?.workflowTrace,
     'Evidence ledger schema is missing required object definitions');
-  readJson(ecfTemplate);
+  assert(schema.$defs.workflowTrace.properties?.requestedWorkerModel?.type === 'string'
+    && schema.$defs.spawnedAgent.properties?.actualModel?.type === 'string'
+    && schema.$defs.spawnedAgent.properties?.fallbackReason?.type === 'string',
+  'Evidence ledger schema must preserve requested/actual worker model truth');
+  const ecfContract = readJson(ecfTemplate);
+  assert(ecfContract.delegationPolicy?.defaultWorkerModel === 'gpt-5.6-luna'
+    && ecfContract.delegationPolicy?.defaultWorkerReasoningEffort === 'medium'
+    && ecfContract.receipt?.requestedWorkerModel === 'gpt-5.6-luna',
+  'ECF template must default bounded workers to Luna medium');
 
   const solConfig = parsePackagedToml(solUltraTemplate);
   assert(solConfig.model === 'gpt-5.6-sol', 'Sol Ultra config must use gpt-5.6-sol');
   assert(solConfig.model_reasoning_effort === 'ultra', 'Sol Ultra config must use ultra reasoning');
-  assert(solConfig.agents?.max_threads === 6 && solConfig.agents?.max_depth === 1,
-    'Sol Ultra config must bound agent threads and depth');
+  assert(solConfig.agents?.default_subagent_model === 'gpt-5.6-luna'
+    && solConfig.agents?.default_subagent_reasoning_effort === 'medium',
+  'Sol Ultra config must default bounded workers to Luna medium');
+  assert(solConfig.agents?.max_concurrent_threads_per_session === 3 && solConfig.agents?.max_depth === 1,
+    'Sol Ultra config must bound concurrent agent threads and depth');
 
   const powerShellWrapperText = readFileSync(powerShellWrapper, 'utf8');
   const bashWrapperText = readFileSync(bashWrapper, 'utf8');
   assert(/\$Model\s*=\s*"gpt-5\.6-sol"/.test(powerShellWrapperText)
-    && /\$ReasoningEffort\s*=\s*"ultra"/.test(powerShellWrapperText),
-  'PowerShell wrapper must default to gpt-5.6-sol with ultra reasoning');
+    && /\$ReasoningEffort\s*=\s*"ultra"/.test(powerShellWrapperText)
+    && /\$SubagentModel\s*=\s*"gpt-5\.6-luna"/.test(powerShellWrapperText)
+    && /\$SubagentReasoningEffort\s*=\s*"medium"/.test(powerShellWrapperText),
+  'PowerShell wrapper must default to a Sol Ultra coordinator with Luna medium workers');
   assert(/FABLE5_MODEL:-gpt-5\.6-sol/.test(bashWrapperText)
-    && /FABLE5_REASONING_EFFORT:-ultra/.test(bashWrapperText),
-  'Bash wrapper must default to gpt-5.6-sol with ultra reasoning');
+    && /FABLE5_REASONING_EFFORT:-ultra/.test(bashWrapperText)
+    && /FABLE5_SUBAGENT_MODEL:-gpt-5\.6-luna/.test(bashWrapperText)
+    && /FABLE5_SUBAGENT_REASONING_EFFORT:-medium/.test(bashWrapperText),
+  'Bash wrapper must default to a Sol Ultra coordinator with Luna medium workers');
 
   const customAgentsDir = join(plugin, 'custom-agents');
   for (const file of readdirSync(customAgentsDir).filter((name) => name.endsWith('.toml'))) {
@@ -490,8 +505,11 @@ function validate() {
       && /^description:\s*.+$/m.test(frontmatter[1]), `Skill frontmatter is missing name/description for ${skill}`);
     assert(/gpt-5\.6-sol/.test(text)
       && /model_reasoning_effort\s*=\s*"ultra"/.test(text)
+      && /gpt-5\.6-luna/.test(text)
+      && /`medium` reasoning/.test(text)
+      && /requested and actual worker model/.test(text)
       && /parallel delegation/.test(text)
-      && /single-agent multi-lens/.test(text), `Skill is missing the Sol Ultra delegation/fallback policy: ${skill}`);
+      && /single-agent multi-lens/.test(text), `Skill is missing the Sol coordinator and Luna worker policy: ${skill}`);
   }
 
   const installDryRun = spawnSync(process.execPath, [installer, '--dry-run', '--no-codex-add'], {

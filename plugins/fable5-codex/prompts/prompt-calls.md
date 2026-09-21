@@ -5,7 +5,7 @@ Use $fable-understand. Question: how does this repo boot? Include citations and 
 ```
 
 ```text
-Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: server/routes. Focus: authz, trust-state mutation, money flow, and docs-vs-reality. Spawn four independent read-only lenses: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist. Include the ECF contract and Workflow Trace.
+Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly authorize parallel subagents for this run. Scope: server/routes. Focus: authz, trust-state mutation, money flow, and docs-vs-reality. Spawn four independent read-only lenses on GPT-5.6 Luna with medium reasoning: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The Sol Ultra coordinator must verify candidates locally before final findings. Do not claim multi-agent mode or Luna use unless runtime-visible evidence supports it. Include the ECF contract and Workflow Trace.
 ```
 
 ```text

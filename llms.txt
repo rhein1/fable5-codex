@@ -18,7 +18,7 @@ Installed skills:
 - `$fable-design-options`
 - `$fable-sweep`
 
-Fable workflows require source-backed evidence, explicit unknowns, local verification, and a truthful Workflow Trace. They use real subagents only when the runtime exposes them; otherwise they report single-agent multi-lens execution.
+Fable workflows require source-backed evidence, explicit unknowns, local verification, and a truthful Workflow Trace. Demanding runs keep a GPT-5.6 Sol Ultra coordinator and default bounded subagents to GPT-5.6 Luna medium. They use real subagents only when the runtime exposes them; otherwise they report single-agent multi-lens execution.
 
 Docs:
 
