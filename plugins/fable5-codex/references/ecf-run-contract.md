@@ -10,7 +10,7 @@ Fable-5 for Codex uses an ECF-style run contract to make agent work explicit, bo
 
 ## Sol Coordinator And Luna Worker Profile
 
-The recommended high-capability profile keeps the coordinator on `gpt-5.6-sol` with `model_reasoning_effort = "ultra"` and uses `gpt-5.6-luna` with `medium` reasoning for bounded subagents. Set the worker model and effort explicitly on each spawn when the runtime supports it. Keep synthesis, load-bearing verification, and side effects with the coordinator.
+The recommended high-capability profile uses `gpt-5.6-sol` with `model_reasoning_effort = "ultra"` for the parent when that profile is selected or configured before the run, and uses `gpt-5.6-luna` with `medium` reasoning for bounded subagents. Set the worker model and effort explicitly on each spawn when the runtime supports it. Keep synthesis, load-bearing verification, and side effects with the coordinator. Record the requested and actual coordinator profile and any fallback; never imply Sol Ultra was active when it was not.
 
 Use `../templates/sol-ultra.config.toml` as a starting configuration. Keep subagent depth at `1` unless recursive delegation is an explicit, reviewed requirement. If Ultra is unavailable for the active account or surface, use `max` or `xhigh` for the coordinator and retain the Luna worker policy. If the runtime cannot honor the requested worker model or effort, record the actual values and fallback reason; never claim Luna was used without runtime evidence.
 
@@ -67,6 +67,8 @@ Workflow Trace
 - subagent trigger: large-task policy | explicit user request | not used
 - authorization phrase: <quoted user phrase or none>
 - subagent tool: <tool name or unavailable>
+- requested coordinator profile: <model and reasoning effort>
+- actual coordinator profile: <model and reasoning effort or unavailable>; fallback: <reason or none>
 - requested worker profile: <model and reasoning effort>
 - spawned agents:
   - <agent_id>: <lens>; actual model/effort: <values or unavailable>; fallback: <reason or none>
@@ -92,7 +94,7 @@ If no subagents were used, replace `spawned agents` with `no-subagent reason`.
 - `authoritySplit`: what subagents may do and what the main agent alone may do
 - `evidencePolicy`: source, command, runtime, artifact, redaction, and unknown rules
 - `verificationPolicy`: how candidates must be reproduced, refuted, or bounded
-- `receipt`: final mode, requested and actual worker profiles, subagent IDs, validation, coverage gaps, and unknowns
+- `receipt`: final mode, requested and actual coordinator and worker profiles, subagent IDs, validation, coverage gaps, and unknowns
 
 ## Review Contract
 

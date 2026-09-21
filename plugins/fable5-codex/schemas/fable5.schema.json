@@ -77,6 +77,11 @@
         "artifactPath": { "type": "string" },
         "authorizationPhrase": { "type": "string" },
         "subagentTool": { "type": "string" },
+        "requestedCoordinatorModel": { "type": "string" },
+        "requestedCoordinatorReasoningEffort": { "type": "string" },
+        "actualCoordinatorModel": { "type": "string" },
+        "actualCoordinatorReasoningEffort": { "type": "string" },
+        "coordinatorFallbackReason": { "type": "string" },
         "requestedWorkerModel": { "type": "string" },
         "requestedWorkerReasoningEffort": { "type": "string" },
         "workerFallbackReason": { "type": "string" },
@@ -123,9 +128,38 @@
         "authoritySplit": { "type": "object" },
         "evidencePolicy": { "type": "object" },
         "verificationPolicy": { "type": "object" },
-        "receipt": { "type": "object" }
+        "receipt": { "$ref": "#/$defs/ecfReceipt" }
       },
       "additionalProperties": false
+    },
+    "ecfReceipt": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["multi-agent", "single-agent-multi-lens", "single-agent"]
+        },
+        "subagentTrigger": { "type": "string" },
+        "subagentTool": { "type": "string" },
+        "requestedCoordinatorModel": { "type": "string" },
+        "requestedCoordinatorReasoningEffort": { "type": "string" },
+        "actualCoordinatorModel": { "type": "string" },
+        "actualCoordinatorReasoningEffort": { "type": "string" },
+        "coordinatorFallbackReason": { "type": "string" },
+        "requestedWorkerModel": { "type": "string" },
+        "requestedWorkerReasoningEffort": { "type": "string" },
+        "actualWorkerProfiles": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "workerFallbackReason": { "type": "string" },
+        "spawnedAgents": { "type": "array" },
+        "lensesCovered": { "type": "array" },
+        "localVerification": { "type": "array" },
+        "coverageGaps": { "type": "array" },
+        "unknowns": { "type": "array" }
+      },
+      "additionalProperties": true
     },
     "spawnedAgent": {
       "type": "object",

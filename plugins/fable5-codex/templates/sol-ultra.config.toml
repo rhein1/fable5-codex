@@ -1,4 +1,5 @@
 # Copy these settings into ~/.codex/config.toml or a trusted repo's .codex/config.toml.
+# The Luna worker-default keys require Codex CLI 0.152.0 or newer.
 model = "gpt-5.6-sol"
 model_reasoning_effort = "ultra"
 

@@ -2,7 +2,7 @@
 
 Fable-5 v0.4 uses `gpt-5.6-sol` with `ultra` reasoning as the coordinator for large or high-risk work and `gpt-5.6-luna` with `medium` reasoning for bounded subagents by default.
 
-GPT-5.6 requires Codex CLI `0.144.0` or newer. The packaged wrappers inspect the selected executable and stop with an upgrade message before launching an older CLI.
+The packaged Luna worker-default keys require Codex CLI `0.152.0` or newer. The wrappers inspect the selected executable and stop with an upgrade message before launching an older CLI.
 
 ## Exact Configuration
 

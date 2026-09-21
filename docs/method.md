@@ -19,7 +19,7 @@ render report
 
 ## Multi-Subagent Contract
 
-On GPT-5.6 Sol Ultra, the coordinator may delegate proactively. Fable defaults bounded workers to GPT-5.6 Luna with medium reasoning so independent evidence lenses cost less while synthesis and final verification remain with the coordinator. Fable skills still explicitly request parallel delegation for large or high-risk work so the lens and authority policy remains durable across Codex surfaces. When the runtime exposes a subagent tool and the user has not opted out, split work across independent lenses and record the real agent IDs, requested worker profile, actual worker profile, and any fallback in the final Workflow Trace. Otherwise run the same lenses locally and report `single-agent multi-lens`.
+On GPT-5.6 Sol Ultra, the coordinator may delegate proactively. Fable defaults bounded workers to GPT-5.6 Luna with medium reasoning so independent evidence lenses cost less while synthesis and final verification remain with the coordinator. Fable skills still explicitly request parallel delegation for large or high-risk work so the lens and authority policy remains durable across Codex surfaces. When the runtime exposes a subagent tool and the user has not opted out, split work across independent lenses and record the real agent IDs, requested and actual coordinator and worker profiles, and any fallback in the final Workflow Trace. Otherwise run the same lenses locally and report `single-agent multi-lens`.
 
 Default audit lenses:
 

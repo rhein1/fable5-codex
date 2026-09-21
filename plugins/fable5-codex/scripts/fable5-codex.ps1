@@ -17,7 +17,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$minimumGpt56CliVersion = [version]"0.144.0"
+$minimumWorkerDefaultsCliVersion = [version]"0.152.0"
 
 $skillByMode = @{
   "audit" = '$fable-audit'
@@ -38,7 +38,7 @@ if ($Focus.Trim().Length -gt 0) {
 if ($Ecf -or $Subagents) {
   $prompt = "$prompt Include an ECF run contract and Workflow Trace."
 }
-$prompt = "$prompt For large or high-risk Fable tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out. Use $SubagentModel with $SubagentReasoningEffort reasoning for each delegated worker when supported, and report the requested and actual worker model plus any fallback; otherwise report single-agent multi-lens with the no-subagent reason."
+$prompt = "$prompt For large or high-risk Fable tasks, use real Codex subagents when the runtime exposes a subagent tool and the user has not opted out. Report the requested and actual coordinator model and effort plus any fallback. Use $SubagentModel with $SubagentReasoningEffort reasoning for each delegated worker when supported, and report the requested and actual worker model plus any fallback; otherwise report single-agent multi-lens with the no-subagent reason."
 if ($Subagents) {
   $prompt = "$prompt I explicitly authorize parallel subagents for this run. Spawn four independent read-only lenses when the runtime exposes a subagent tool: correctness-integration, security-privacy-authz, data-migrations-idempotency, and operations-tests-docs. The main agent must verify candidates locally before final findings. Do not claim multi-agent mode unless real subagent IDs exist."
 }
@@ -60,7 +60,7 @@ if ($DryRun) {
     subagentModel = $SubagentModel
     subagentReasoningEffort = $SubagentReasoningEffort
     codexExecutable = $CodexExecutable
-    minimumCliVersion = $minimumGpt56CliVersion.ToString()
+    minimumCliVersion = $minimumWorkerDefaultsCliVersion.ToString()
     sandbox = $sandbox
     prompt = $prompt
   } | ConvertTo-Json -Depth 3
@@ -81,8 +81,8 @@ if ($versionExitCode -ne 0 -or -not $versionMatch.Success) {
   throw "Could not determine Codex CLI version from '$CodexExecutable --version': $versionOutput"
 }
 $installedCliVersion = [version]$versionMatch.Groups[1].Value
-if (($Model -match '^gpt-5\.6-' -or $SubagentModel -match '^gpt-5\.6-') -and $installedCliVersion -lt $minimumGpt56CliVersion) {
-  throw "GPT-5.6 requires Codex CLI $minimumGpt56CliVersion or newer; $CodexExecutable reports $installedCliVersion."
+if ($installedCliVersion -lt $minimumWorkerDefaultsCliVersion) {
+  throw "Fable's Luna worker defaults require Codex CLI $minimumWorkerDefaultsCliVersion or newer; $CodexExecutable reports $installedCliVersion."
 }
 
 & $CodexExecutable @codexArgs

@@ -18,7 +18,7 @@ Subagent behavior:
 - `$fable-audit` must still show the workflow every time through a `Workflow Trace` section and should declare the ECF run contract when the user asks for ECF, subagents, repeatable evidence, CI ledgers, or durable receipts.
 - When subagents are not available, the task is small/routine, or the user opted out, the audit should run as `single-agent multi-lens` and say that directly instead of implying independent review happened.
 - Do not claim `multi-agent` unless real subagent IDs or runtime-visible handles exist.
-- Record the requested and actual worker model and any fallback. Do not claim Luna was used without runtime evidence.
+- Record the requested and actual coordinator and worker profiles plus any fallback. Do not claim Sol Ultra or Luna was used without runtime evidence.
 - Keep authority split explicit: subagents research/plan/find/verify; the main agent spot-checks and owns final findings plus side effects.
 
 Suggested rollout:

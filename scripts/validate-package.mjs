@@ -455,13 +455,24 @@ function validate() {
   assert(schema.$schema === 'https://json-schema.org/draft/2020-12/schema', 'Unexpected JSON Schema draft');
   assert(schema.type === 'object' && schema.$defs?.finding && schema.$defs?.workflowTrace,
     'Evidence ledger schema is missing required object definitions');
-  assert(schema.$defs.workflowTrace.properties?.requestedWorkerModel?.type === 'string'
+  assert(schema.$defs.workflowTrace.properties?.requestedCoordinatorModel?.type === 'string'
+    && schema.$defs.workflowTrace.properties?.actualCoordinatorModel?.type === 'string'
+    && schema.$defs.workflowTrace.properties?.requestedWorkerModel?.type === 'string'
     && schema.$defs.spawnedAgent.properties?.actualModel?.type === 'string'
     && schema.$defs.spawnedAgent.properties?.fallbackReason?.type === 'string',
-  'Evidence ledger schema must preserve requested/actual worker model truth');
+  'Evidence ledger schema must preserve requested/actual coordinator and worker model truth');
+  assert(schema.$defs.ecfRunContract.properties?.receipt?.$ref === '#/$defs/ecfReceipt'
+    && schema.$defs.ecfReceipt.properties?.requestedCoordinatorModel?.type === 'string'
+    && schema.$defs.ecfReceipt.properties?.actualCoordinatorModel?.type === 'string'
+    && schema.$defs.ecfReceipt.properties?.requestedWorkerModel?.type === 'string'
+    && schema.$defs.ecfReceipt.properties?.actualWorkerProfiles?.type === 'array'
+    && schema.$defs.ecfReceipt.properties?.workerFallbackReason?.type === 'string',
+  'ECF receipt schema must preserve requested/actual coordinator and worker model truth');
   const ecfContract = readJson(ecfTemplate);
   assert(ecfContract.delegationPolicy?.defaultWorkerModel === 'gpt-5.6-luna'
     && ecfContract.delegationPolicy?.defaultWorkerReasoningEffort === 'medium'
+    && ecfContract.receipt?.requestedCoordinatorModel === 'gpt-5.6-sol'
+    && ecfContract.receipt?.requestedCoordinatorReasoningEffort === 'ultra'
     && ecfContract.receipt?.requestedWorkerModel === 'gpt-5.6-luna',
   'ECF template must default bounded workers to Luna medium');
 
@@ -479,12 +490,14 @@ function validate() {
   assert(/\$Model\s*=\s*"gpt-5\.6-sol"/.test(powerShellWrapperText)
     && /\$ReasoningEffort\s*=\s*"ultra"/.test(powerShellWrapperText)
     && /\$SubagentModel\s*=\s*"gpt-5\.6-luna"/.test(powerShellWrapperText)
-    && /\$SubagentReasoningEffort\s*=\s*"medium"/.test(powerShellWrapperText),
+    && /\$SubagentReasoningEffort\s*=\s*"medium"/.test(powerShellWrapperText)
+    && /minimumWorkerDefaultsCliVersion\s*=\s*\[version\]"0\.152\.0"/.test(powerShellWrapperText),
   'PowerShell wrapper must default to a Sol Ultra coordinator with Luna medium workers');
   assert(/FABLE5_MODEL:-gpt-5\.6-sol/.test(bashWrapperText)
     && /FABLE5_REASONING_EFFORT:-ultra/.test(bashWrapperText)
     && /FABLE5_SUBAGENT_MODEL:-gpt-5\.6-luna/.test(bashWrapperText)
-    && /FABLE5_SUBAGENT_REASONING_EFFORT:-medium/.test(bashWrapperText),
+    && /FABLE5_SUBAGENT_REASONING_EFFORT:-medium/.test(bashWrapperText)
+    && /minimum_worker_defaults_cli_version="0\.152\.0"/.test(bashWrapperText),
   'Bash wrapper must default to a Sol Ultra coordinator with Luna medium workers');
 
   const customAgentsDir = join(plugin, 'custom-agents');
@@ -507,6 +520,7 @@ function validate() {
       && /model_reasoning_effort\s*=\s*"ultra"/.test(text)
       && /gpt-5\.6-luna/.test(text)
       && /`medium` reasoning/.test(text)
+      && /requested and actual coordinator model and effort/.test(text)
       && /requested and actual worker model/.test(text)
       && /parallel delegation/.test(text)
       && /single-agent multi-lens/.test(text), `Skill is missing the Sol coordinator and Luna worker policy: ${skill}`);

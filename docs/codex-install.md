@@ -102,7 +102,7 @@ The installed skill will use real subagents only when Codex exposes a subagent t
 
 In the Codex app, select **GPT-5.6 Sol** and **Ultra** beneath the composer. If Ultra is hidden, open **Settings > Configuration** and enable it in the model picker. Ultra availability depends on the active plan and surface.
 
-GPT-5.6 requires Codex CLI `0.144.0` or newer. The wrappers check the selected executable before launching Codex and fail with an upgrade message when it is too old.
+The Luna worker-default keys require Codex CLI `0.152.0` or newer. The wrappers check the selected executable before launching Codex and fail with an upgrade message when it is too old.
 
 For CLI and repo defaults, copy the values from `plugins/fable5-codex/templates/sol-ultra.config.toml` into `~/.codex/config.toml` or a trusted repo's `.codex/config.toml`. The coordinator stays on Sol Ultra while bounded workers use Luna medium:
 

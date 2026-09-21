@@ -150,7 +150,7 @@ Cite exact files and include an UNKNOWNS section.
   <img src="assets/brand/fable5-sol-ultra.png" alt="Fable-5 configured for GPT-5.6 Sol Ultra multi-agent workflows" width="920">
 </p>
 
-The repository includes a cost-aware multi-agent profile for large or high-risk work: `gpt-5.6-sol` with `ultra` reasoning coordinates, while bounded workers default to `gpt-5.6-luna` with `medium` reasoning. The coordinator retains synthesis and final verification. The packaged wrappers enforce the repository's declared minimum Codex CLI version before launch.
+The repository includes a cost-aware multi-agent profile for large or high-risk work: `gpt-5.6-sol` with `ultra` reasoning coordinates, while bounded workers default to `gpt-5.6-luna` with `medium` reasoning. The coordinator retains synthesis and final verification. Interactive use must select the coordinator profile before the run; Workflow Traces record requested and actual coordinator and worker profiles. The packaged wrappers enforce the repository's declared minimum Codex CLI version before launch.
 
 Use the ready-to-copy template:
 
