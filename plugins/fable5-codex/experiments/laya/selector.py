@@ -14,8 +14,9 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-import tempfile
 import re
+import signal
+import threading
 import time
 import unicodedata
 
@@ -26,6 +27,71 @@ LABELS = tuple(CONTRACT["questions"][CONTRACT["question_id"]]["criteria"])
 PLAYBOOKS = LABELS[:-1]
 MAX_JSON_BYTES = 32768
 MAX_OUTPUT_BYTES = 65536
+SUPERVISOR_UNAVAILABLE = (124, 125)
+SUPERVISOR = r'''import subprocess,sys
+job=None
+if sys.platform == "win32":
+    import ctypes
+    from ctypes import wintypes
+    class BASIC(ctypes.Structure):
+        _fields_=[("PerProcessUserTimeLimit",ctypes.c_longlong),("PerJobUserTimeLimit",ctypes.c_longlong),("LimitFlags",wintypes.DWORD),("MinimumWorkingSetSize",ctypes.c_size_t),("MaximumWorkingSetSize",ctypes.c_size_t),("ActiveProcessLimit",wintypes.DWORD),("Affinity",ctypes.c_size_t),("PriorityClass",wintypes.DWORD),("SchedulingClass",wintypes.DWORD)]
+    class IO(ctypes.Structure):
+        _fields_=[("ReadOperationCount",ctypes.c_ulonglong),("WriteOperationCount",ctypes.c_ulonglong),("OtherOperationCount",ctypes.c_ulonglong),("ReadTransferCount",ctypes.c_ulonglong),("WriteTransferCount",ctypes.c_ulonglong),("OtherTransferCount",ctypes.c_ulonglong)]
+    class EXTENDED(ctypes.Structure):
+        _fields_=[("BasicLimitInformation",BASIC),("IoInfo",IO),("ProcessMemoryLimit",ctypes.c_size_t),("JobMemoryLimit",ctypes.c_size_t),("PeakProcessMemoryUsed",ctypes.c_size_t),("PeakJobMemoryUsed",ctypes.c_size_t)]
+    kernel32=ctypes.WinDLL("kernel32",use_last_error=True)
+    kernel32.CreateJobObjectW.argtypes=[ctypes.c_void_p,wintypes.LPCWSTR]
+    kernel32.CreateJobObjectW.restype=wintypes.HANDLE
+    kernel32.SetInformationJobObject.argtypes=[wintypes.HANDLE,ctypes.c_int,ctypes.c_void_p,wintypes.DWORD]
+    kernel32.SetInformationJobObject.restype=wintypes.BOOL
+    kernel32.AssignProcessToJobObject.argtypes=[wintypes.HANDLE,wintypes.HANDLE]
+    kernel32.AssignProcessToJobObject.restype=wintypes.BOOL
+    kernel32.CloseHandle.argtypes=[wintypes.HANDLE]
+    kernel32.CloseHandle.restype=wintypes.BOOL
+    limits=EXTENDED()
+    limits.BasicLimitInformation.LimitFlags=0x2000
+    job=kernel32.CreateJobObjectW(None,None)
+    if not job or not kernel32.SetInformationJobObject(job,9,ctypes.byref(limits),ctypes.sizeof(limits)):
+        if job:
+            kernel32.CloseHandle(job)
+        raise SystemExit(124)
+try:
+    flags=getattr(subprocess,"CREATE_SUSPENDED",0x00000004) if sys.platform == "win32" else 0
+    child=subprocess.Popen(sys.argv[1:],stdin=sys.stdin.buffer,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,shell=False,creationflags=flags)
+except OSError:
+    if job:
+        kernel32.CloseHandle(job)
+    raise SystemExit(125)
+if job:
+    handle=wintypes.HANDLE(int(child._handle))
+    if not kernel32.AssignProcessToJobObject(job,handle):
+        child.kill()
+        child.wait()
+        kernel32.CloseHandle(job)
+        raise SystemExit(124)
+    ntdll=ctypes.WinDLL("ntdll")
+    ntdll.NtResumeProcess.argtypes=[wintypes.HANDLE]
+    ntdll.NtResumeProcess.restype=ctypes.c_long
+    if ntdll.NtResumeProcess(handle) != 0:
+        kernel32.CloseHandle(job)
+        child.wait()
+        raise SystemExit(124)
+try:
+    while True:
+        chunk=child.stdout.read(8192)
+        if not chunk:
+            break
+        sys.stdout.buffer.write(chunk)
+        sys.stdout.buffer.flush()
+except BrokenPipeError:
+    child.kill()
+finally:
+    child.stdout.close()
+code=child.wait()
+if job:
+    kernel32.CloseHandle(job)
+raise SystemExit(code)
+'''
 
 
 class Invalid(ValueError):
@@ -53,7 +119,9 @@ def decode_json(raw):
         raise Invalid("nonfinite_json")
     try:
         return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
-    except (json.JSONDecodeError, UnicodeError) as exc:
+    except Invalid:
+        raise
+    except (json.JSONDecodeError, UnicodeError, ValueError, RecursionError) as exc:
         raise Invalid("invalid_json") from exc
 
 
@@ -94,20 +162,117 @@ def child_env():
 def run_json(argv, payload, timeout):
     require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool)
             and math.isfinite(timeout) and 0 < timeout <= 300, "invalid_timeout")
-    with tempfile.TemporaryFile() as output:
+    deadline = time.monotonic() + timeout
+    encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    command = [sys.executable, "-I", "-B", "-c", SUPERVISOR, *argv]
+    popen_options = {"start_new_session": True} if os.name != "nt" else {
+        "creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)}
+    try:
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.DEVNULL, env=child_env(), shell=False,
+                                   **popen_options)
+    except OSError as exc:
+        raise Invalid("provider_unavailable") from exc
+    output = bytearray()
+    overflow = threading.Event()
+    read_failed = threading.Event()
+    termination_lock = threading.Lock()
+    terminated = threading.Event()
+
+    def terminate():
+        with termination_lock:
+            if terminated.is_set():
+                return
+            terminated.set()
+            if os.name == "nt":
+                taskkill = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "taskkill.exe"
+                try:
+                    subprocess.run([str(taskkill), "/PID", str(process.pid), "/T", "/F"],
+                                   stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, timeout=1, check=False,
+                                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                except (OSError, subprocess.TimeoutExpired):
+                    pass
+            else:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except (OSError, ProcessLookupError):
+                    pass
+            if process.poll() is None:
+                try:
+                    process.kill()
+                except OSError:
+                    pass
+
+    def bounded_cleanup():
         try:
-            result = subprocess.run(argv, input=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-                                    stdout=output, stderr=subprocess.DEVNULL,
-                                    timeout=timeout, env=child_env(), shell=False, check=False)
-        except subprocess.TimeoutExpired as exc:
-            raise Invalid("provider_timeout") from exc
-        except OSError as exc:
-            raise Invalid("provider_unavailable") from exc
-        require(result.returncode == 0, "provider_failed")
-        output.seek(0, os.SEEK_END)
-        require(output.tell() <= MAX_OUTPUT_BYTES, "provider_output_too_large")
-        output.seek(0)
-        return decode_json(output.read(MAX_OUTPUT_BYTES))
+            process.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            pass
+        writer.join(timeout=1)
+        reader.join(timeout=1)
+
+    def read_output():
+        try:
+            while True:
+                remaining = MAX_OUTPUT_BYTES + 1 - len(output)
+                if remaining <= 0:
+                    overflow.set()
+                    terminate()
+                    return
+                chunk = process.stdout.read(min(8192, remaining))
+                if not chunk:
+                    return
+                output.extend(chunk)
+                if len(output) > MAX_OUTPUT_BYTES:
+                    overflow.set()
+                    terminate()
+                    return
+        except OSError:
+            read_failed.set()
+            terminate()
+        finally:
+            try:
+                process.stdout.close()
+            except OSError:
+                pass
+
+    def write_input():
+        try:
+            process.stdin.write(encoded)
+            process.stdin.flush()
+        except (BrokenPipeError, OSError):
+            pass
+        finally:
+            try:
+                process.stdin.close()
+            except OSError:
+                pass
+
+    reader = threading.Thread(target=read_output, name="fable-laya-output", daemon=True)
+    writer = threading.Thread(target=write_input, name="fable-laya-input", daemon=True)
+    reader.start()
+    writer.start()
+    try:
+        returncode = process.wait(timeout=max(0, deadline - time.monotonic()))
+    except subprocess.TimeoutExpired as exc:
+        terminate()
+        bounded_cleanup()
+        raise Invalid("provider_timeout") from exc
+    writer.join(timeout=max(0, deadline - time.monotonic()))
+    reader.join(timeout=max(0, deadline - time.monotonic()))
+    if writer.is_alive() or reader.is_alive():
+        terminate()
+        bounded_cleanup()
+        raise Invalid("provider_timeout")
+    if os.name != "nt":
+        # The reaped supervisor led a private session/process group. Remove any
+        # provider descendants that detached their stdio but stayed in the group.
+        terminate()
+    require(not overflow.is_set(), "provider_output_too_large")
+    require(returncode not in SUPERVISOR_UNAVAILABLE, "provider_unavailable")
+    require(not read_failed.is_set() and returncode == 0, "provider_failed")
+    return decode_json(bytes(output))
 
 
 def keyword_baseline(request, node="node"):
@@ -214,7 +379,7 @@ def validate_dataset(dataset):
         require(case["group"] not in group_splits or group_splits[case["group"]] == case["split"], "group_split_leakage")
         group_splits[case["group"]] = case["split"]
         request = validate_request(case["request"])
-        normalized = " ".join(request["task"].casefold().split())
+        normalized = " ".join(unicodedata.normalize("NFC", request["task"].casefold()).split())
         require(normalized not in texts, "duplicate_task")
         texts.add(normalized)
         acceptable = case["acceptable"]
@@ -242,7 +407,7 @@ def evaluate(dataset, *, split="test", **options):
     require(split in ("development", "validation", "test"), "invalid_split")
     cases = [case for case in dataset["cases"] if case["split"] == split]
     require(bool(cases), "empty_evaluation_split")
-    rows, observed_rows, paired, provenance, elapsed = [], [], [], [], []
+    rows, observed_rows, paired, provenance, all_elapsed = [], [], [], [], []
     for case in cases:
         result = suggest(case["request"], **options)
         observed = result["laya"]["status"] == "observed"
@@ -254,35 +419,50 @@ def evaluate(dataset, *, split="test", **options):
         if "reason" in result["laya"]:
             row["laya_reason"] = result["laya"]["reason"]
         rows.append(row)
-        elapsed.append(result["wall_ms"])
+        all_elapsed.append(result["wall_ms"])
         if observed:
-            row["probabilities"] = result["laya"]["probabilities"]
-            row["model_timing"] = result["laya"].get("timing")
-            observed_rows.append(row)
-            if row["baseline_status"] == "observed":
-                paired.append(row)
             origin = result["laya"].get("provenance")
-            if origin not in provenance:
+            if provenance and origin != provenance[0]:
+                row["laya_status"] = "failed"
+                row["laya_reason"] = "mixed_provenance"
+                row["laya_candidate"] = None
+                provenance.append(origin)
+            else:
+                row["probabilities"] = result["laya"]["probabilities"]
+                row["model_timing"] = result["laya"].get("timing")
+                observed_rows.append(row)
+                if row["baseline_status"] == "observed":
+                    paired.append(row)
+            if not provenance:
                 provenance.append(origin)
     ordinary = [r for r in rows if r["selection_source"] != "explicit"]
     attempted = [r for r in ordinary if r["laya_status"] in ("observed", "failed")]
-    def percentile(p):
-        ordered = sorted(elapsed)
-        return ordered[max(0, math.ceil(p * len(ordered)) - 1)]
+    skipped = [r for r in ordinary if r["laya_status"].startswith("skipped_")]
+    attempted_elapsed = [r["wall_ms"] for r in attempted]
+    observed_elapsed = [r["wall_ms"] for r in observed_rows]
+    def latency(values, kind):
+        if not values:
+            return None
+        ordered = sorted(values)
+        return {"p50": ordered[max(0, math.ceil(.5 * len(ordered)) - 1)],
+                "p95": ordered[max(0, math.ceil(.95 * len(ordered)) - 1)], "kind": kind}
     return {"schema_version": 1, "dataset_kind": dataset["kind"], "split": split,
             "dataset_sha256": hashlib.sha256(json.dumps(dataset, sort_keys=True).encode()).hexdigest(),
             "question_sha256": hashlib.sha256(CONTRACT_BYTES).hexdigest(),
             "status": "not_run" if options.get("engine", "keyword") == "keyword" else
-                      "complete" if attempted and len(observed_rows) == len(attempted) else "partial_or_unavailable",
+                      "complete" if ordinary and len(observed_rows) == len(ordinary) else "partial_or_unavailable",
             "promotion_eligible": False, "calibration_status": CONTRACT["calibration_status"],
             "total_cases": len(rows), "explicit_cases_excluded_from_model_metrics": len(rows) - len(ordinary),
-            "laya_attempted": len(attempted), "laya_observed": len(observed_rows), "paired_observed": len(paired),
+            "laya_attempted": len(attempted), "laya_observed": len(observed_rows), "laya_failed": sum(r["laya_status"] == "failed" for r in ordinary),
+            "laya_skipped": len(skipped), "paired_observed": len(paired),
             "baseline_failed": sum(r["baseline_status"] == "failed" for r in ordinary),
             "baseline_metrics": metrics([r for r in ordinary if r["baseline_status"] in ("observed", "policy_abstain")], "baseline"),
             "observed_laya_metrics": metrics(observed_rows, "laya_candidate"),
             "paired_observed_baseline_metrics": metrics(paired, "baseline"),
             "paired_observed_laya_metrics": metrics(paired, "laya_candidate"),
-            "wall_ms": {"p50": percentile(.5), "p95": percentile(.95), "kind": "end_to_end_cold_subprocess_per_case"},
+            "wall_ms": {"all_cases": latency(all_elapsed, "end_to_end_selector_per_case"),
+                        "laya_attempted": latency(attempted_elapsed, "end_to_end_shadow_attempt_per_attempted_case"),
+                        "laya_observed": latency(observed_elapsed, "end_to_end_cold_subprocess_per_observed_case")},
             "peak_memory_bytes": None, "provenance": provenance, "cases": rows,
             "limitations": ["Synthetic seeds are not deployment evidence.",
                             "Latin-script language is caller-declared, not detected.",

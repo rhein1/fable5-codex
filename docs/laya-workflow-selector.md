@@ -170,14 +170,19 @@ baseline provider, returns exit 3 with its report. Invalid input returns exit 2.
 
 Reports include acceptable-label rate, coverage, accuracy conditional on making
 a suggestion, expected-abstention recall, explicit/failed/skipped denominators,
-and paired observed comparisons. Multiple acceptable labels are supported.
+and paired observed comparisons. A skipped non-explicit case makes a requested
+shadow run partial rather than complete. Multiple acceptable labels are supported.
 Provider failures are not scored as successful abstentions. Labels, case IDs,
 groups, and split membership are never sent to Laya. Reports include IDs and
-outcomes but not raw task text. The probability values remain uncalibrated.
+outcomes but not raw task text. Observations with different manifest or runtime
+provenance are rejected from pooled metrics and make the run partial. The
+probability values remain uncalibrated.
 
-Every case uses a fresh model subprocess: reported end-to-end p50/p95 are COLD
-figures including baseline invocation, integrity verification, imports, and load
-costs. Separate worker load/inference timings exclude some of that overhead.
+Every observed model case uses a fresh subprocess. Reports separately identify
+all-case selector p50/p95, attempted-shadow p50/p95, and COLD observed-model
+p50/p95; skipped and explicit cases do not reduce the latter. Cold figures include
+baseline invocation, integrity verification, imports, and load costs. Separate
+worker load/inference timings exclude some of that overhead.
 No warm serving latency or memory consumption is measured; memory stays null.
 This deliberately simple harness is not a long-lived server or a performance
 optimization. Do not compare these timings directly to upstream GPU headlines.
@@ -186,7 +191,7 @@ Before an adoption decision, collect owner-approved, redacted representative
 requests (an initial target is a few hundred, not padded synthetic variants).
 Use `kind=owner_redacted`. Keep related tasks and paraphrases in the SAME group
 and split; use separate `development`, `validation`, and `test` partitions.
-The validator catches duplicate IDs, normalized identical text, and groups
+The validator catches duplicate IDs, whitespace/case/Unicode-normalized identical text, and groups
 crossing splits. Semantic near-duplicate and privacy review still require human
 judgment. Fix labels and thresholds before inspecting test outcomes; do not tune
 on the bundled synthetic seed and call it held-out validation.
@@ -205,7 +210,9 @@ be redacted by the owner; this implementation is NOT a secret detector/redactor.
 The subprocess environment drops caller credentials, proxy variables, Python
 path injection, and Node options. The worker uses local paths, library offline
 flags, no remote-code option, and temporary caches. Child stdout is bounded before
-being parsed, and errors are suppressed rather than reflected.
+being parsed, and errors are suppressed rather than reflected. Timeout and output
+limit cleanup contains the provider tree with a POSIX process group or a Windows
+kill-on-close Job Object.
 
 Temporary files/caches are implementation details, not secure erasure. Offline
 library settings and path/hash checks are not an OS sandbox; use network-isolated,

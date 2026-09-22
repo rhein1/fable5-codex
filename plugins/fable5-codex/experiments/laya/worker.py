@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import sys
 import tempfile
 import time
@@ -49,17 +50,36 @@ def file_hash(path):
     return digest.hexdigest()
 
 
+def is_link_like(path):
+    if path.is_symlink():
+        return True
+    attributes = getattr(os.lstat(path), "st_file_attributes", 0)
+    return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
+
+
 def artifact_files(model_dir):
     model_dir = Path(model_dir)
-    require(model_dir.is_absolute() and model_dir.is_dir() and not model_dir.is_symlink(), "absolute_local_model_required")
-    entries = sorted(model_dir.rglob("*"))
+    require(model_dir.is_absolute(), "absolute_local_model_required")
+    try:
+        root_is_link = is_link_like(model_dir)
+    except OSError as exc:
+        raise Invalid("absolute_local_model_required") from exc
+    require(not root_is_link and model_dir.is_dir(), "absolute_local_model_required")
+    entries = []
+    for path in sorted(model_dir.iterdir()):
+        require(not is_link_like(path), "symlink_artifact_rejected")
+        entries.append(path)
+        if path.is_dir():
+            require(path.name in ("encoder", "tokenizer"), "unexpected_artifact_directory")
+            for child in sorted(path.iterdir()):
+                require(not is_link_like(child), "symlink_artifact_rejected")
+                require(not child.is_dir(), "unexpected_artifact_directory")
+                entries.append(child)
     require(len(entries) <= 64, "too_many_artifacts")
     files = {}
     for path in entries:
-        require(not path.is_symlink(), "symlink_artifact_rejected")
         relative = path.relative_to(model_dir).as_posix()
         if path.is_dir():
-            require(relative in ("encoder", "tokenizer"), "unexpected_artifact_directory")
             continue
         require(path.is_file(), "nonregular_artifact")
         allowed = relative in REQUIRED or (

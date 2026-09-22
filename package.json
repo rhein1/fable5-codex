@@ -37,7 +37,10 @@
     "CITATION.cff",
     "llms.txt",
     "SECURITY.md",
-    "LICENSE"
+    "LICENSE",
+    "!**/__pycache__/**",
+    "!**/*.pyc",
+    "!**/*.pyo"
   ],
   "engines": {
     "node": ">=18"

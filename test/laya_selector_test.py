@@ -7,6 +7,9 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
+import time
+import types
 import unittest
 from unittest import mock
 
@@ -172,9 +175,47 @@ class SelectorTests(unittest.TestCase):
         with self.assertRaisesRegex(s.Invalid, '^provider_failed$'):
             s.run_json([sys.executable, "-I", "-c", 'import sys;print("secret",file=sys.stderr);sys.exit(1)'], {}, 5)
 
-    def test_subprocess_oversize_output_rejected(self):
+    def test_subprocess_oversize_output_is_terminated_while_running(self):
         with self.assertRaisesRegex(s.Invalid, '^provider_output_too_large$'):
-            s.run_json([sys.executable, "-I", "-c", 'print("x"*65537)'], {}, 5)
+            s.run_json([sys.executable, "-I", "-c",
+                        'import sys,time;sys.stdout.write("x"*131072);sys.stdout.flush();time.sleep(5)'], {}, 2)
+
+    def test_subprocess_descendant_cannot_escape_timeout_or_cleanup(self):
+        self.assertIn('CREATE_SUSPENDED",0x00000004', s.SUPERVISOR)
+        with tempfile.TemporaryDirectory() as tmp:
+            sentinel = Path(tmp) / "descendant-survived"
+            descendant = ('import time,pathlib;time.sleep(1);'
+                          f'pathlib.Path({str(sentinel)!r}).write_text("survived")')
+            code = ('import subprocess,sys;'
+                    f'subprocess.Popen([sys.executable,"-I","-c",{descendant!r}],stdout=sys.stdout);'
+                    'print("{}")')
+            started = time.monotonic()
+            with self.assertRaisesRegex(s.Invalid, '^provider_timeout$'):
+                s.run_json([sys.executable, "-I", "-c", code], {}, .5)
+            self.assertLess(time.monotonic() - started, 1.5)
+            time.sleep(1.1)
+            self.assertFalse(sentinel.exists())
+            self.assertFalse(any(thread.name in ("fable-laya-input", "fable-laya-output")
+                                 for thread in threading.enumerate()))
+
+    def test_successful_provider_cleans_background_descendants(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            sentinel = Path(tmp) / "background-survived"
+            descendant = ('import time,pathlib;time.sleep(1);'
+                          f'pathlib.Path({str(sentinel)!r}).write_text("survived")')
+            code = ('import subprocess,sys;'
+                    f'subprocess.Popen([sys.executable,"-I","-c",{descendant!r}],'
+                    'stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);'
+                    'print("{}")')
+            self.assertEqual(s.run_json([sys.executable, "-I", "-c", code], {}, 2), {})
+            time.sleep(1.1)
+            self.assertFalse(sentinel.exists())
+
+    def test_decoder_sanitizes_value_and_recursion_failures(self):
+        for failure in (ValueError("private path"), RecursionError("private path")):
+            with mock.patch.object(s.json, "loads", side_effect=failure):
+                with self.assertRaisesRegex(s.Invalid, '^invalid_json$'):
+                    s.decode_json('{}')
 
     def test_model_requires_explicit_local_paths(self):
         with self.assertRaises(s.Invalid):
@@ -310,6 +351,13 @@ class EvaluationTests(unittest.TestCase):
         data["cases"][1]["group"] = "one"
         self.assertIs(s.validate_dataset(data), data)
 
+    def test_unicode_equivalent_tasks_are_duplicates(self):
+        data = dataset()
+        data["cases"][0]["request"]["task"] = "Review café output"
+        data["cases"][1]["request"]["task"] = "Review cafe\u0301 output"
+        with self.assertRaisesRegex(s.Invalid, "duplicate_task"):
+            s.validate_dataset(data)
+
     def test_missing_split_is_not_silently_replaced(self):
         with self.assertRaisesRegex(s.Invalid, "empty_evaluation_split"):
             s.evaluate(dataset(), split="validation")
@@ -336,6 +384,36 @@ class EvaluationTests(unittest.TestCase):
         result = s.metrics([{"prediction": None, "acceptable": [None]}], "prediction")
         self.assertIsNone(result["accuracy_when_answered"])
         self.assertEqual(result["abstention_recall"], 1)
+
+    def test_policy_skips_prevent_complete_shadow_status(self):
+        data = dataset()
+        data["cases"][1]["request"] = {"task": "分析系统", "language": "en"}
+        result = s.evaluate(data, engine="laya-shadow", baseline_fn=baseline, laya_fn=observed)
+        self.assertEqual(result["status"], "partial_or_unavailable")
+        self.assertEqual(result["laya_attempted"], 1)
+        self.assertEqual(result["laya_observed"], 1)
+        self.assertEqual(result["laya_skipped"], 1)
+
+    def test_mixed_provenance_is_not_pooled(self):
+        calls = iter(("a", "b"))
+        def mixed(*_):
+            return {**s.assess_probabilities(probabilities()), "provenance": {"manifest": next(calls)}}
+        result = s.evaluate(dataset(), engine="laya-shadow", baseline_fn=baseline, laya_fn=mixed)
+        self.assertEqual(result["status"], "partial_or_unavailable")
+        self.assertEqual(result["laya_observed"], 1)
+        self.assertEqual(result["laya_failed"], 1)
+        self.assertEqual(result["cases"][1]["laya_reason"], "mixed_provenance")
+        self.assertNotIn("probabilities", result["cases"][1])
+
+    def test_latency_separates_skipped_rows_from_model_attempts(self):
+        data = dataset()
+        data["cases"][1]["request"] = {"task": "分析系统", "language": "en"}
+        result = s.evaluate(data, engine="laya-shadow", baseline_fn=baseline, laya_fn=observed)
+        self.assertEqual(result["wall_ms"]["laya_attempted"]["kind"],
+                         "end_to_end_shadow_attempt_per_attempted_case")
+        self.assertEqual(result["wall_ms"]["laya_observed"]["kind"],
+                         "end_to_end_cold_subprocess_per_observed_case")
+        self.assertEqual(result["wall_ms"]["all_cases"]["kind"], "end_to_end_selector_per_case")
 
 
 class ManifestTests(unittest.TestCase):
@@ -384,6 +462,26 @@ class ManifestTests(unittest.TestCase):
             self.skipTest('OS denies symlink creation; no claim for this case')
         with self.assertRaises(w.Invalid):
             w.verify_manifest(self.root, self.lock)
+
+    def test_windows_reparse_points_are_link_like(self):
+        attributes = getattr(w.stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 1024)
+        fake = types.SimpleNamespace(st_file_attributes=attributes)
+        with mock.patch.object(w.Path, 'is_symlink', return_value=False), \
+                mock.patch.object(w.os, 'lstat', return_value=fake):
+            self.assertTrue(w.is_link_like(self.root))
+
+    def test_link_like_subdirectory_is_rejected_before_traversal(self):
+        original = w.is_link_like
+        with mock.patch.object(w, 'is_link_like', side_effect=lambda path: path.name == 'encoder' or original(path)):
+            with self.assertRaisesRegex(w.Invalid, 'symlink_artifact_rejected'):
+                w.artifact_files(self.root)
+
+    def test_nested_artifact_directory_is_rejected(self):
+        nested = self.root / 'encoder' / 'unhashed-subdir'
+        nested.mkdir()
+        (nested / 'extra.json').write_text('{}', encoding='utf-8')
+        with self.assertRaisesRegex(w.Invalid, 'unexpected_artifact_directory'):
+            w.artifact_files(self.root)
 
     def test_tokenizer_mutation_precondition_rejected(self):
         for config in ({}, {"tokenizer_class": "TokenizersBackend"}, {"tokenizer_class": "PreTrainedTokenizerFast", "extra_special_tokens": []}):
