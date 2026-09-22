@@ -1,0 +1,4 @@
+# Optional, separate virtual environment ONLY. No installation by the selector or npm.
+# Exact reviewed SDK source; transitive dependencies are NOT a reproducible lock.
+# Record pip freeze and the runner's observed runtime versions for each evaluation.
+laya @ git+https://github.com/NandhaKishorM/laya.git@573e5b62696ba441230cd6be71d593331b5d23af
