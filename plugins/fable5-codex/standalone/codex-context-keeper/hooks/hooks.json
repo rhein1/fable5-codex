@@ -1,0 +1,18 @@
+{
+  "description": "Opt-in pointers to explicit reviewed packs. No raw transcript reads or replacement messages.",
+  "hooks": {
+    "PreCompact": [{ "matcher": "^(manual|auto)$", "hooks": [{
+      "type": "command",
+      "command": "node \"${PLUGIN_ROOT}/bin/codex-context-keeper.mjs\" hook",
+      "commandWindows": "node \"${PLUGIN_ROOT}/bin/codex-context-keeper.mjs\" hook",
+      "timeout": 10
+    }] }],
+    "SessionStart": [{ "matcher": "^(startup|compact|resume)$", "hooks": [{
+      "type": "command",
+      "command": "node \"${PLUGIN_ROOT}/bin/codex-context-keeper.mjs\" hook",
+      "commandWindows": "node \"${PLUGIN_ROOT}/bin/codex-context-keeper.mjs\" hook",
+      "timeout": 10,
+      "additionalContextLimit": 512
+    }] }]
+  }
+}

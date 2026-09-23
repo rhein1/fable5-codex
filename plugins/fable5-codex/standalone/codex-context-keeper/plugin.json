@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-context-keeper",
+  "version": "0.1.0-alpha.1",
+  "description": "Local evidence-preserving context packs. Opt-in handoff hooks; no transcript replacement.",
+  "author": { "name": "Agoragentic" },
+  "license": "MIT",
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/hooks.json",
+      "interface": { "displayName": "Codex Context Keeper", "shortDescription": "Keep exact evidence across context handoffs.", "developerName": "Agoragentic", "category": "Productivity" }
+    }
+  }
+}
