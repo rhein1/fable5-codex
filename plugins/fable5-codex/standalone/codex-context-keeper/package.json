@@ -1,0 +1,14 @@
+{
+  "name": "@agoragentic/codex-context-keeper",
+  "version": "0.1.0-alpha.1",
+  "description": "Local evidence-preserving context packs and opt-in Codex post-compaction handoffs.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Agoragentic",
+  "engines": { "node": ">=18" },
+  "bin": { "codex-context-keeper": "bin/codex-context-keeper.mjs" },
+  "exports": { ".": "./lib/context-pack.mjs", "./keeper": "./lib/keeper.mjs" },
+  "scripts": { "test": "node --test test/keeper.test.mjs", "check": "node --check bin/codex-context-keeper.mjs" },
+  "files": ["lib", "bin", "hooks", "skills", "test", "examples", "plugin.json", ".codex-plugin/plugin.json", ".agents/plugins/marketplace.json", "README.md", "SECURITY.md", "LICENSE"]
+}
