@@ -12,6 +12,8 @@ export async function packReviewedMemory(packet, options) {
   requireThat(canonical(data.scope) === canonical(host.scope) && data.policy_revision === host.policy_revision, 'MEMORY_SCOPE_POLICY_MISMATCH');
   requireThat(data.authority?.data_only === true && data.authority.completion_evidence === false
     && data.authority.memory_write === false && data.authority.execution === false && data.authority.spending === false, 'INVALID_MEMORY_AUTHORITY');
+  // Memory v1 selected_chunks counts matched candidates BEFORE byte/result limits.
+  // The producer reports omitted_chunks separately, so emitted = selected - omitted.
   requireThat(Array.isArray(data.snippets) && data.snippets.length <= 32
     && Number.isSafeInteger(data.selected_chunks) && Number.isSafeInteger(data.omitted_chunks)
     && data.omitted_chunks >= 0 && data.selected_chunks === data.snippets.length + data.omitted_chunks

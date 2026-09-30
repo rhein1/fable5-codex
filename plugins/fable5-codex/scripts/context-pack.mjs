@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { packContext, verifyPack, serializePack, requireThat } from '../lib/context-pack.mjs';
 import { readJsonFile, parseOptions } from '../lib/context-pack-io.mjs';
@@ -19,7 +19,7 @@ export function runCli(args) {
   return command === 'pack' ? serializePack(packContext(input, binding))
     : `${JSON.stringify(verifyPack(readJsonFile(options['--pack']), input, binding))}\n`;
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   try { process.stdout.write(runCli(process.argv.slice(2))); }
   catch (error) { process.stderr.write(`${error.code ?? 'CONTEXT_PACK_FAILED'}\n`); process.exitCode = error.code === 'PROTECTED_CONTEXT_EXCEEDS_BUDGET' ? 3 : 2; }
 }
