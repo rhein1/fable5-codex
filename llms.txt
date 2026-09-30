@@ -27,6 +27,7 @@ Docs:
 - Method: https://github.com/rhein1/fable5-codex/blob/main/docs/method.md
 - Development recipes (development branch/main, not the tagged alpha.2 release): https://github.com/rhein1/fable5-codex/blob/main/docs/development-prompts.md
 - Optional Laya playbook-selection experiment (source-only, default-off, not the tagged alpha.2 release): https://github.com/rhein1/fable5-codex/blob/main/docs/laya-workflow-selector.md
+- Evidence-preserving context packer (source-only; explicit approved inputs, no automatic compaction): https://github.com/rhein1/fable5-codex/blob/main/docs/context-packing.md
 - Examples: https://github.com/rhein1/fable5-codex/tree/main/examples/gallery
 - Benchmarks and limitations: https://github.com/rhein1/fable5-codex/blob/main/benchmarks/README.md
 
