@@ -378,8 +378,9 @@ def run_json(argv, payload, timeout):
             # provider descendants that detached their stdio but stayed in the group.
             terminate()
         require(not overflow.is_set(), "provider_output_too_large")
+        require(not read_failed.is_set(), "provider_failed")
         require(returncode not in SUPERVISOR_UNAVAILABLE, "provider_unavailable")
-        require(not read_failed.is_set() and returncode == 0, "provider_failed")
+        require(returncode == 0, "provider_failed")
         return decode_json(bytes(output))
     finally:
         try:
