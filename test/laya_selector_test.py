@@ -166,6 +166,55 @@ class SelectorTests(unittest.TestCase):
         with self.assertRaisesRegex(s.Invalid, '^provider_timeout$'):
             s.run_json([sys.executable, "-I", "-c", "import time;time.sleep(2)"], {}, .05)
 
+    def test_windows_startup_assignment_failure_is_cleaned_up(self):
+        process = mock.Mock(_handle=object())
+        job = mock.Mock()
+        job.assign.side_effect = OSError("assignment failed")
+        with mock.patch.object(s.os, "name", "nt"), \
+                mock.patch.object(s.subprocess, "Popen", return_value=process), \
+                mock.patch.object(s, "_WindowsJob", return_value=job):
+            with self.assertRaisesRegex(s.Invalid, "^provider_unavailable$"):
+                s.run_json([sys.executable, "-I", "-c", "print('{}')"], {}, 1)
+        job.terminate.assert_called_once_with(124)
+        job.close.assert_called()
+        process.kill.assert_called_once_with()
+        process.wait.assert_called()
+
+    def test_windows_startup_interrupt_during_resume_is_cleaned_up(self):
+        process = mock.Mock(_handle=object())
+        job = mock.Mock()
+        with mock.patch.object(s.os, "name", "nt"), \
+                mock.patch.object(s.subprocess, "Popen", return_value=process), \
+                mock.patch.object(s, "_WindowsJob", return_value=job), \
+                mock.patch.object(s, "_resume_windows_process", side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                s.run_json([sys.executable, "-I", "-c", "print('{}')"], {}, 1)
+        job.assign.assert_called_once_with(process)
+        job.terminate.assert_called_once_with(124)
+        job.close.assert_called()
+        process.kill.assert_called_once_with()
+        process.wait.assert_called()
+
+    def test_thread_start_failure_closes_windows_job_without_joining_unstarted_thread(self):
+        process = mock.Mock(_handle=object())
+        process.poll.return_value = None
+        job = mock.Mock()
+        job.terminate.return_value = True
+        reader = mock.Mock()
+        writer = mock.Mock()
+        writer.start.side_effect = RuntimeError("thread start failed")
+        with mock.patch.object(s.os, "name", "nt"), \
+                mock.patch.object(s.subprocess, "Popen", return_value=process), \
+                mock.patch.object(s, "_WindowsJob", return_value=job), \
+                mock.patch.object(s, "_resume_windows_process"), \
+                mock.patch.object(s.threading, "Thread", side_effect=[reader, writer]):
+            with self.assertRaisesRegex(RuntimeError, "^thread start failed$"):
+                s.run_json([sys.executable, "-I", "-c", "print('{}')"], {}, 1)
+        reader.join.assert_called()
+        writer.join.assert_not_called()
+        job.terminate.assert_called_once_with(124)
+        job.close.assert_called()
+
     def test_invalid_timeout_rejected(self):
         for value in (0, -1, 301, True, float("nan"), float("inf")):
             with self.assertRaises(s.Invalid):

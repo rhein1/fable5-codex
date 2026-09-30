@@ -236,7 +236,9 @@ test('PowerShell wrapper ignores launcher versions before the Codex CLI token', 
     ].join('\n'));
     const result = runPowerShell(powerShell, ['-CodexExecutable', fakeCodex]);
     assert.notEqual(result.status, 0);
-    assert.match(`${result.stdout}\n${result.stderr}`, /reports 0\.151\.9/);
+    // PowerShell 7 wraps error text with a continuation gutter on long paths.
+    const diagnostic = `${result.stdout}\n${result.stderr}`.replace(/\r?\n\s*\|\s*/g, ' ');
+    assert.match(diagnostic, /reports\s+0\.151\.9/);
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
