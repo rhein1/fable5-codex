@@ -8,8 +8,9 @@ Python, an API key, a model, or any third-party runtime dependency.
 
 **Source preview: 0.1.0-alpha.1.** Independently installable source, not an npm
 release. `private: true` deliberately blocks accidental registry publication.
-No live Codex installation or native compaction/resume run has been validated
-for this preview. Offline command/hook contract tests are not that evidence.
+Real installation, discovery, installed CLI lifecycle and removal have been
+validated in disposable Codex homes on Windows (versions below). Native
+compaction/resume remains unvalidated; fixture hook events are not that evidence.
 
 ## What works
 
@@ -123,17 +124,30 @@ renewed by a matching hash. The fixed Git read uses no shell or network command.
 
 The portable root `plugin.json`, compatibility `.codex-plugin/plugin.json`,
 `skills/`, `hooks/hooks.json`, and self-contained local marketplace are included.
-Use the standalone directory, not Fable's root marketplace, to register it:
+Codex 0.159.2 installs the portable layout and discovers its skill, but does not
+discover portable plugin hooks. For hooks on this version, prepare the supported
+compatibility layout in a **new directory whose parent already exists**:
 
 ```sh
-codex plugin marketplace add ./PATH_TO_STANDALONE_DIRECTORY
+node scripts/prepare-codex-plugin.mjs ./NEW_COMPATIBILITY_DIRECTORY
 ```
 
-Then install Codex Context Keeper from that local marketplace in your Codex
-plugin interface and review its hooks. Installation changes Codex configuration;
-none of the packer/keeper commands installs or activates it. This preview has
-not been exercised in a real Codex installation. First test in an isolated
-`CODEX_HOME`, without private input, using your installed host's documented flow.
+This copies the self-contained runtime, skill and compatibility manifest. It
+omits the portable root manifest, refuses existing destinations and never
+installs anything. Use that directory, not Fable's root marketplace, when you
+explicitly choose to install:
+
+```sh
+codex plugin marketplace add ./NEW_COMPATIBILITY_DIRECTORY
+codex plugin add codex-context-keeper@codex-context-keeper-local
+```
+
+These two Codex commands change the selected Codex home's configuration. Review
+and trust the installed hooks through Codex's supported interface before use;
+installation alone does not grant hook trust. First use the disposable smoke
+below. Neither the packer nor the preparation command installs or activates a
+plugin. The original portable package also installs on 0.159.2; its missing hook
+discovery is a separate runtime limitation, not a general installation failure.
 
 Hooks remain **off** unless the owner supplies all of these settings in the
 Codex launch environment (values are placeholders):
@@ -168,10 +182,38 @@ a model; this design does not guarantee model instruction adherence.
 The included tests exercise the library, real CLI subprocesses, disposable Git
 head changes, private local capsule lifecycle, malformed/bounded hook input,
 default-off behavior, and manifest consistency. Hook events are fixtures, not a
-live Codex process. POSIX permission assertions do not validate Windows ACLs.
+native compaction/resume event. POSIX permission assertions do not validate
+Windows ACLs.
 
-Before enabling on real tasks, validate installation and removal in an isolated
-Codex home, actual manual/automatic compaction and resume, Windows/macOS/Linux
+Run the real-host smoke from the standalone source or npm archive. Supply the
+actual Codex executable path if it is not on PATH:
+
+```sh
+node scripts/smoke-codex-install.mjs codex compatibility
+node scripts/smoke-codex-install.mjs codex both
+```
+
+The smoke creates and removes disposable homes, local marketplaces and Git
+repositories. It installs the actual payload, checks app-server skill and hook
+discovery, runs the installed CLI and configured shell hook with synthetic
+input, and tests policy/HEAD denial, revocation, removal and reinstallation.
+It makes no model turns, copies no credentials, edits no hook trust records and
+does not touch the normal Codex home. Hooks must remain `untrusted` during this
+check. Any missing hook or discovery warning fails the selected layout's gate.
+
+Windows results on September 30, 2026:
+
+| Codex version | Portable layout | Prepared compatibility layout |
+| --- | --- | --- |
+| 0.142.5 | Install, discovery and lifecycle pass | Install, discovery and lifecycle pass |
+| 0.159.2 | Install and CLI pass; hook discovery fails | Install, discovery and lifecycle pass |
+
+Thus `both` intentionally fails on 0.159.2. The `compatibility` selection checks
+the supported path without claiming portable hooks work. Both paths use the
+same runtime bytes; the portable manifest remains available for other hosts.
+
+Before enabling on real tasks, validate your host version in an isolated Codex
+home, actual manual/automatic compaction and resume, Windows/macOS/Linux
 behavior, independent worktrees, policy changes and deletion. Measure resumed
 task accuracy and actual model context consumption against a matched baseline.
 No token, latency, cost, or quality improvement is claimed by this preview.
@@ -188,7 +230,7 @@ Maintained as an independently packaged directory in the public
 is implied by this source preview. The parent Fable PR provides the same core
 plus its governed Memory adapter; this package works without either product.
 
-Official contracts reviewed September 22, 2026:
+Official contracts reviewed September 30, 2026:
 https://developers.openai.com/codex/hooks and
 https://developers.openai.com/codex/plugins/build . The documented post-compaction
 context hook is used, not an undocumented transcript-replacement output.

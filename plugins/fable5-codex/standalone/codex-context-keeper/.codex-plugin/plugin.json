@@ -2,6 +2,12 @@
   "name": "codex-context-keeper",
   "version": "0.1.0-alpha.1",
   "description": "Local evidence-preserving context packs. Opt-in hooks; no transcript replacement.",
+  "author": { "name": "Agoragentic" },
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "interface": {
+    "displayName": "Codex Context Keeper",
+    "shortDescription": "Keep exact evidence across context handoffs.",
+    "developerName": "Agoragentic",
+    "category": "Productivity"
+  }
 }

@@ -51,8 +51,9 @@ export function canonical(value) {
     }
     let result;
     if (Array.isArray(item)) {
-      requireThat(Object.keys(item).length === item.length, 'SPARSE_ARRAY');
-      result = `[${item.map((value) => walk(value, depth + 1)).join(',')}]`;
+      const keys = Object.keys(item);
+      requireThat(keys.length === item.length && keys.every((key, index) => key === String(index)), 'SPARSE_ARRAY');
+      result = `[${keys.map((key) => walk(item[key], depth + 1)).join(',')}]`;
     } else {
       const keys = Object.keys(item).sort();
       requireThat(keys.every((key) => !['__proto__', 'prototype', 'constructor'].includes(key)), 'UNSAFE_KEY');
@@ -160,7 +161,7 @@ export function packContext(raw, binding) {
   }
   let selected = new Set(protectedIds);
   requireThat(bytes(serializePack(render(selected))) <= budget, 'PROTECTED_CONTEXT_EXCEEDS_BUDGET');
-  const words = (value) => new Set(value.toLowerCase().match(/[a-z0-9_]+/g) ?? []);
+  const words = (value) => new Set(value.normalize('NFC').toLowerCase().match(/[\p{L}\p{M}\p{N}_]+/gu) ?? []);
   const terms = words(input.task.goal);
   const ranking = input.records.map((record, index) => {
     const candidate = words(record.text);

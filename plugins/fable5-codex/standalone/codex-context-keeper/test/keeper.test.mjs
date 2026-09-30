@@ -137,11 +137,30 @@ test('portable manifest, compatibility manifest and marketplace agree', () => {
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'))), manifest = JSON.parse(readFileSync(join(root, 'plugin.json')));
   const compat = JSON.parse(readFileSync(join(root, '.codex-plugin/plugin.json'))), market = JSON.parse(readFileSync(join(root, '.agents/plugins/marketplace.json')));
   assert.equal(pkg.private, true); assert.equal(pkg.version, manifest.version); assert.equal(compat.version, manifest.version);
+  assert.equal(compat.name, manifest.name); assert.deepEqual(compat.author, manifest.author);
+  assert.deepEqual(compat.interface, manifest.extensions['com.openai'].interface);
+  assert.deepEqual(Object.keys(compat).sort(), ['author', 'description', 'interface', 'name', 'skills', 'version']);
+  assert.equal(compat.skills, './skills/'); // Compatibility hooks use default hooks/hooks.json discovery.
   assert.equal(manifest.name, market.plugins[0].name); assert.equal(market.plugins[0].source.path, './');
   assert.equal(pkg.dependencies, undefined); assert.equal(manifest.extensions['com.openai'].hooks, './hooks/hooks.json');
-  const hooks = JSON.parse(readFileSync(join(root, 'hooks/hooks.json'))).hooks;
+  const hookFile = JSON.parse(readFileSync(join(root, 'hooks/hooks.json')));
+  assert.deepEqual(Object.keys(hookFile), ['hooks']); // Older supported hosts reject other top-level metadata.
+  const hooks = hookFile.hooks;
   assert.deepEqual(Object.keys(hooks).sort(), ['PreCompact', 'SessionStart']);
   assert.ok(hooks.SessionStart[0].hooks[0].command.includes('${PLUGIN_ROOT}'));
+});
+
+test('configured native hook command executes from an unrelated working directory', () => {
+  const hooks = JSON.parse(readFileSync(join(root, 'hooks/hooks.json'))).hooks;
+  const handler = hooks.SessionStart[0].hooks[0];
+  const windows = process.platform === 'win32';
+  const command = windows ? handler.commandWindows : handler.command;
+  const args = windows ? ['-NoProfile', '-NonInteractive', '-Command', command] : ['-c', command];
+  const result = spawnSync(windows ? 'pwsh' : 'sh', args, { cwd: tmpdir(), encoding: 'utf8',
+    env: { ...process.env, PLUGIN_ROOT: root, CODEX_CONTEXT_KEEPER_ENABLE: '1' },
+    input: JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', session_id: 'configured-command' }) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(JSON.parse(result.stdout).hookSpecificOutput.additionalContext, /configured-command/);
 });
 
 test('CLI entrypoint runs through a package-style bin symlink where supported', () => {
@@ -151,5 +170,27 @@ test('CLI entrypoint runs through a package-style bin symlink where supported', 
     if (process.platform !== 'win32') { entry = join(tmp, 'keeper'); symlinkSync(bin, entry); }
     const result = spawnSync(process.execPath, [entry, 'help'], { encoding: 'utf8', cwd: tmp });
     assert.equal(result.status, 0, result.stderr); assert.ok(result.stdout.startsWith('Codex Context Keeper'));
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+});
+
+test('compatibility preparation creates a runnable new payload without overwriting it', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'keeper-prepare-'));
+  try {
+    const destination = join(tmp, 'compatibility');
+    const script = join(root, 'scripts/prepare-codex-plugin.mjs');
+    const prepare = () => spawnSync(process.execPath, [script, destination], { cwd: tmp, encoding: 'utf8' });
+    const result = prepare();
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), { prepared: true, layout: 'codex-compatibility', destination, installed: false });
+    assert.ok(!readdirSync(destination).includes('plugin.json'));
+    for (const file of ['.codex-plugin/plugin.json', '.agents/plugins/marketplace.json', 'hooks/hooks.json', 'lib/context-pack.mjs']) {
+      assert.deepEqual(readFileSync(join(destination, file)), readFileSync(join(root, file)));
+    }
+    const cli = spawnSync(process.execPath, [join(destination, 'bin/codex-context-keeper.mjs'), 'help'], { cwd: tmp, encoding: 'utf8' });
+    assert.equal(cli.status, 0, cli.stderr); assert.match(cli.stdout, /^Codex Context Keeper/);
+    writeFileSync(join(destination, 'owner-file'), 'preserve');
+    assert.equal(prepare().status, 2);
+    assert.equal(readFileSync(join(destination, 'owner-file'), 'utf8'), 'preserve');
+    assert.equal(spawnSync(process.execPath, [script], { encoding: 'utf8' }).status, 2);
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 });
