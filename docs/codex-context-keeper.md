@@ -33,8 +33,13 @@ installing/updating Fable does not register or activate this nested plugin.
 The hook supports a reviewed handoff after native compaction; it does not replace
 the native compactor or edit Codex rollout files. Only fixed retrieval guidance,
 not source excerpts, enters developer-role hook output. Real Codex installation,
-manual/automatic compaction, resume, source freshness and resumed-task accuracy
-still require target-host validation. No automatic capture or model call exists.
+discovery and installed CLI lifecycle were tested in disposable Windows homes
+with Codex 0.142.5 and 0.159.2. Version 0.159.2 requires the prepared compatibility
+layout for hook discovery; the original portable layout installs but its hooks
+are unavailable. See the standalone README for the preparation command and
+strict real-host smoke. Manual/automatic compaction, native resume, source
+freshness and resumed-task accuracy still require target-host validation. No
+automatic capture or model call exists.
 
 Review/merge order: the evidence-preserving context-packing PR first, then this
 standalone-package PR. The latter is stacked on the former for a bounded diff.
