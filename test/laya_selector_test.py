@@ -215,6 +215,30 @@ class SelectorTests(unittest.TestCase):
         job.terminate.assert_called_once_with(124)
         job.close.assert_called()
 
+    def test_windows_pipe_failure_is_distinct_from_supervisor_unavailability(self):
+        for returncode in s.SUPERVISOR_UNAVAILABLE:
+            for read_failure in (False, True):
+                with self.subTest(returncode=returncode, read_failure=read_failure):
+                    process = mock.Mock(_handle=object())
+                    process.wait.return_value = returncode
+                    process.poll.return_value = returncode
+                    process.stdout.read.side_effect = OSError("private pipe detail") if read_failure else [b""]
+                    job = mock.Mock()
+                    job.terminate.return_value = True
+                    expected = "provider_failed" if read_failure else "provider_unavailable"
+                    with mock.patch.object(s.os, "name", "nt"), \
+                            mock.patch.object(s.subprocess, "Popen", return_value=process), \
+                            mock.patch.object(s, "_WindowsJob", return_value=job), \
+                            mock.patch.object(s, "_resume_windows_process"):
+                        with self.assertRaisesRegex(s.Invalid, f"^{expected}$"):
+                            s.run_json([sys.executable, "-I", "-c", "print('{}')"], {}, 1)
+                    if read_failure:
+                        job.terminate.assert_called_once_with(124)
+                    else:
+                        job.terminate.assert_not_called()
+                    job.close.assert_called_once_with()
+                    process.stdout.close.assert_called_once_with()
+
     def test_invalid_timeout_rejected(self):
         for value in (0, -1, 301, True, float("nan"), float("inf")):
             with self.assertRaises(s.Invalid):
