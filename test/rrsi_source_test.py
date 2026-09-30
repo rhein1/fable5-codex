@@ -17,7 +17,9 @@ class SourceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="fable-rrsi-source-")
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        # macOS exposes its temporary directory through /var -> /private/var.
+        # Canonicalize our trusted fixture root; candidate paths still reject links.
+        self.root = Path(self.temp.name).resolve()
         self.source = self.root / "source"
         self.source.mkdir()
         s.git(self.source, "init", "--quiet")
