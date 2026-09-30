@@ -106,6 +106,28 @@ test('canonical rejects cycles, getters, exotic objects, unsafe keys, sparse arr
   const c = {}; c.c = c;
   for (const value of [c, { get x() { throw new Error('getter ran'); } }, new Date(), JSON.parse('{"__proto__":1}'), Array(2), { n: NaN }]) assert.throws(() => canonical(value));
 });
+
+test('sparse arrays cannot replace missing indices with named properties', () => {
+  for (const value of [Object.assign(Array(1), { extra: 'x' }), Object.assign(Array(2), { 1: 'x', extra: 'y' }), Object.assign([], { extra: 'x' })]) {
+    assert.throws(() => snapshotDigest(value), /SPARSE_ARRAY/);
+    const { input, binding } = fixture(); input.task.required_ids = value;
+    assert.throws(() => packContext(input, binding), /SPARSE_ARRAY/);
+  }
+  assert.equal(canonical(['a', 'b']), '["a","b"]');
+});
+
+for (const term of ['修复错误', 'エラー修正', 'исправить', 'cafe\u0301']) {
+  test(`relevance retains older Unicode match: ${term}`, () => {
+    const { input, binding } = fixture([
+      record('older', 'note', `${term.normalize('NFC')} ${'a'.repeat(700)}`),
+      record('newer', 'note', `unrelated ${'b'.repeat(700)}`),
+    ]);
+    input.task.goal = term;
+    const pack = packContext(input, refreshed(input, { ...binding, budget_bytes: 2300 }));
+    assert.deepEqual(pack.records.map((r) => r.id), ['older']);
+    assert.deepEqual(pack.omitted.map((r) => r.id), ['newer']);
+  });
+}
 test('output cannot be repacked as a fresh full snapshot', () => {
   const { input, binding } = fixture(); assert.throws(() => validateInput(packContext(input, binding)));
 });
@@ -156,6 +178,28 @@ test('CLI works from unrelated cwd and rejects bad flags without printing source
     assert.equal(check.status, 0, check.stderr);
     const failed = spawnSync(process.execPath, [cli, 'pack', '--input', 'PRIVATE-SECRET', '--enable-spend', 'true'], { encoding: 'utf8' });
     assert.equal(failed.status, 2); assert.equal(failed.stdout, ''); assert.ok(!failed.stderr.includes('PRIVATE-SECRET'));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('CLI help, pack, verify and errors work through a linked parent directory', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fable-pack-link-'));
+  try {
+    symlinkSync(root, join(dir, 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
+    const linkedCli = join(dir, 'linked/plugins/fable5-codex/scripts/context-pack.mjs');
+    const run = (args) => spawnSync(process.execPath, [linkedCli, ...args], { cwd: dir, encoding: 'utf8' });
+    const help = run(['--help']);
+    assert.equal(help.status, 0, help.stderr); assert.match(help.stdout, /Fable data-only context packer/);
+    const { input, binding } = fixture();
+    writeFileSync(join(dir, 'input.json'), JSON.stringify(input));
+    writeFileSync(join(dir, 'binding.json'), JSON.stringify(binding));
+    const args = ['--input', 'input.json', '--binding', 'binding.json'];
+    const packed = run(['pack', ...args]);
+    assert.equal(packed.status, 0, packed.stderr); assert.equal(JSON.parse(packed.stdout).schema, 'agoragentic.context-pack.v1');
+    writeFileSync(join(dir, 'pack.json'), packed.stdout);
+    const verified = run(['verify', ...args, '--pack', 'pack.json']);
+    assert.equal(verified.status, 0, verified.stderr); assert.equal(JSON.parse(verified.stdout).valid, true);
+    const denied = run(['pack', '--unknown', 'PRIVATE-SECRET']);
+    assert.equal(denied.status, 2); assert.equal(denied.stdout, ''); assert.doesNotMatch(denied.stderr, /PRIVATE-SECRET/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 test('explicit-file reader bounds bytes, refuses invalid JSON, directories and final symlinks', () => {

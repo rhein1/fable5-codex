@@ -13,7 +13,10 @@ Tool calls/results are paired atomically. Side-effecting and unknown-effect
 pairs are always protected. Dependencies are retained transitively.
 
 Optional notes and explicitly read-only pairs are ranked deterministically by
-word overlap with the current goal, then recency. Optional groups that do not
+Unicode letter/mark/number word overlap with the current goal, then recency.
+Ranking normalizes terms to NFC and lowercase; retained text stays verbatim.
+This is token overlap, not linguistic segmentation or semantic search.
+Optional groups that do not
 fit are explicitly recorded in the omission manifest; smaller later groups may
 still fit. No output text is summarized or truncated. The **complete compact
 JSON plus final newline** must fit the requested byte budget. Protected evidence
@@ -116,8 +119,25 @@ The adapter retains the run contract and snippets containing required evidence,
 rejects missing required refs, preserves upstream omission counts, and adds no
 Memory write operation. It does not import or start context-mode, read the
 Memory database, implement production ECF authorization, or promote evidence.
-Tests use the inspected packet shape and controlled callbacks, not a running
-Memory/context-mode/Codex installation. Wire actual host controls only under a
+In Memory v1, `selected_chunks` counts all matched candidates **before** result
+and byte limits, so `selected_chunks = snippets.length + omitted_chunks`.
+For example, three candidates with a one-result limit emit one snippet with
+`selected_chunks: 3`, `omitted_chunks: 2`, and `truncated: true`. Do not reinterpret
+the field as the emitted count without a coordinated producer schema change.
+
+Run the offline producer-to-consumer gate against an explicit Memory checkout:
+
+```sh
+node scripts/validate-memory-context-pack.mjs /path/to/agoragentic-memory
+```
+
+The gate checks the pinned producer blob below and imports that real module. It
+uses synthetic local file snapshots, actual scope/revision/hash/coordinate/ref
+checks, and a double only for the external context-mode peer. Both result-count
+and byte truncation are exercised, with required constraints/evidence retained
+and denial, revocation, stale source, missing evidence and overflow rejected.
+It opens no Memory ledger and makes no network/model calls. Full running
+Memory/context-mode/Codex integration and production host controls remain a
 separately reviewed integration.
 
 ## Semantics that must not be weakened
