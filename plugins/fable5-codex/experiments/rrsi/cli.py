@@ -9,8 +9,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from source import Denied, bind_candidate, compose, export_baseline, inspect_candidate
 
 
+class SafeArgumentParser(argparse.ArgumentParser):
+    def error(self, _message):
+        # argparse's default errors include rejected argument values. Preserve
+        # parser exit status without disclosing caller paths or private text.
+        self.exit(2, "source_operation_denied\n")
+
+
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = SafeArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="operation", required=True)
     snapshot = commands.add_parser("snapshot")
     snapshot.add_argument("--source", required=True)

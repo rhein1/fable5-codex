@@ -78,6 +78,34 @@ class SourceTests(unittest.TestCase):
         self.assertIn(s.OPTIONS["strategy"]["test-edge-cases"], composition["bounded_suggestions"])
         self.assertFalse(composition["execution"])
 
+    def test_diff_binding_is_independent_of_repository_diff_configuration(self):
+        head = self.candidate()
+        expected = self.inspect(head)
+        for key, value in (("diff.context", "0"), ("diff.noprefix", "true"),
+                           ("diff.algorithm", "patience"), ("color.ui", "always")):
+            s.git(self.experiment, "config", key, value)
+        self.assertEqual(self.inspect(head), expected)
+
+    def test_commit_replacement_cannot_relabel_exported_source(self):
+        path = self.source / (s.PREFIX + s.SOURCE_PATHS[0])
+        path.write_bytes(b"Replacement governed source\n")
+        replacement = self.commit(self.source)
+        s.git(self.source, "replace", self.source_commit, replacement)
+        s.git(self.source, "update-ref", "HEAD", self.source_commit)
+        destination = self.root / "replacement-export"
+        with self.assertRaises(s.Denied):
+            s.export_baseline(self.source, self.source_commit, destination)
+        self.assertFalse(destination.exists())
+
+    def test_blob_replacement_cannot_change_content_addressed_source(self):
+        path = s.PREFIX + s.SOURCE_PATHS[0]
+        original = s.tree(self.source, self.source_commit)[path]
+        expected = s.blob_bytes(self.source, original)
+        (self.source / path).write_bytes(b"Replacement governed source\n")
+        replacement = s.tree(self.source, self.commit(self.source))[path]
+        s.git(self.source, "replace", original["blob"], replacement["blob"])
+        self.assertEqual(s.blob_bytes(self.source, original), expected)
+
     def test_budget_counts_multiple_atoms_in_one_file(self):
         head = self.candidate(b"# Strategy\n- prioritize-uncertainty\n- test-edge-cases\n")
         tags = self.tags(head)
@@ -177,6 +205,20 @@ class SourceTests(unittest.TestCase):
                                  "execute"], cwd=self.root, capture_output=True, timeout=10)
         self.assertEqual(result.returncode, 2)
         self.assertEqual(result.stdout, b"")
+
+    def test_cli_parser_errors_do_not_echo_private_arguments(self):
+        import sys
+        sentinel = "private-hypothesis-do-not-disclose"
+        cases = ([sentinel], ["snapshot", "--unexpected", sentinel],
+                 ["bind", "--repo", ".", "--baseline", "a" * 40, "--candidate", "b" * 40,
+                  "--snapshot-sha256", "c" * 64, "--edits", "unused.json", "--edit-budget", sentinel])
+        for args in cases:
+            run = subprocess.run([sys.executable, "-I", "-B", str(ROOT / "plugins/fable5-codex/experiments/rrsi/cli.py"),
+                                  *args], cwd=self.root, capture_output=True, timeout=10)
+            with self.subTest(args=args):
+                self.assertEqual(run.returncode, 2)
+                self.assertEqual(run.stdout, b"")
+                self.assertEqual(run.stderr.replace(b"\r\n", b"\n"), b"source_operation_denied\n")
 
     def test_protected_file_change_denied(self):
         path = self.experiment / (s.HARNESS + "base/references/ecf-run-contract.md")

@@ -93,6 +93,26 @@ class EvaluatorTests(unittest.TestCase):
             leaked = tasks(); leaked[2]["prompt"] = prompt
             with self.subTest(prompt=prompt), self.assertRaises(e.EvaluationDenied): config(tasks=leaked)
 
+    def test_prompt_screening_rejects_unbounded_work(self):
+        from unittest.mock import patch
+        oversized = tasks(); oversized[0]["prompt"] = "ab" * 32768
+        with patch.object(e.difflib, "SequenceMatcher", side_effect=AssertionError("must reject before comparison")):
+            with self.assertRaises(e.EvaluationDenied): config(tasks=oversized)
+        large = [task(str(i), ("evolve", "heldout", "ood")[min(i, 2)], chr(97 + i) * 1000)
+                 for i in range(5)]
+        with self.assertRaisesRegex(e.EvaluationDenied, "comparison budget"):
+            config(tasks=large, split={"tasks": {"evolve": ["0"], "heldout": ["1"], "ood": ["2", "3", "4"]}})
+
+    def test_duplicate_assertion_paths_cannot_reweight_one_fact(self):
+        for expected in (False, True):
+            value = tasks(); duplicate = copy.deepcopy(value[0]["assertions"][0])
+            duplicate.update(id="another-id", equals=expected)
+            value[0]["assertions"].append(duplicate)
+            with self.subTest(expected=expected), self.assertRaises(e.EvaluationDenied):
+                config(tasks=value)
+            with self.assertRaises(e.EvaluationDenied):
+                e.grade_factual_task(value[0], result())
+
     def test_duplicate_or_missing_split_members_denied(self):
         for ids in (["a", "a"], [], ["unknown"]):
             with self.subTest(ids=ids), self.assertRaises(e.EvaluationDenied):
@@ -151,6 +171,15 @@ class EvaluatorTests(unittest.TestCase):
         self.assertEqual(answer["missing_trials"], 1)
         self.assertFalse(answer["comparable_synthetic"])
 
+    def test_different_tasks_can_share_trial_and_seed(self):
+        other = slot(self.config, task_id="b")
+        answer = self.aggregate([self.row, observation(other)], [self.slot, other])
+        self.assertEqual(answer["expected_trials"], 2)
+        self.assertEqual(answer["completed"], 2)
+        self.assertEqual(answer["score"], 1)
+        self.assertEqual(answer["total_cost_microusd"], 200)
+        self.assertTrue(answer["comparable_synthetic"])
+
     def test_retries_count_cost_once_each_not_extra_rewards(self):
         failed = observation(self.slot, status="failed", result=None)
         retry = observation(self.slot, attempt=1, cost_microusd=70, policy_tokens=7)
@@ -159,6 +188,20 @@ class EvaluatorTests(unittest.TestCase):
         self.assertEqual(answer["completed"], 1)
         self.assertEqual(answer["total_cost_microusd"], 170)
         self.assertEqual(answer["total_policy_tokens"], 27)
+        self.assertTrue(answer["comparable_synthetic"])
+
+    def test_unreconciled_prior_attempt_blocks_successful_retry_comparison(self):
+        for status in ("unknown", "timeout", "cancelled"):
+            prior = observation(self.slot, status=status, terminal=False, result=None)
+            answer = self.aggregate([prior, observation(self.slot, attempt=1)])
+            with self.subTest(status=status):
+                self.assertEqual(answer["score"], 1)
+                self.assertEqual(answer["total_cost_microusd"], 200)
+                self.assertEqual(answer["total_policy_tokens"], 40)
+                self.assertFalse(answer["costs_known_positive"])
+                self.assertFalse(answer["comparable_synthetic"])
+        unknown = observation(self.slot, status="unknown", terminal=True, result=None)
+        self.assertFalse(self.aggregate([unknown, observation(self.slot, attempt=1)])["comparable_synthetic"])
 
     def test_later_unknown_attempt_cannot_select_earlier_success(self):
         retry = observation(self.slot, attempt=1, status="timeout", terminal=False, result=None)

@@ -95,7 +95,7 @@ def git(repo, *args):
     env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
                GIT_TERMINAL_PROMPT="0", GIT_ATTR_NOSYSTEM="1")
     result = subprocess.run(
-        ["git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=" + os.devnull,
+        ["git", "--no-replace-objects", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=" + os.devnull,
          "-c", "core.autocrlf=false", "-C", str(repo), *args],
         env=env, capture_output=True, timeout=30, check=False)
     if result.returncode:
@@ -253,7 +253,7 @@ def inspect_candidate(repo, baseline_commit, candidate_commit, snapshot_sha256):
         raise Denied("added, removed, renamed or hidden paths")
     if git(repo, "merge-base", baseline_commit, candidate_commit).decode().strip() != baseline_commit:
         raise Denied("candidate is not descended from baseline")
-    edits, manifest = [], {}
+    edits, manifest, patches = [], {}, []
     for path, entry in candidate.items():
         if entry["mode"] != baseline[path]["mode"]:
             raise Denied("file mode changed")
@@ -267,7 +267,14 @@ def inspect_candidate(repo, baseline_commit, candidate_commit, snapshot_sha256):
             raise Denied("protected source changed")
         if path in EVOLVABLE:
             validate_fragment(path, data)
-            edits += atoms(path, blob_bytes(repo, baseline[path]), data)
+            before = blob_bytes(repo, baseline[path])
+            edits += atoms(path, before, data)
+            # Canonical unified bytes come from verified blobs, independent of
+            # local Git diff algorithms, context, attributes, prefixes or color.
+            patches.extend(difflib.unified_diff(
+                before.decode("ascii").splitlines(keepends=True),
+                data.decode("ascii").splitlines(keepends=True),
+                fromfile="a/" + path, tofile="b/" + path, n=3, lineterm="\n"))
         manifest[path] = {"sha256": digest(data), "mode": entry["mode"], "blob": entry["blob"]}
     # Includes ignored files and physical case aliases; do not trust status alone.
     found = set()
@@ -288,8 +295,7 @@ def inspect_candidate(repo, baseline_commit, candidate_commit, snapshot_sha256):
             found.add(path)
     if found != set(candidate):
         raise Denied("untracked or ignored candidate content")
-    patch = git(repo, "diff", "--no-ext-diff", "--no-textconv", "--binary", "--no-renames",
-                baseline_commit, candidate_commit, "--")
+    patch = "".join(patches).encode("ascii")
     if len(patch) > MAX_DIFF_BYTES:
         raise Denied("diff exceeds byte budget")
     clean(repo, candidate_commit)

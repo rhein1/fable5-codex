@@ -19,6 +19,9 @@ The export records each original Git blob, SHA-256, mode and source tree in
 host-owned storage outside candidate reach. A candidate's own hash is never
 an authority grant. Source reading and hashing require a quiescent host-owned
 checkout; these admission checks do not provide filesystem isolation.
+Git reads disable replacement objects, so replacement refs cannot relabel the
+reviewed commits or blobs. The diff digest uses canonical unified bytes from
+the verified prompt blobs, independent of repository diff configuration.
 
 Only these experiment paths are evolvable:
 
@@ -91,7 +94,10 @@ worker/deadline/retry limits, the sealed-evaluation cap, source excerpts and
 grader definitions. Its evaluator digest hashes the actual Python source bytes.
 Tasks require repository and problem-family separation; exact and near-duplicate
 prompt screening is an additional deterministic check, not proof against all
-semantic duplication. Every assertion names an exact typed fact and a citation
+semantic duplication. Prompts are limited to 1,024 characters and screening is
+limited to four million pairwise character products; exceeding either bound
+rejects the suite before further comparison. Each assertion path is unique,
+so repeated assertions cannot reweight one fact. Every assertion names an exact typed fact and a citation
 whose line digest must match the frozen host source excerpt. This grades known
 facts and evidence references; it does not infer arbitrary code semantics.
 
@@ -101,9 +107,12 @@ evaluation slot to both Git commits, the snapshot, frozen suite/model/runtime,
 arm, task, trial, and seed. `aggregate_results(..., synthetic=True)` recomputes
 scores from structured results rather than accepting caller scores. It counts
 every attempt's integer micro-USD cost and policy tokens, selects the final
-attempt per fixed slot, and keeps missing slots in the denominator. Unknown or
+attempt per task/split/trial/seed slot, and keeps missing slots in the denominator. Unknown or
 zero cost, unsafe attempts, deadline overruns and incomplete trials cannot be
-comparable. `accepted` and `promotion_allowed` always remain false. Live imports
+comparable. Every prior attempt must be terminal with known consumption before
+a successful retry can be comparable; reported consumption from unresolved
+attempts remains in the totals but does not become a final cost. `accepted`
+and `promotion_allowed` always remain false. Live imports
 and live aggregation refuse even a caller-provided `authenticated: true` envelope.
 
 The host must retain the complete campaign history outside candidate reach for

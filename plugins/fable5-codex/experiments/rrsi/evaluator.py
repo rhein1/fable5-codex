@@ -29,6 +29,8 @@ SLOT_FIELDS = ("experiment_id", *DIGEST_FIELDS, "baseline_commit", "candidate_co
                "source_commit", "arm", "task_id", "split_id", "trial_id", "seed")
 OBS_FIELDS = (*SLOT_FIELDS, "attempt", "status", "terminal", "output_digest", "result",
               "cost_microusd", "policy_tokens", "duration_ms", "safety")
+MAX_PROMPT_CHARS = 1024
+MAX_PROMPT_COMPARISON_WORK = 4_000_000
 
 
 def digest(value):
@@ -97,7 +99,8 @@ def _task(task):
     _fields(task, ("id", "repository", "family", "split", "prompt", "sources", "assertions"))
     for field in ("id", "repository", "family"):
         _identifier(task[field])
-    if task["split"] not in ("evolve", "heldout", "ood") or type(task["prompt"]) is not str or not task["prompt"].strip():
+    if (task["split"] not in ("evolve", "heldout", "ood") or type(task["prompt"]) is not str
+            or not task["prompt"].strip() or len(task["prompt"]) > MAX_PROMPT_CHARS):
         raise EvaluationDenied("invalid task split or prompt")
     if type(task["sources"]) is not dict or not task["sources"]:
         raise EvaluationDenied("host source excerpts required")
@@ -107,13 +110,16 @@ def _task(task):
             raise EvaluationDenied("invalid source excerpt")
     if type(task["assertions"]) is not list or not 1 <= len(task["assertions"]) <= 128:
         raise EvaluationDenied("host assertions required")
-    seen = set()
+    seen, paths = set(), set()
     for assertion in task["assertions"]:
         _fields(assertion, ("id", "path", "equals", "evidence"))
         _identifier(assertion["id"])
-        if assertion["id"] in seen or type(assertion["path"]) is not str or not re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*", assertion["path"]):
+        if (assertion["id"] in seen or type(assertion["path"]) is not str
+                or assertion["path"] in paths
+                or not re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*", assertion["path"])):
             raise EvaluationDenied("duplicate or invalid assertion")
         seen.add(assertion["id"])
+        paths.add(assertion["path"])
         ref = assertion["evidence"]
         _fields(ref, ("path", "line", "content_digest"))
         _integer(ref["line"], 1, 100000)
@@ -130,6 +136,7 @@ def validate_split(tasks, split):
     _fields(split, ("tasks",))
     _fields(split["tasks"], ("evolve", "heldout", "ood"))
     ids, families, repositories, texts = {}, {}, {}, []
+    comparison_work = 0
     for task in tasks:
         _task(task)
         if task["id"] in ids:
@@ -140,8 +147,12 @@ def validate_split(tasks, split):
                 raise EvaluationDenied("repository or family crosses splits")
             groups[key] = task["split"]
         text = " ".join(task["prompt"].casefold().split())
-        if any(difflib.SequenceMatcher(a=text, b=old, autojunk=False).ratio() >= 0.92 for old in texts):
-            raise EvaluationDenied("duplicate or near-duplicate prompt")
+        for old in texts:
+            comparison_work += len(text) * len(old)
+            if comparison_work > MAX_PROMPT_COMPARISON_WORK:
+                raise EvaluationDenied("prompt comparison budget exceeded")
+            if difflib.SequenceMatcher(a=text, b=old, autojunk=False).ratio() >= 0.92:
+                raise EvaluationDenied("duplicate or near-duplicate prompt")
         texts.append(text)
     declared = []
     for part, group in split["tasks"].items():
@@ -336,7 +347,7 @@ def aggregate_results(*, observations, expected_slots, config, synthetic=False):
         if campaign is not None and common != campaign:
             raise EvaluationDenied("mixed campaign or arm")
         campaign = common
-        key = (slot["trial_id"], slot["seed"])
+        key = (slot["task_id"], slot["split_id"], slot["trial_id"], slot["seed"])
         if key in by_key:
             raise EvaluationDenied("duplicate expected slot")
         by_key[key] = (slot, task)
@@ -344,7 +355,7 @@ def aggregate_results(*, observations, expected_slots, config, synthetic=False):
     enforce_heldout_attempt_cap(rows, cap=config.runtime["heldout_attempt_cap"])
     groups = {}
     for row in rows:
-        key = (row["trial_id"], row["seed"])
+        key = (row["task_id"], row["split_id"], row["trial_id"], row["seed"])
         if key not in by_key or any(row[k] != v for k, v in by_key[key][0].items()):
             raise EvaluationDenied("observation outside frozen slot")
         if row["attempt"] > config.runtime["max_retries"]:
@@ -365,7 +376,8 @@ def aggregate_results(*, observations, expected_slots, config, synthetic=False):
             if row["status"] == "completed" and all(row["safety"].values()):
                 score += grade_factual_task(_plain(by_key[key][1]), row["result"])["score"]
     safety_ok = all(all(row["safety"].values()) for row in rows)
-    costs_known_positive = all(row["cost_microusd"] > 0 and row["policy_tokens"] > 0 for row in rows)
+    costs_known_positive = all(row["terminal"] and row["status"] != "unknown"
+                               and row["cost_microusd"] > 0 and row["policy_tokens"] > 0 for row in rows)
     within_deadline = all(row["duration_ms"] <= config.runtime["timeout_ms"] for row in rows)
     return {"score": score / len(slots), "completed": completed, "expected_trials": len(slots),
             "missing_trials": len(slots) - completed,
