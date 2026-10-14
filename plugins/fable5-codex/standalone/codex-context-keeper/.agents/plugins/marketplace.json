@@ -1,0 +1,10 @@
+{
+  "name": "codex-context-keeper-local",
+  "interface": { "displayName": "Agoragentic Context Keeper" },
+  "plugins": [{
+    "name": "codex-context-keeper",
+    "source": { "source": "local", "path": "./" },
+    "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+    "category": "Productivity"
+  }]
+}
