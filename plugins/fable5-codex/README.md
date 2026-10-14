@@ -11,6 +11,12 @@ Fable-5 for Codex is a local Codex plugin that packages evidence-first workflows
 
 The plugin is intentionally conservative. It asks Codex to map the target, inspect callers/importers, preserve rejected candidates, cite file and command evidence, and separate target-system failures from runner/tool failures.
 
+The optional [RRSI source experiment](experiments/rrsi/README.md) provides frozen
+baseline exports, bounded candidate diff verification and offline independent
+evaluation contracts. It does not change the installed workflows or launch an
+optimizer; paid execution, host qualification and exact-commit promotion remain
+separately gated.
+
 ## Sol Ultra Coordinator, Luna Workers
 
 The packaged wrappers keep the coordinator on `gpt-5.6-sol` with `ultra` reasoning and default delegated workers to `gpt-5.6-luna` with `medium` reasoning. This preserves a high-capability coordinator for synthesis and verification while using lower-cost workers for bounded evidence lenses. The Fable skills add explicit lens assignments, authority boundaries, verification, and Workflow Trace requirements.
