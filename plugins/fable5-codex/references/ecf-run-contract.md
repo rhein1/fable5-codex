@@ -103,3 +103,19 @@ When a Fable run is reviewing a PR or driving a review loop, use `../templates/f
 ## Public OSS Boundary
 
 The public plugin may ship Micro ECF-style contracts, templates, and reporting rules. Do not include private Full ECF internals, private customer evidence, private connector details, secrets, wallet material, or enterprise runtime code in this OSS package.
+
+## Optional Durable Closeout
+
+When the user requests strict completion accounting or durable checkpoints for a
+long-running task, consult [run-closeout.md](run-closeout.md) and use the explicit-file
+helper `../scripts/run-closeout.mjs`. Keep the selected one of the six workflows,
+this ECF contract, model/worker policy and review verdict format unchanged. Skip
+this extra ledger for small tasks or an explicit opt-out. Read-only scope does
+not authorize writing ledger files.
+
+The coordinator supplies independently checked scope/revision/policy/plan bindings,
+records required checks and coverage, and preserves blocking findings through
+fresh resolution. A `RECORDS_SATISFIED` result is only record accounting, never an
+independent review, execution proof, ECF grant or permission to merge/publish.
+Include its blockers, optional notes and host-verification limits in the existing
+Workflow Trace; do not create another authority or automatic Memory completion.
