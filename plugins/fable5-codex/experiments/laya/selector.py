@@ -159,20 +159,125 @@ def child_env():
     return env
 
 
+class _WindowsJob:
+    """Parent-owned kill-on-close job for the supervisor process tree."""
+
+    def __init__(self):
+        import ctypes
+        from ctypes import wintypes
+        class Basic(ctypes.Structure):
+            _fields_ = [("PerProcessUserTimeLimit", ctypes.c_longlong),
+                        ("PerJobUserTimeLimit", ctypes.c_longlong),
+                        ("LimitFlags", wintypes.DWORD),
+                        ("MinimumWorkingSetSize", ctypes.c_size_t),
+                        ("MaximumWorkingSetSize", ctypes.c_size_t),
+                        ("ActiveProcessLimit", wintypes.DWORD),
+                        ("Affinity", ctypes.c_size_t),
+                        ("PriorityClass", ctypes.c_int),
+                        ("SchedulingClass", wintypes.DWORD)]
+        class Io(ctypes.Structure):
+            _fields_ = [("ReadOperationCount", ctypes.c_ulonglong),
+                        ("WriteOperationCount", ctypes.c_ulonglong),
+                        ("OtherOperationCount", ctypes.c_ulonglong),
+                        ("ReadTransferCount", ctypes.c_ulonglong),
+                        ("WriteTransferCount", ctypes.c_ulonglong),
+                        ("OtherTransferCount", ctypes.c_ulonglong)]
+        class Extended(ctypes.Structure):
+            _fields_ = [("BasicLimitInformation", Basic), ("IoInfo", Io),
+                        ("ProcessMemoryLimit", ctypes.c_size_t),
+                        ("JobMemoryLimit", ctypes.c_size_t),
+                        ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                        ("PeakJobMemoryUsed", ctypes.c_size_t)]
+        self._ctypes = ctypes
+        self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        self._kernel32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+        self._kernel32.CreateJobObjectW.restype = wintypes.HANDLE
+        self._kernel32.SetInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int,
+                                                            ctypes.c_void_p, wintypes.DWORD]
+        self._kernel32.SetInformationJobObject.restype = wintypes.BOOL
+        self._kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        self._kernel32.AssignProcessToJobObject.restype = wintypes.BOOL
+        self._kernel32.TerminateJobObject.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        self._kernel32.TerminateJobObject.restype = wintypes.BOOL
+        self._kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        self._kernel32.CloseHandle.restype = wintypes.BOOL
+        self._handle = self._kernel32.CreateJobObjectW(None, None)
+        if not self._handle:
+            raise OSError(ctypes.get_last_error(), "CreateJobObjectW")
+        limits = Extended()
+        limits.BasicLimitInformation.LimitFlags = 0x2000  # KILL_ON_JOB_CLOSE
+        if not self._kernel32.SetInformationJobObject(self._handle, 9, ctypes.byref(limits),
+                                                       ctypes.sizeof(limits)):
+            self.close()
+            raise OSError(ctypes.get_last_error(), "SetInformationJobObject")
+
+    def assign(self, process):
+        if not self._kernel32.AssignProcessToJobObject(self._handle, process._handle):
+            raise OSError(self._ctypes.get_last_error(), "AssignProcessToJobObject")
+
+    def terminate(self, code=1):
+        if not self._handle:
+            return True
+        return bool(self._kernel32.TerminateJobObject(self._handle, code))
+
+    def close(self):
+        handle = getattr(self, "_handle", None)
+        self._handle = None
+        if handle:
+            return bool(self._kernel32.CloseHandle(handle))
+        return True
+
+
+def _resume_windows_process(process):
+    import ctypes
+    from ctypes import wintypes
+    ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
+    ntdll.NtResumeProcess.argtypes = [wintypes.HANDLE]
+    ntdll.NtResumeProcess.restype = ctypes.c_long
+    if ntdll.NtResumeProcess(process._handle) != 0:
+        raise OSError(ctypes.get_last_error(), "NtResumeProcess")
+
+
 def run_json(argv, payload, timeout):
     require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool)
             and math.isfinite(timeout) and 0 < timeout <= 300, "invalid_timeout")
     deadline = time.monotonic() + timeout
     encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     command = [sys.executable, "-I", "-B", "-c", SUPERVISOR, *argv]
+    windows_job = None
+    process = None
     popen_options = {"start_new_session": True} if os.name != "nt" else {
-        "creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)}
+        "creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+                       | getattr(subprocess, "CREATE_SUSPENDED", 0x00000004)
+                       | getattr(subprocess, "CREATE_NO_WINDOW", 0)}
     try:
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.DEVNULL, env=child_env(), shell=False,
                                    **popen_options)
-    except OSError as exc:
-        raise Invalid("provider_unavailable") from exc
+        if os.name == "nt":
+            windows_job = _WindowsJob()
+            windows_job.assign(process)
+            _resume_windows_process(process)
+    except BaseException as exc:
+        if windows_job is not None:
+            try:
+                windows_job.terminate(124)
+            except BaseException:
+                pass
+        if process is not None:
+            try:
+                process.kill()
+                process.wait(timeout=1)
+            except BaseException:
+                pass
+        if windows_job is not None:
+            try:
+                windows_job.close()
+            except BaseException:
+                pass
+        if isinstance(exc, (OSError, subprocess.TimeoutExpired)):
+            raise Invalid("provider_unavailable") from exc
+        raise
     output = bytearray()
     overflow = threading.Event()
     read_failed = threading.Event()
@@ -185,14 +290,8 @@ def run_json(argv, payload, timeout):
                 return
             terminated.set()
             if os.name == "nt":
-                taskkill = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "taskkill.exe"
-                try:
-                    subprocess.run([str(taskkill), "/PID", str(process.pid), "/T", "/F"],
-                                   stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL, timeout=1, check=False,
-                                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-                except (OSError, subprocess.TimeoutExpired):
-                    pass
+                if windows_job is not None and windows_job.terminate(124):
+                    return
             else:
                 try:
                     os.killpg(process.pid, signal.SIGKILL)
@@ -209,8 +308,10 @@ def run_json(argv, payload, timeout):
             process.wait(timeout=1)
         except subprocess.TimeoutExpired:
             pass
-        writer.join(timeout=1)
-        reader.join(timeout=1)
+        if writer_started:
+            writer.join(timeout=1)
+        if reader_started:
+            reader.join(timeout=1)
 
     def read_output():
         try:
@@ -251,28 +352,44 @@ def run_json(argv, payload, timeout):
 
     reader = threading.Thread(target=read_output, name="fable-laya-output", daemon=True)
     writer = threading.Thread(target=write_input, name="fable-laya-input", daemon=True)
-    reader.start()
-    writer.start()
+    reader_started = False
+    writer_started = False
     try:
-        returncode = process.wait(timeout=max(0, deadline - time.monotonic()))
-    except subprocess.TimeoutExpired as exc:
-        terminate()
-        bounded_cleanup()
-        raise Invalid("provider_timeout") from exc
-    writer.join(timeout=max(0, deadline - time.monotonic()))
-    reader.join(timeout=max(0, deadline - time.monotonic()))
-    if writer.is_alive() or reader.is_alive():
-        terminate()
-        bounded_cleanup()
-        raise Invalid("provider_timeout")
-    if os.name != "nt":
-        # The reaped supervisor led a private session/process group. Remove any
-        # provider descendants that detached their stdio but stayed in the group.
-        terminate()
-    require(not overflow.is_set(), "provider_output_too_large")
-    require(returncode not in SUPERVISOR_UNAVAILABLE, "provider_unavailable")
-    require(not read_failed.is_set() and returncode == 0, "provider_failed")
-    return decode_json(bytes(output))
+        reader.start()
+        reader_started = True
+        writer.start()
+        writer_started = True
+        try:
+            returncode = process.wait(timeout=max(0, deadline - time.monotonic()))
+        except subprocess.TimeoutExpired as exc:
+            terminate()
+            bounded_cleanup()
+            raise Invalid("provider_timeout") from exc
+        if writer_started:
+            writer.join(timeout=max(0, deadline - time.monotonic()))
+        if reader_started:
+            reader.join(timeout=max(0, deadline - time.monotonic()))
+        if writer.is_alive() or reader.is_alive():
+            terminate()
+            bounded_cleanup()
+            raise Invalid("provider_timeout")
+        if os.name != "nt":
+            # The reaped supervisor led a private session/process group. Remove any
+            # provider descendants that detached their stdio but stayed in the group.
+            terminate()
+        require(not overflow.is_set(), "provider_output_too_large")
+        require(not read_failed.is_set(), "provider_failed")
+        require(returncode not in SUPERVISOR_UNAVAILABLE, "provider_unavailable")
+        require(returncode == 0, "provider_failed")
+        return decode_json(bytes(output))
+    finally:
+        try:
+            if process.poll() is None:
+                terminate()
+                bounded_cleanup()
+        finally:
+            if windows_job is not None:
+                windows_job.close()
 
 
 def keyword_baseline(request, node="node"):
