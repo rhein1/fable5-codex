@@ -97,8 +97,10 @@ test('explicit native executable remains selected instead of preferring an npm p
 });
 
 test('explicit PowerShell scripts preserve custom environment and argument semantics', (context) => {
+  try { shellPath('PowerShell'); } catch { context.skip('PowerShell unavailable'); return; }
   const data = fixture(context);
   writeFileSync(join(data.npm, 'codex.ps1'), "$env:CODEX_HOME = 'custom-home'\n& node \"$PSScriptRoot/node_modules/@openai/codex/bin/codex.js\" --sandbox read-only @args\n");
+  if (process.platform !== 'win32') chmodSync(join(data.npm, 'codex.ps1'), 0o644);
   const launcher = resolveCodexLauncher(join(data.npm, 'codex.ps1'));
   assert.deepEqual(launcher.prefixArgs, ['-NoProfile', '-File', join(data.npm, 'codex.ps1')]);
 });

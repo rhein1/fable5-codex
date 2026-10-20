@@ -16,7 +16,7 @@ function findExecutable(requested) {
   for (const candidate of candidates) {
     try {
       if (!statSync(candidate).isFile()) continue;
-      accessSync(candidate, process.platform === 'win32' ? constants.F_OK : constants.X_OK);
+      accessSync(candidate, process.platform === 'win32' ? constants.F_OK : ['.ps1', '.cmd'].includes(extname(candidate).toLowerCase()) ? constants.R_OK : constants.X_OK);
       return realpathSync(candidate);
     } catch { }
   }
