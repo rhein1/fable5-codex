@@ -54,6 +54,13 @@ writing a summary; changing the repository grader mid-trial cannot change the
 grader attributed to the run. The restrictive candidate profile grants no access
 to that private copy; stronger isolation still requires separate qualification.
 
+The credential-free RRSI source regression suite has a finite 300-second
+whole-suite budget on Windows after repeated CI exhaustion of its former
+180-second aggregate budget. Its 30 tests, per-Git 30-second limits and all other
+suite/platform limits remain unchanged; verbose names/timing expose slow cases.
+This offline validation budget does not change matched model-trial deadlines,
+retry/slot accounting or production limits.
+
 Corpus v2 separates budget validation, string normalization and production-proof
 fidelity into different repository/family splits. Family assignment needs semantic
 review, not just different labels. The exploratory v1 corpus put two budget cases
