@@ -1,10 +1,11 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fingerprintSources } from '../plugins/fable5-codex/scripts/observe-check.mjs';
 
 export function restrictDirectory(root) {
+  if (process.platform !== 'win32') chmodSync(root, 0o700);
   if (process.platform === 'win32') {
     const who = spawnSync('whoami', ['/user', '/fo', 'csv', '/nh'], { encoding: 'utf8', windowsHide: true });
     const sid = who.stdout?.match(/S-\d(?:-\d+)+/u)?.[0];
