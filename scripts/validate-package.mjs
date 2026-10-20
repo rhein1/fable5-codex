@@ -13,6 +13,7 @@ import {
   resolve,
 } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { modelProfiles, resolveModels } from '../plugins/fable5-codex/scripts/model-support.mjs';
 import {
   containsAbsoluteLocalMarkdownLink,
   containsFileUri,
@@ -50,6 +51,7 @@ const bugReportTemplate = join(repo, '.github', 'ISSUE_TEMPLATE', 'bug_report.ym
 const powerShellWrapper = join(plugin, 'scripts', 'fable5-codex.ps1');
 const bashWrapper = join(plugin, 'scripts', 'fable5-codex.sh');
 const requiredSkills = [
+  'fable-verify',
   'fable-audit',
   'fable-deep-review',
   'fable-fact-check',
@@ -279,6 +281,11 @@ function validate() {
   assert(manifest.homepage === 'https://agoragentic.com', `Unexpected homepage: ${manifest.homepage}`);
   assert(manifest.interface?.websiteURL === 'https://agoragentic.com', `Unexpected interface.websiteURL: ${manifest.interface?.websiteURL}`);
   assert(Array.isArray(manifest.interface?.defaultPrompt), 'Plugin interface.defaultPrompt must be an array');
+  assert(manifest.requires_local_executor === true, 'Local repository verification must declare desktop execution');
+  assert(manifest.interface.shortDescription.length <= 30, 'Listing short description must be at most 30 characters');
+  assert(!manifest.interface.screenshots, 'The prepared skills-only submission omits unsupported screenshots');
+  for (const path of ['config/model-profiles.json', 'lib/completion-verification.mjs', 'scripts/verify-completion.mjs',
+    'scripts/model-support.mjs', 'schemas/completion-verification.schema.json', 'references/completion-verification.md', 'references/model-support.md']) assertExists(join(plugin, path));
   for (const prompt of manifest.interface.defaultPrompt) {
     assert(typeof prompt === 'string' && prompt.length <= 128, `Plugin default prompts must be strings of at most 128 characters: ${prompt}`);
   }
@@ -469,36 +476,42 @@ function validate() {
     && schema.$defs.ecfReceipt.properties?.workerFallbackReason?.type === 'string',
   'ECF receipt schema must preserve requested/actual coordinator and worker model truth');
   const ecfContract = readJson(ecfTemplate);
-  assert(ecfContract.delegationPolicy?.defaultWorkerModel === 'gpt-5.6-luna'
-    && ecfContract.delegationPolicy?.defaultWorkerReasoningEffort === 'medium'
-    && ecfContract.receipt?.requestedCoordinatorModel === 'gpt-5.6-sol'
-    && ecfContract.receipt?.requestedCoordinatorReasoningEffort === 'ultra'
-    && ecfContract.receipt?.requestedWorkerModel === 'gpt-5.6-luna',
-  'ECF template must default bounded workers to Luna medium');
+  const balanced = modelProfiles.profiles.balanced;
+  const deep = modelProfiles.profiles.deep;
+  assert(modelProfiles.version === 'fable-model-profiles/1'
+    && ['balanced', 'deep', 'economical'].every((profile) => modelProfiles.profiles[profile]), 'Required versioned profiles missing');
+  assert(ecfContract.delegationPolicy?.defaultWorkerModel === balanced.worker[0].model
+    && ecfContract.delegationPolicy?.defaultWorkerReasoningEffort === balanced.worker[0].effort
+    && ecfContract.receipt?.requestedCoordinatorModel === balanced.coordinator[0].model
+    && ecfContract.receipt?.requestedCoordinatorReasoningEffort === balanced.coordinator[0].effort
+    && ecfContract.receipt?.requestedWorkerModel === balanced.worker[0].model,
+  'ECF template must match centralized balanced preferences');
+  const advertised = [...new Map(Object.values(modelProfiles.profiles).flatMap((profile) => [...profile.coordinator, ...profile.worker])
+    .map(({ model }) => [model, { model, supportedReasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'] }])).values()];
+  for (const profile of Object.keys(modelProfiles.profiles)) assert(resolveModels(advertised, { profile }).accessVerified === false,
+    'Profile resolution must never claim entitlement or execution');
 
   const solConfig = parsePackagedToml(solUltraTemplate);
-  assert(solConfig.model === 'gpt-5.6-sol', 'Sol Ultra config must use gpt-5.6-sol');
-  assert(solConfig.model_reasoning_effort === 'ultra', 'Sol Ultra config must use ultra reasoning');
-  assert(solConfig.agents?.default_subagent_model === 'gpt-5.6-luna'
-    && solConfig.agents?.default_subagent_reasoning_effort === 'medium',
-  'Sol Ultra config must default bounded workers to Luna medium');
+  assert(solConfig.model === deep.coordinator[0].model, 'Compatibility template must match the deep model profile');
+  assert(solConfig.model_reasoning_effort === deep.coordinator[0].effort, 'Compatibility template must match the deep effort');
+  assert(solConfig.agents?.default_subagent_model === deep.worker[0].model
+    && solConfig.agents?.default_subagent_reasoning_effort === deep.worker[0].effort,
+  'Compatibility template must match centralized worker preferences');
   assert(solConfig.agents?.max_concurrent_threads_per_session === 3 && solConfig.agents?.max_depth === 1,
     'Sol Ultra config must bound concurrent agent threads and depth');
 
   const powerShellWrapperText = readFileSync(powerShellWrapper, 'utf8');
   const bashWrapperText = readFileSync(bashWrapper, 'utf8');
-  assert(/\$Model\s*=\s*"gpt-5\.6-sol"/.test(powerShellWrapperText)
-    && /\$ReasoningEffort\s*=\s*"ultra"/.test(powerShellWrapperText)
-    && /\$SubagentModel\s*=\s*"gpt-5\.6-luna"/.test(powerShellWrapperText)
-    && /\$SubagentReasoningEffort\s*=\s*"medium"/.test(powerShellWrapperText)
+  assert(powerShellWrapperText.includes('model-support.mjs')
+    && powerShellWrapperText.includes('$resolved.catalogChecked')
+    && powerShellWrapperText.includes('Verification is read-only')
     && /minimumWorkerDefaultsCliVersion\s*=\s*\[version\]"0\.152\.0"/.test(powerShellWrapperText),
-  'PowerShell wrapper must default to a Sol Ultra coordinator with Luna medium workers');
-  assert(/FABLE5_MODEL:-gpt-5\.6-sol/.test(bashWrapperText)
-    && /FABLE5_REASONING_EFFORT:-ultra/.test(bashWrapperText)
-    && /FABLE5_SUBAGENT_MODEL:-gpt-5\.6-luna/.test(bashWrapperText)
-    && /FABLE5_SUBAGENT_REASONING_EFFORT:-medium/.test(bashWrapperText)
+  'PowerShell wrapper must resolve shared profiles and preserve version/read-only gates');
+  assert(bashWrapperText.includes('model-support.mjs')
+    && bashWrapperText.includes('Verification is read-only')
+    && !/\beval\s/.test(bashWrapperText)
     && /minimum_worker_defaults_cli_version="0\.152\.0"/.test(bashWrapperText),
-  'Bash wrapper must default to a Sol Ultra coordinator with Luna medium workers');
+  'Bash wrapper must resolve shared profiles without eval and preserve safety gates');
 
   const customAgentsDir = join(plugin, 'custom-agents');
   for (const file of readdirSync(customAgentsDir).filter((name) => name.endsWith('.toml'))) {
@@ -516,14 +529,10 @@ function validate() {
     const frontmatter = text.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
     assert(frontmatter && new RegExp(`^name:\\s*${skill}\\s*$`, 'm').test(frontmatter[1])
       && /^description:\s*.+$/m.test(frontmatter[1]), `Skill frontmatter is missing name/description for ${skill}`);
-    assert(/gpt-5\.6-sol/.test(text)
-      && /model_reasoning_effort\s*=\s*"ultra"/.test(text)
-      && /gpt-5\.6-luna/.test(text)
-      && /`medium` reasoning/.test(text)
-      && /requested and actual coordinator model and effort/.test(text)
-      && /requested and actual worker model/.test(text)
-      && /parallel delegation/.test(text)
-      && /single-agent multi-lens/.test(text), `Skill is missing the Sol coordinator and Luna worker policy: ${skill}`);
+    assert(text.includes('../../references/model-support.md'), `Skill must use shared model policy: ${skill}`);
+    if (skill !== 'fable-verify') assert(/requested and actual coordinator model and effort/.test(text)
+      && /requested and actual worker model/.test(text) && /parallel delegation/.test(text)
+      && /single-agent multi-lens/.test(text), `Skill must preserve requested/actual execution truth: ${skill}`);
   }
 
   const installDryRun = spawnSync(process.execPath, [installer, '--dry-run', '--no-codex-add'], {

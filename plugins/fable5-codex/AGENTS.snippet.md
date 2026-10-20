@@ -7,6 +7,7 @@ Use this snippet in a repo `AGENTS.md` only when the repo wants Fable-5 behavior
 Use Fable-5 when the task needs high-confidence analysis, broad coverage, or source-backed conclusions:
 
 - Use `$fable-understand` for behavior questions and architecture mapping.
+- Use `$fable-verify` to check completion against acceptance criteria before merge or handoff.
 - Use `$fable-audit` for bug, risk, security, integration, and docs-vs-reality audits.
 - Use `$fable-deep-review` for PR, branch, or diff review.
 - Use `$fable-fact-check` for status docs, launch claims, changelogs, and "done/tested/working" assertions.
@@ -22,7 +23,7 @@ Required reporting style:
 - Do not claim subagent, test, browser, deploy, or runtime verification happened unless it did.
 - When the user asks for ECF, subagents, repeatable evidence, CI ledgers, or durable receipts, declare an ECF-style run contract and include a Workflow Trace.
 - Use real Codex subagents for large or high-risk Fable tasks when the runtime exposes a subagent tool and the user has not opted out. Treat repo-wide, cross-package, security/privacy/money/data/API, migration, release, exhaustive audit, deep review, and broad sweep tasks as large by default. Otherwise report `single-agent multi-lens` with the no-subagent reason.
-- Keep the parent coordinator on its configured model. Use `gpt-5.6-luna` with `medium` reasoning for delegated Fable workers by default, setting both explicitly on each spawn when supported. Record the requested and actual coordinator and worker profiles plus any fallback.
+- Keep the parent on its configured model. Use the centralized `references/model-support.md` policy and supported profile settings for workers, preserving explicit overrides. Record requested and actual models/efforts and fallbacks.
 - Keep the authority split clear: subagents may research, map, plan, draft, find, or verify; the main agent owns final findings and external side effects.
 - For audits and reviews, list findings first by severity; keep summaries secondary.
 - For write tasks, keep edits scoped and verify with the narrowest meaningful commands.

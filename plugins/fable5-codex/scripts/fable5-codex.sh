@@ -5,11 +5,16 @@ write=""
 ecf=""
 subagents=""
 dry_run=""
-model="${FABLE5_MODEL:-gpt-5.6-sol}"
-reasoning="${FABLE5_REASONING_EFFORT:-ultra}"
-subagent_model="${FABLE5_SUBAGENT_MODEL:-gpt-5.6-luna}"
-subagent_reasoning="${FABLE5_SUBAGENT_REASONING_EFFORT:-medium}"
-codex_executable="${FABLE5_CODEX_EXECUTABLE:-codex}"
+profile="${FABLE5_PROFILE:-balanced}"
+model="${FABLE5_MODEL:-}"
+reasoning="${FABLE5_REASONING_EFFORT:-}"
+subagent_model="${FABLE5_SUBAGENT_MODEL:-}"
+subagent_reasoning="${FABLE5_SUBAGENT_REASONING_EFFORT:-}"
+default_codex=codex
+if [[ "${OS:-}" == "Windows_NT" ]]; then default_codex=codex.exe; fi
+codex_executable="${FABLE5_CODEX_EXECUTABLE:-$default_codex}"
+catalog=""
+depth="quick"
 minimum_worker_defaults_cli_version="0.152.0"
 positionals=()
 
@@ -19,6 +24,9 @@ for arg in "$@"; do
     --ecf) ecf="1" ;;
     --subagents) subagents="1"; ecf="1" ;;
     --dry-run) dry_run="1" ;;
+    --profile=*) profile="${arg#--profile=}" ;;
+    --catalog=*) catalog="${arg#--catalog=}" ;;
+    --depth=*) depth="${arg#--depth=}" ;;
     --model=*) model="${arg#--model=}" ;;
     --reasoning=*) reasoning="${arg#--reasoning=}" ;;
     --subagent-model=*) subagent_model="${arg#--subagent-model=}" ;;
@@ -38,11 +46,12 @@ if (( ${#positionals[@]} > 3 )); then
   exit 2
 fi
 
-mode="${positionals[0]:-audit}"
+mode="${positionals[0]:-verify}"
 scope="${positionals[1]:-.}"
 focus="${positionals[2]:-}"
 
 case "$mode" in
+  verify) skill='$fable-verify' ;;
   audit) skill='$fable-audit' ;;
   deep-review) skill='$fable-deep-review' ;;
   fact-check) skill='$fable-fact-check' ;;
@@ -51,10 +60,31 @@ case "$mode" in
   sweep) skill='$fable-sweep' ;;
   *)
     echo "Unknown mode: $mode" >&2
-    echo "Expected: audit, deep-review, fact-check, understand, design-options, sweep" >&2
+    echo "Expected: verify, audit, deep-review, fact-check, understand, design-options, sweep" >&2
     exit 2
     ;;
 esac
+
+if [[ "$mode" == verify && -n "$write" ]]; then echo 'Verification is read-only; request repairs separately.' >&2; exit 2; fi
+if [[ "$depth" != quick && "$depth" != deep ]]; then echo 'Unknown verification depth.' >&2; exit 2; fi
+if [[ -z "$dry_run" ]]; then
+  if ! command -v "$codex_executable" >/dev/null 2>&1; then echo "Codex executable not found: $codex_executable" >&2; exit 1; fi
+  version_output="$("$codex_executable" --version 2>&1)" || { echo 'Could not determine Codex CLI version.' >&2; exit 1; }
+  if [[ ! "$version_output" =~ (^|[[:space:]])codex-cli[[:space:]]+v?([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z][0-9A-Za-z.-]*)?([[:space:]]|$) ]]; then echo 'Could not parse Codex CLI version.' >&2; exit 1; fi
+  installed_major=$((10#${BASH_REMATCH[2]})); installed_minor=$((10#${BASH_REMATCH[3]})); installed_patch=$((10#${BASH_REMATCH[4]}))
+  if (( installed_major == 0 && installed_minor < 152 )); then echo "Fable worker defaults require Codex CLI $minimum_worker_defaults_cli_version or newer; executable reports $installed_major.$installed_minor.$installed_patch." >&2; exit 1; fi
+fi
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+resolver_args=(--profile "$profile" --codex-executable "$codex_executable" --format lines)
+[[ -z "$model" ]] || resolver_args+=(--model "$model")
+[[ -z "$reasoning" ]] || resolver_args+=(--effort "$reasoning")
+[[ -z "$subagent_model" ]] || resolver_args+=(--worker-model "$subagent_model")
+[[ -z "$subagent_reasoning" ]] || resolver_args+=(--worker-effort "$subagent_reasoning")
+if [[ -n "$dry_run" ]]; then resolver_args+=(--dry-run); elif [[ -n "$catalog" ]]; then resolver_args+=(--catalog "$catalog"); fi
+resolved="$(node "$script_dir/model-support.mjs" "${resolver_args[@]}")" || exit 2
+while IFS='=' read -r key value; do
+  case "$key" in model) model="$value" ;; reasoning_effort) reasoning="$value" ;; subagent_model) subagent_model="$value" ;; subagent_reasoning_effort) subagent_reasoning="$value" ;; esac
+done <<< "$resolved"
 
 if [[ -n "$write" ]]; then
   sandbox="workspace-write"
@@ -63,6 +93,7 @@ else
 fi
 
 prompt="Use ${skill}. Scope: ${scope}"
+if [[ "$mode" == verify ]]; then prompt="${prompt} Verification mode: ${depth}. Verify completion without repairs or changes to the reviewed system."; fi
 if [[ -n "$focus" ]]; then
   prompt="${prompt} Focus: ${focus}."
 fi
@@ -78,36 +109,6 @@ if [[ -n "$dry_run" ]]; then
   printf 'model=%s\nreasoning_effort=%s\nsubagent_model=%s\nsubagent_reasoning_effort=%s\ncodex_executable=%s\nminimum_cli_version=%s\nsandbox=%s\nprompt=%s\n' \
     "$model" "$reasoning" "$subagent_model" "$subagent_reasoning" "$codex_executable" "$minimum_worker_defaults_cli_version" "$sandbox" "$prompt"
   exit 0
-fi
-
-if ! command -v "$codex_executable" >/dev/null 2>&1; then
-  echo "Codex executable not found: $codex_executable" >&2
-  exit 1
-fi
-
-version_output="$("$codex_executable" --version 2>&1)" || {
-  echo "Could not determine Codex CLI version from '$codex_executable --version': $version_output" >&2
-  exit 1
-}
-if [[ ! "$version_output" =~ (^|[[:space:]])codex-cli[[:space:]]+v?([0-9]+)\.([0-9]+)\.([0-9]+)([[:space:]]|$) ]]; then
-  echo "Could not parse Codex CLI version from: $version_output" >&2
-  exit 1
-fi
-installed_major=$((10#${BASH_REMATCH[2]}))
-installed_minor=$((10#${BASH_REMATCH[3]}))
-installed_patch=$((10#${BASH_REMATCH[4]}))
-installed_version_text="${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.${BASH_REMATCH[4]}"
-
-minimum_major=0
-minimum_minor=152
-minimum_patch=0
-if ((
-  installed_major < minimum_major ||
-  (installed_major == minimum_major && installed_minor < minimum_minor) ||
-  (installed_major == minimum_major && installed_minor == minimum_minor && installed_patch < minimum_patch)
-)); then
-  echo "Fable's Luna worker defaults require Codex CLI $minimum_worker_defaults_cli_version or newer; $codex_executable reports $installed_version_text." >&2
-  exit 1
 fi
 
 "$codex_executable" exec \

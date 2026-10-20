@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0-alpha.1 - Unreleased
+
+### Added
+
+- Primary `fable-verify` quick/deep completion workflow, preserving the six existing workflows.
+- Versioned requirement-to-source/evidence artifacts, live source/process/GitHub-check/install observations, stale working-tree/index detection, and compact permission-free handoffs.
+- Behavioral regressions for old-head CI, missing requirements, skipped checks, mocks, uninstalled source, dirty changes, forged/inaccessible evidence, injection and legitimate completion.
+- Configurable balanced/deep/economical model profiles with client-specific catalog preflight, explicit overrides and reported fallbacks.
+- Submission preparation and local-execution/privacy/upgrade guidance. No directory approval, publication or measured superiority is implied.
+
+### Boundaries
+
+- Reuses PR #27 closeout accounting without promoting `RECORDS_SATISFIED` into verified work. Serialized artifacts and semantic judgments are not authenticated proof.
+- Historical benchmark outputs remain unchanged. The RRSI evaluator stays synthetic-only; live authenticated imports, representative private evaluation and owner promotion remain separately qualified.
+- This source version is unreleased. Installation, activation, release, listing approval, publication, deployment and production are separate evidence states.
+
 ## 0.4.0-alpha.3 - Unreleased
 
 ### Added

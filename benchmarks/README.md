@@ -1,5 +1,44 @@
 # Fable-5 Benchmark
 
+## Completion verification comparison (0.5 source)
+
+The new `scripts/run-completion-comparison.mjs` is separate from the historical
+lexical harness below. It freezes `evals/completion-verification/cases.json` and
+the semantic/citation grader before running three matched task pairs. It requires
+a committed, clean candidate, an absolute native Codex executable, an explicitly
+authorized existing auth-file path and a new absolute private output directory:
+
+```powershell
+node scripts/run-completion-comparison.mjs --codex '<native-codex.exe>' --auth-file '<authorized-auth.json>' --output '<new-private-output-directory>' --model gpt-6.1-sol --effort medium --timeout-ms 120000
+```
+
+Both arms use fresh isolated homes, the same fixture bytes, requested model and
+effort, read-only permission profile, no shell network, no subagents, no retries,
+equal deadlines, counterbalanced ordering and the same structured output rubric.
+Only the candidate installs this exact plugin and invokes `$fable-verify`.
+The profile permits minimal runtime/workspace reads and denies both auth-file
+paths. It fails closed on unsupported permission profiles; never retry unsandboxed.
+Temporary auth copies are private and removed after use. Raw model events are
+private diagnostic artifacts, not package contents or public benchmark output.
+
+The host keeps answer keys outside model workspaces and reuses issue #24's RRSI
+split, matching, fixed-denominator and noncompensatory guards. Missing/timeouts
+remain zero; no unknown or zero all-in cost is accepted as savings. Metrics count
+missed defects, false completion claims, false blockers and exact oracle-citation
+mismatches, not headings. Original fixture files are checked again after each run.
+Auxiliary error counters include missing responses as failures, not just completed
+responses. A sampling seed is not available; slot seeds only identify matched pairs.
+
+These public synthetic cases are not a representative private holdout, and one
+pair per case cannot establish superior effectiveness. Exact oracle citations can
+penalize other valid citations. Actual routed model/effort remain unverified unless
+runtime metadata attests them. Costs are unknown, RRSI's live host importer remains
+unqualified, and effectiveness/promotion remain false. `frozen-protocol.json`,
+per-trial diagnostics, `runs.json` and `summary.json` preserve the attempted run.
+Historical records and the legacy runner below retain their original models.
+
+## Historical lexical harness
+
 This benchmark compares the same Codex model and reasoning effort in two modes. The runner now defaults to the Fable-5 v0.4 profile:
 
 - Model: `gpt-5.6-sol`

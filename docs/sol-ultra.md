@@ -1,6 +1,6 @@
-# GPT-5.6 Sol Ultra
+# Model profiles (compatibility guide)
 
-Fable-5 v0.4 uses `gpt-5.6-sol` with `ultra` reasoning as the coordinator for large or high-risk work and `gpt-5.6-luna` with `medium` reasoning for bounded subagents by default.
+Current defaults are defined in [the shared model policy](../plugins/fable5-codex/references/model-support.md) and versioned profile config. Balanced/deep prefer GPT-6.1 Sol medium/max where the actual selected client advertises it; economical work prefers GPT-6 Luna. Older supported alternatives are explicit fallbacks, not assumed modern defaults. This filename is retained for existing links.
 
 The packaged Luna worker-default keys require Codex CLI `0.152.0` or newer. The wrappers inspect the selected executable and stop with an upgrade message before launching an older CLI.
 
@@ -9,23 +9,23 @@ The packaged Luna worker-default keys require Codex CLI `0.152.0` or newer. The 
 Ultra is a reasoning and multi-agent setting. It is not a separate model slug.
 
 ```toml
-model = "gpt-5.6-sol"
-model_reasoning_effort = "ultra"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "max"
 
 [agents]
-default_subagent_model = "gpt-5.6-luna"
+default_subagent_model = "gpt-6-luna"
 default_subagent_reasoning_effort = "medium"
 max_concurrent_threads_per_session = 3
 max_depth = 1
 ```
 
-Copy the packaged template from `plugins/fable5-codex/templates/sol-ultra.config.toml` into `~/.codex/config.toml` for a personal default or `.codex/config.toml` in a trusted repository for a project default.
+Check the client's catalog before applying the compatibility-named deep template. Wrappers resolve profiles without changing global configuration. Explicit user overrides are preserved or fail clearly.
 
-In the Codex app, select **GPT-5.6 Sol** and **Ultra** beneath the composer. If Ultra is hidden, enable **Ultra in model picker slider** under **Settings > Configuration**.
+Interactive use retains the model selected in that session. Codex UI Ultra may enable orchestration; it is not a portable API reasoning effort. GPT-6.1 Sol's API supports low through max as documented in the shared policy. Model access depends on sign-in mode, client and account.
 
 ## What Ultra Adds
 
-OpenAI describes Ultra as its highest-capability setting. Codex can proactively delegate suitable work to subagents. Fable-5 caps concurrent threads at `3`, keeps `agents.max_depth` at `1`, and defaults workers to Luna medium. Those values are limits and defaults, not a promise that three workers will run. Additional lenses queue behind that cap. Fable-5 adds the workflow discipline around that runtime:
+Codex Ultra can delegate suitable work. Fable's template caps concurrent threads at `3` and depth at `1`; these limits are not evidence that any worker ran. Quick verification avoids unnecessary delegation. Fable adds:
 
 - disjoint evidence lenses
 - ECF scope and authority contracts
@@ -66,10 +66,10 @@ Inspect the generated configuration without starting Codex:
 
 ## Fallbacks
 
-Use `max` when you need deep single-task coordinator reasoning without Ultra's proactive multi-agent coordination. Use `xhigh` for demanding work where lower latency and usage matter. Keep Luna medium as the bounded worker default. If a runtime cannot honor the requested worker profile, record the actual model and effort plus the fallback reason in the Workflow Trace.
+Resolve preferences against the exact client's model/effort catalog. A dry run never establishes access; a completed observed turn is needed. Record all requested/actual profiles and fallbacks. See the shared policy for the independently observed npm/native-client catalog difference.
 
 ## Official Sources
 
-- [GPT-5.6 announcement and Ultra behavior](https://openai.com/index/gpt-5-6/)
-- [Codex model selection](https://developers.openai.com/codex/models)
+- [Current Codex models and surface limits](https://learn.chatgpt.com/docs/models)
+- [GPT-6.1 Sol API specification](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
 - [Codex configuration](https://developers.openai.com/codex/config-basic)

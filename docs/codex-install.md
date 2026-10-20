@@ -98,26 +98,26 @@ Use $fable-audit with real Codex subagents and an ECF run contract. I explicitly
 
 The installed skill will use real subagents only when Codex exposes a subagent tool in that runtime. If not, it should report `single-agent multi-lens` with a no-subagent reason.
 
-## Select Sol Ultra With Luna Workers
+## Select A Supported Model Profile
 
-In the Codex app, select **GPT-5.6 Sol** and **Ultra** beneath the composer. If Ultra is hidden, open **Settings > Configuration** and enable it in the model picker. Ultra availability depends on the active plan and surface.
+Use the [shared model support policy](../plugins/fable5-codex/references/model-support.md). Balanced/deep prefer GPT-6.1 Sol medium/max and bounded GPT-6 Luna workers only where the exact client supports them. An npm shim and native desktop executable can expose different catalogs; select the executable deliberately and do not equate catalog presence with entitlement.
 
 The Luna worker-default keys require Codex CLI `0.152.0` or newer. The wrappers check the selected executable before launching Codex and fail with an upgrade message when it is too old.
 
-For CLI and repo defaults, copy the values from `plugins/fable5-codex/templates/sol-ultra.config.toml` into `~/.codex/config.toml` or a trusted repo's `.codex/config.toml`. The coordinator stays on Sol Ultra while bounded workers use Luna medium:
+The compatibility-named deep template illustrates preferences; check support before applying any configuration. Wrappers resolve profiles without overwriting user settings:
 
 ```toml
-model = "gpt-5.6-sol"
-model_reasoning_effort = "ultra"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "max"
 
 [agents]
-default_subagent_model = "gpt-5.6-luna"
+default_subagent_model = "gpt-6-luna"
 default_subagent_reasoning_effort = "medium"
 max_concurrent_threads_per_session = 3
 max_depth = 1
 ```
 
-Ultra is the effort setting; there is no separate `gpt-5.6-sol-ultra` model ID. See [Sol Ultra setup and runtime boundaries](sol-ultra.md).
+Codex Ultra orchestration is not an OpenAI API reasoning-effort value. See [model/client boundaries](sol-ultra.md). `-Profile` / `--profile=` selects balanced, deep or economical; explicit overrides remain supported.
 
 The packaged CLI wrappers can generate the same prompt:
 
@@ -159,7 +159,7 @@ through:
 "path": "./plugins/fable5-codex"
 ```
 
-To avoid drift, regenerate the personal plugin copy from the repo copy:
+Verify the actual installed source and version using `codex plugin list --json`. Before updating, back up that package and affected configuration, compare customizations and test an isolated upgrade. See [upgrade, rollback, privacy and activation](completion-upgrade.md). The supported sync path is:
 
 ```powershell
 .\scripts\sync-personal-plugin.ps1

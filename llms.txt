@@ -1,6 +1,6 @@
 # Fable-5 for Codex
 
-Fable-5 is an OpenAI Codex plugin for evidence-first audits, deep code review, fact checks, codebase understanding, design options, and repo-wide sweeps.
+Fable-5 is a local Codex completion-verification plugin, retaining audits, reviews, fact checks, understanding, design options and sweeps. The unreleased 0.5 source adds requirement-mapped evidence and stale-aware handoffs.
 
 Latest public tagged release: `v0.4.0-alpha.2`.
 
@@ -9,16 +9,17 @@ npx github:rhein1/fable5-codex#v0.4.0-alpha.2
 codex plugin add fable5-codex@personal
 ```
 
-Installed skills:
+Source skills (the tagged alpha.2 release does not include fable-verify):
 
 - `$fable-audit`
+- `$fable-verify`
 - `$fable-deep-review`
 - `$fable-fact-check`
 - `$fable-understand`
 - `$fable-design-options`
 - `$fable-sweep`
 
-Fable workflows require source-backed evidence, explicit unknowns, local verification, and a truthful Workflow Trace. Demanding runs keep a GPT-5.6 Sol Ultra coordinator and default bounded subagents to GPT-5.6 Luna medium. They use real subagents only when the runtime exposes them; otherwise they report single-agent multi-lens execution.
+Fable requires source-backed evidence, explicit unknowns and truthful traces. Model profiles are centralized and resolved against the chosen client's catalog; explicit overrides and fallbacks remain visible. Preferences do not establish account access or actual execution. Quick verification avoids unnecessary workers; all claimed subagents require actual runtime IDs.
 
 Docs:
 

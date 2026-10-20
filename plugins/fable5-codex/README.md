@@ -1,6 +1,8 @@
 # Fable-5 for Codex
 
-Fable-5 for Codex is a local Codex plugin that packages evidence-first workflows as six reusable skills plus Micro ECF-style run contracts:
+Fable-5 verifies what a coding agent actually finished, tested and left unverified before merge. Start with `$fable-verify` in quick or deep mode; map explicit acceptance criteria to current source, observed checks, reasoned conclusions and next actions. Versioned artifacts/handoffs require revalidation and never authorize repair, merge or deploy.
+
+The six existing workflows remain:
 
 - `$fable-audit`: ranked bug, risk, and integration audit
 - `$fable-deep-review`: PR or branch review with verification passes
@@ -17,11 +19,11 @@ evaluation contracts. It does not change the installed workflows or launch an
 optimizer; paid execution, host qualification and exact-commit promotion remain
 separately gated.
 
-## Sol Ultra Coordinator, Luna Workers
+## Model And Client Profiles
 
-The packaged wrappers keep the coordinator on `gpt-5.6-sol` with `ultra` reasoning and default delegated workers to `gpt-5.6-luna` with `medium` reasoning. This preserves a high-capability coordinator for synthesis and verification while using lower-cost workers for bounded evidence lenses. The Fable skills add explicit lens assignments, authority boundaries, verification, and Workflow Trace requirements.
+Profiles are centralized in `config/model-profiles.json`. Balanced/deep prefer GPT-6.1 Sol medium/max and economical work prefers GPT-6 Luna, only where the chosen client's catalog supports the model/effort. Unsupported explicit overrides fail; profile fallbacks are reported. Catalogs do not establish entitlement. See `references/model-support.md`.
 
-Copy `templates/sol-ultra.config.toml` into your Codex configuration when you want the same coordinator and worker defaults in the app, IDE, and CLI. The plugin cannot silently replace the model or reasoning settings of an already-open task, so Workflow Traces record the requested and actual coordinator profile and any fallback.
+Do not silently replace an active session's model or user configuration. The compatibility-named deep template must be checked against the selected client before applying it. Workflow Traces report actual model/worker execution, not merely requested settings.
 
 ## ECF Run Contracts
 
@@ -91,4 +93,4 @@ Bash with ECF contract and explicit subagent authorization:
 bash ./scripts/fable5-codex.sh audit src "correctness, security, data, operations, tests, and docs-vs-reality" --subagents
 ```
 
-The wrappers call `codex exec` in read-only mode with a GPT-5.6 Sol Ultra coordinator and GPT-5.6 Luna medium workers by default. The Luna worker-default keys require Codex CLI `0.152.0` or newer. PowerShell supports `-Model`, `-ReasoningEffort`, `-SubagentModel`, `-SubagentReasoningEffort`, `-CodexExecutable`, and `-DryRun`; Bash supports the matching `FABLE5_*` environment variables plus `--model=`, `--reasoning=`, `--subagent-model=`, `--subagent-reasoning=`, `--codex-executable=`, and `--dry-run`. Bash flags may appear before or after positional arguments. Pass the write flag only for controlled edits. Large/high-risk tasks request real subagents automatically when the runtime exposes a subagent tool; `-Subagents` / `--subagents` adds an explicit authorization phrase for smaller scopes. The report must still fall back to `single-agent multi-lens` if the active Codex runtime does not expose subagents.
+Wrappers default to read-only verification and the balanced profile. PowerShell adds `-Profile balanced|deep|economical` and `-VerificationDepth quick|deep`; Bash adds `--profile=` and `--depth=`. Existing model/worker/executable overrides remain. `-DryRun`/`--dry-run` display preferences without catalog/inference access claims. Verification rejects the write flag; request a separate scoped repair workflow. See `references/completion-verification.md` for artifact/API examples and privacy limits.

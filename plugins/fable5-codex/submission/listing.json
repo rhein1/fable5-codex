@@ -1,0 +1,16 @@
+{
+  "version": "fable-listing-preparation/1",
+  "name": "Fable-5 for Codex",
+  "shortDescription": "Verify agent completion",
+  "category": "Developer Tools",
+  "requiresLocalExecutor": true,
+  "localRequirements": ["Codex with skills/plugins", "Node 18+", "Git", "Authorized local repository access", "gh and network access only for explicit hosted-check observations"],
+  "primaryPrompt": "Use $fable-verify in quick mode against this task and branch. Show verified, incomplete and unverified requirements before merge.",
+  "privacy": "Local selected-repository evidence. No hosted service, telemetry endpoint or automatic memory import. Do not include private source, credentials or transcripts in shared artifacts.",
+  "limitations": ["Semantic judgments require reasoning", "Serialized reports are not authenticated proof", "Node checks are not an OS sandbox", "Effectiveness is not established by small synthetic tasks", "Desktop-only eligibility and approval require portal review"],
+  "reviewInformation": "See test-cases.md and the repository examples/completion-verification/demo.mjs",
+  "videoWalkthrough": null,
+  "uploaded": false,
+  "approved": false,
+  "published": false
+}

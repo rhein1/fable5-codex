@@ -1,0 +1,62 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { isolatedEnvironment } from '../scripts/fable-runtime.mjs';
+
+const repo = new URL('..', import.meta.url);
+const dataset = JSON.parse(readFileSync(new URL('evals/completion-verification/cases.json', repo)));
+const grader = new URL('scripts/completion-evaluation.py', repo);
+
+function evaluate(context, runs) {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'fable-grader-')));
+  context.after(() => { assert.equal(dirname(root), realpathSync(tmpdir())); rmSync(root, { recursive: true }); });
+  const packet = { cases: dataset.cases, runs, model: 'gpt-6.1-sol', effort: 'medium', timeoutMs: 120000,
+    baselineCommit: 'a'.repeat(40), candidateCommit: 'b'.repeat(40) };
+  const input = join(root, 'runs.json'); writeFileSync(input, JSON.stringify(packet));
+  const result = spawnSync(process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), ['-I', '-B', grader.pathname.replace(/^\/([A-Za-z]:)/, '$1'), input], { encoding: 'utf8', shell: false });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
+}
+
+test('missing and timeout trials remain in the matched fixed denominator with no completion proof', (context) => {
+  const report = evaluate(context, [{ caseId: dataset.cases[0].id, arm: 'baseline', stopped: true, exitCode: null, durationMs: 120000 }]);
+  assert.equal(report.reports.baseline.completed, 0);
+  assert.equal(report.reports.candidate.completed, 0);
+  assert.equal(report.reports.baseline.score, 0);
+  assert.equal(report.reports.candidate.score, 0);
+  assert.equal(report.costComparisonAdmissible, false);
+  assert.equal(report.effectivenessProven, false);
+  assert.equal(report.promotionAllowed, false);
+});
+
+test('known synthetic answers score without certifying real model effectiveness or unknown costs', (context) => {
+  const runs = dataset.cases.flatMap((fixture) => ['baseline', 'candidate'].map((arm) => ({ caseId: fixture.id, arm, exitCode: 0,
+    durationMs: 100, reportedTokens: 100, testCommandObserved: false, parsed: { requirements: fixture.expected.map(({ id, status, path, line }) => ({ id, status, evidence: { path, line } })), testsObserved: false, deployedVerified: false } })));
+  const report = evaluate(context, runs);
+  assert.equal(report.reports.baseline.completed, 3);
+  assert.equal(report.reports.candidate.score, 1);
+  assert.equal(report.metrics.candidate.invalidEvidence, 0);
+  assert.equal(report.reports.candidate.costs_known_positive, false);
+  assert.equal(report.effectivenessProven, false);
+  runs[0].parsed.deployedVerified = true;
+  runs[0].parsed.requirements[1].status = 'verified';
+  runs[0].parsed.requirements[0].evidence.line = 99;
+  const forged = evaluate(context, runs);
+  assert.equal(forged.reports.baseline.safety_ok, false);
+  assert.ok(forged.metrics.baseline.falseCompletionClaims > 0);
+  assert.ok(forged.metrics.baseline.invalidEvidence > 0);
+});
+
+test('isolated runtime does not inherit personal plugin homes, credentials or proxy variables', (context) => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'fable-environment-')));
+  context.after(() => { assert.equal(dirname(root), realpathSync(tmpdir())); rmSync(root, { recursive: true }); });
+  mkdirSync(join(root, 'home'));
+  const env = isolatedEnvironment(join(root, 'home'));
+  assert.equal(env.CODEX_HOME, join(root, 'home'));
+  assert.equal(env.APPDATA, join(root, 'home/AppData/Roaming'));
+  assert.equal(env.OPENAI_API_KEY, undefined);
+  assert.equal(env.HTTPS_PROXY, undefined);
+});

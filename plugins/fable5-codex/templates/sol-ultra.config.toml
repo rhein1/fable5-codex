@@ -1,12 +1,10 @@
-# Copy these settings into ~/.codex/config.toml or a trusted repo's .codex/config.toml.
-# The Luna worker-default keys require Codex CLI 0.152.0 or newer.
-model = "gpt-5.6-sol"
-model_reasoning_effort = "ultra"
+# Compatibility filename for the deep profile. Check references/model-support.md
+# and the actual client's catalog before applying any personal configuration.
+model = "gpt-6.1-sol"
+model_reasoning_effort = "max"
 
 [agents]
-# Keep the Sol Ultra coordinator for synthesis and final verification. Use
-# Luna medium for bounded workers to reduce delegated-run cost and latency.
-default_subagent_model = "gpt-5.6-luna"
+default_subagent_model = "gpt-6-luna"
 default_subagent_reasoning_effort = "medium"
 max_concurrent_threads_per_session = 3
 max_depth = 1

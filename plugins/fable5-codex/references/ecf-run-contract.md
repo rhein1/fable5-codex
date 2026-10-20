@@ -8,11 +8,11 @@ Fable-5 for Codex uses an ECF-style run contract to make agent work explicit, bo
 - Codex subagent runtime: spawns real subagents when the task policy calls for them and the runtime exposes a subagent tool.
 - Fable skill: maps the task, creates the contract, delegates independent lenses when allowed, verifies candidates, and reports the trace.
 
-## Sol Coordinator And Luna Worker Profile
+## Configurable Coordinator And Worker Profiles
 
-The recommended high-capability profile uses `gpt-5.6-sol` with `model_reasoning_effort = "ultra"` for the parent when that profile is selected or configured before the run, and uses `gpt-5.6-luna` with `medium` reasoning for bounded subagents. Set the worker model and effort explicitly on each spawn when the runtime supports it. Keep synthesis, load-bearing verification, and side effects with the coordinator. Record the requested and actual coordinator profile and any fallback; never imply Sol Ultra was active when it was not.
+Use the centralized preferences in `../config/model-profiles.json` and [model-support.md](model-support.md). Resolve model/effort support against the selected Codex client, preserve explicit overrides and report any fallback. Catalog discovery does not establish inference access. Keep synthesis, final verification and side effects with the coordinator and report requested and actual coordinator and worker profiles.
 
-Use `../templates/sol-ultra.config.toml` as a starting configuration. Keep subagent depth at `1` unless recursive delegation is an explicit, reviewed requirement. If Ultra is unavailable for the active account or surface, use `max` or `xhigh` for the coordinator and retain the Luna worker policy. If the runtime cannot honor the requested worker model or effort, record the actual values and fallback reason; never claim Luna was used without runtime evidence.
+The compatibility-named `../templates/sol-ultra.config.toml` illustrates the deep profile; validate it before applying settings. Keep subagent depth at `1` unless explicitly reviewed. Codex Ultra orchestration is not a portable API reasoning effort. Never claim a worker or model ran without runtime evidence.
 
 ## Authority Split
 
@@ -103,3 +103,19 @@ When a Fable run is reviewing a PR or driving a review loop, use `../templates/f
 ## Public OSS Boundary
 
 The public plugin may ship Micro ECF-style contracts, templates, and reporting rules. Do not include private Full ECF internals, private customer evidence, private connector details, secrets, wallet material, or enterprise runtime code in this OSS package.
+
+## Optional Durable Closeout
+
+When the user requests strict completion accounting or durable checkpoints for a
+long-running task, consult [run-closeout.md](run-closeout.md) and use the explicit-file
+helper `../scripts/run-closeout.mjs`. Keep the selected one of the six workflows,
+this ECF contract, model/worker policy and review verdict format unchanged. Skip
+this extra ledger for small tasks or an explicit opt-out. Read-only scope does
+not authorize writing ledger files.
+
+The coordinator supplies independently checked scope/revision/policy/plan bindings,
+records required checks and coverage, and preserves blocking findings through
+fresh resolution. A `RECORDS_SATISFIED` result is only record accounting, never an
+independent review, execution proof, ECF grant or permission to merge/publish.
+Include its blockers, optional notes and host-verification limits in the existing
+Workflow Trace; do not create another authority or automatic Memory completion.
