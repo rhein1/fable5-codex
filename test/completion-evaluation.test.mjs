@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { isolatedEnvironment } from '../scripts/fable-runtime.mjs';
+import { configureEvaluationPermissions, isolatedEnvironment } from '../scripts/fable-runtime.mjs';
 
 const repo = new URL('..', import.meta.url);
 const dataset = JSON.parse(readFileSync(new URL('evals/completion-verification/cases.json', repo)));
@@ -59,4 +59,10 @@ test('isolated runtime does not inherit personal plugin homes, credentials or pr
   assert.equal(env.APPDATA, join(root, 'home/AppData/Roaming'));
   assert.equal(env.OPENAI_API_KEY, undefined);
   assert.equal(env.HTTPS_PROXY, undefined);
+  configureEvaluationPermissions(env.CODEX_HOME, join(root, 'original/auth.json'), join(root, 'plugin'));
+  const policy = readFileSync(join(env.CODEX_HOME, 'config.toml'), 'utf8');
+  assert.match(policy, /":root" = "deny"/);
+  assert.match(policy, /auth\.json" = "deny"/);
+  assert.match(policy, /enabled = false/);
+  assert.equal(policy.includes('sandbox_mode'), false);
 });

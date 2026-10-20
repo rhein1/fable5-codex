@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fingerprintSources } from '../plugins/fable5-codex/scripts/observe-check.mjs';
@@ -33,6 +33,11 @@ export function isolatedEnvironment(home) {
   Object.assign(env, { CODEX_HOME: home, HOME: home, USERPROFILE: home, APPDATA: join(home, 'AppData/Roaming'), LOCALAPPDATA: join(home, 'AppData/Local'), GIT_CONFIG_NOSYSTEM: '1',
     GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null', GIT_TERMINAL_PROMPT: '0' });
   return env;
+}
+
+export function configureEvaluationPermissions(home, originalAuth, installedRoot) {
+  const quoted = (value) => JSON.stringify(value.replaceAll('\\', '/'));
+  appendFileSync(join(home, 'config.toml'), `\n[permissions.fable-evaluation.filesystem]\n":root" = "deny"\n":minimal" = "read"\n${quoted(join(home, 'auth.json'))} = "deny"\n${quoted(originalAuth)} = "deny"\n${installedRoot ? `${quoted(installedRoot)} = "read"\n` : ''}[permissions.fable-evaluation.filesystem.":workspace_roots"]\n"." = "read"\n[permissions.fable-evaluation.network]\nenabled = false\n`);
 }
 
 export function run(command, args, cwd, env, input) {
