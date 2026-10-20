@@ -1,15 +1,16 @@
 param(
-  [ValidateSet("audit", "deep-review", "fact-check", "understand", "design-options", "sweep")]
-  [string]$Mode = "audit",
+  [ValidateSet("verify", "audit", "deep-review", "fact-check", "understand", "design-options", "sweep")]
+  [string]$Mode = "verify",
   [string]$Scope = ".",
   [string]$Focus = "",
-  [string]$Model = "gpt-5.6-sol",
-  [ValidateSet("low", "medium", "high", "xhigh", "max", "ultra")]
-  [string]$ReasoningEffort = "ultra",
-  [string]$SubagentModel = "gpt-5.6-luna",
-  [ValidateSet("low", "medium", "high", "xhigh", "max", "ultra")]
-  [string]$SubagentReasoningEffort = "medium",
-  [string]$CodexExecutable = "codex",
+  [string]$Profile = "balanced",
+  [string]$Model = "",
+  [string]$ReasoningEffort = "",
+  [string]$SubagentModel = "",
+  [string]$SubagentReasoningEffort = "",
+  [string]$ModelCatalogPath = "",
+  [ValidateSet("quick", "deep")][string]$VerificationDepth = "quick",
+  [string]$CodexExecutable = $(if ($env:OS -eq 'Windows_NT') { 'codex.exe' } else { 'codex' }),
   [switch]$Write,
   [switch]$Ecf,
   [switch]$Subagents,
@@ -19,7 +20,32 @@ param(
 $ErrorActionPreference = "Stop"
 $minimumWorkerDefaultsCliVersion = [version]"0.152.0"
 
+if ($Mode -eq 'verify' -and $Write) { throw 'Verification is read-only; request a separate repair workflow.' }
+if (-not $DryRun) {
+  if (-not (Get-Command $CodexExecutable -ErrorAction SilentlyContinue)) { throw "Codex executable not found: $CodexExecutable" }
+  $versionOutput = (& $CodexExecutable --version 2>&1 | Out-String).Trim()
+  $versionExitCode = $LASTEXITCODE
+  $versionMatch = [regex]::Match($versionOutput, '(?im)^\s*codex-cli\s+v?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?(?=\s|$)')
+  if ($versionExitCode -ne 0 -or -not $versionMatch.Success) { throw 'Could not determine Codex CLI version.' }
+  $installedCliVersion = [version]$versionMatch.Groups[1].Value
+  if ($installedCliVersion -lt $minimumWorkerDefaultsCliVersion) { throw "Fable worker defaults require Codex CLI $minimumWorkerDefaultsCliVersion or newer; executable reports $installedCliVersion." }
+}
+$resolverArgs = @('--profile', $Profile, '--codex-executable', $CodexExecutable)
+foreach ($entry in @(@('--model', $Model), @('--effort', $ReasoningEffort), @('--worker-model', $SubagentModel), @('--worker-effort', $SubagentReasoningEffort))) {
+  if ($entry[1]) { $resolverArgs += $entry }
+}
+if ($DryRun) { $resolverArgs += '--dry-run' }
+elseif ($ModelCatalogPath) { $resolverArgs += @('--catalog', $ModelCatalogPath) }
+$resolvedJson = & node (Join-Path $PSScriptRoot 'model-support.mjs') @resolverArgs
+if ($LASTEXITCODE -ne 0) { throw 'Fable model preflight failed; no inference was started.' }
+$resolved = $resolvedJson | ConvertFrom-Json
+$Model = $resolved.model
+$ReasoningEffort = $resolved.reasoningEffort
+$SubagentModel = $resolved.subagentModel
+$SubagentReasoningEffort = $resolved.subagentReasoningEffort
+
 $skillByMode = @{
+  "verify" = '$fable-verify'
   "audit" = '$fable-audit'
   "deep-review" = '$fable-deep-review'
   "fact-check" = '$fable-fact-check'
@@ -32,6 +58,7 @@ $sandbox = if ($Write) { "workspace-write" } else { "read-only" }
 $skill = $skillByMode[$Mode]
 
 $prompt = "Use $skill. Scope: $Scope"
+if ($Mode -eq 'verify') { $prompt = "$prompt Verification mode: $VerificationDepth. Verify completion without repairs or changes to the reviewed system." }
 if ($Focus.Trim().Length -gt 0) {
   $prompt = "$prompt Focus: $Focus."
 }
@@ -56,6 +83,9 @@ $codexArgs = @(
 if ($DryRun) {
   [pscustomobject]@{
     model = $Model
+    profile = $Profile
+    catalogChecked = $resolved.catalogChecked
+    accessVerified = $false
     reasoningEffort = $ReasoningEffort
     subagentModel = $SubagentModel
     subagentReasoningEffort = $SubagentReasoningEffort
@@ -65,24 +95,6 @@ if ($DryRun) {
     prompt = $prompt
   } | ConvertTo-Json -Depth 3
   return
-}
-
-if (-not (Get-Command $CodexExecutable -ErrorAction SilentlyContinue)) {
-  throw "Codex executable not found: $CodexExecutable"
-}
-
-$versionOutput = (& $CodexExecutable --version 2>&1 | Out-String).Trim()
-$versionExitCode = $LASTEXITCODE
-$versionMatch = [regex]::Match(
-  $versionOutput,
-  '(?im)^\s*codex-cli\s+v?(\d+\.\d+\.\d+)(?=\s|$)'
-)
-if ($versionExitCode -ne 0 -or -not $versionMatch.Success) {
-  throw "Could not determine Codex CLI version from '$CodexExecutable --version': $versionOutput"
-}
-$installedCliVersion = [version]$versionMatch.Groups[1].Value
-if ($installedCliVersion -lt $minimumWorkerDefaultsCliVersion) {
-  throw "Fable's Luna worker defaults require Codex CLI $minimumWorkerDefaultsCliVersion or newer; $CodexExecutable reports $installedCliVersion."
 }
 
 & $CodexExecutable @codexArgs

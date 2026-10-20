@@ -45,9 +45,9 @@ function runPowerShell(executable, args) {
 test('Bash wrapper recognizes flags when optional focus is omitted', () => {
   const result = runBash(['audit', '.', '--subagents', '--dry-run']);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /^model=gpt-5\.6-sol$/m);
-  assert.match(result.stdout, /^reasoning_effort=ultra$/m);
-  assert.match(result.stdout, /^subagent_model=gpt-5\.6-luna$/m);
+  assert.match(result.stdout, /^model=gpt-6\.1-sol$/m);
+  assert.match(result.stdout, /^reasoning_effort=medium$/m);
+  assert.match(result.stdout, /^subagent_model=gpt-6-luna$/m);
   assert.match(result.stdout, /^subagent_reasoning_effort=medium$/m);
   assert.match(result.stdout, /I explicitly authorize parallel subagents/);
   assert.doesNotMatch(result.stdout, /Focus: --subagents/);
@@ -161,17 +161,20 @@ test('Bash wrapper preflights a supported CLI and passes literal arguments', () 
     writeFileSync(fakeCodex, `#!/usr/bin/env bash\nif [[ \"\${1:-}\" == \"--version\" ]]; then\n  echo \"codex-cli 0.152.0\"\n  exit 0\nfi\nprintf '%s\\n' \"$@\" > \"$(dirname \"$0\")/args.txt\"\n`);
     chmodSync(fakeCodex, 0o755);
     const bashFakeCodex = `./${relative(repoRoot, fakeCodex).replaceAll('\\', '/')}`;
-    const result = runBash(['audit', 'src', '--codex-executable=' + bashFakeCodex]);
+    const catalog = join(target, 'catalog.json');
+    writeFileSync(catalog, JSON.stringify(['gpt-6.1-sol','gpt-6-luna'].map(model => ({model,defaultReasoningEffort:'medium',supportedReasoningEfforts:[{reasoningEffort:'medium'}]}))));
+    const bashCatalog = `./${relative(repoRoot, catalog).replaceAll('\\', '/')}`;
+    const result = runBash(['audit', 'src', '--codex-executable=' + bashFakeCodex, '--catalog=' + bashCatalog]);
     assert.equal(result.status, 0, result.stderr);
     const args = readFileSync(capture, 'utf8').trim().split(/\r?\n/);
     assert.deepEqual(args.slice(0, 10), [
       'exec',
       '--model',
-      'gpt-5.6-sol',
+      'gpt-6.1-sol',
       '-c',
-      'model_reasoning_effort="ultra"',
+      'model_reasoning_effort="medium"',
       '-c',
-      'agents.default_subagent_model="gpt-5.6-luna"',
+      'agents.default_subagent_model="gpt-6-luna"',
       '-c',
       'agents.default_subagent_reasoning_effort="medium"',
       '--sandbox',
@@ -192,9 +195,11 @@ test('PowerShell wrapper dry-run exposes executable and subagent authorization',
   const result = runPowerShell(powerShell, ['-DryRun', '-Subagents', '-CodexExecutable', 'custom-codex']);
   assert.equal(result.status, 0, result.stderr);
   const output = JSON.parse(result.stdout);
-  assert.equal(output.model, 'gpt-5.6-sol');
-  assert.equal(output.reasoningEffort, 'ultra');
-  assert.equal(output.subagentModel, 'gpt-5.6-luna');
+  assert.equal(output.model, 'gpt-6.1-sol');
+  assert.equal(output.reasoningEffort, 'medium');
+  assert.equal(output.subagentModel, 'gpt-6-luna');
+  assert.equal(output.catalogChecked, false);
+  assert.equal(output.accessVerified, false);
   assert.equal(output.subagentReasoningEffort, 'medium');
   assert.equal(output.codexExecutable, 'custom-codex');
   assert.equal(output.minimumCliVersion, '0.152.0');
@@ -286,22 +291,25 @@ test('PowerShell wrapper preflights a supported CLI and passes literal arguments
       '',
     ].join('\n'));
 
+    const catalog = join(target, 'catalog.json');
+    writeFileSync(catalog, JSON.stringify(['gpt-6.1-sol','gpt-6-luna'].map(model => ({model,defaultReasoningEffort:'medium',supportedReasoningEfforts:[{reasoningEffort:'medium'}]}))));
     const result = runPowerShell(powerShell, [
       '-Mode', 'audit',
       '-Scope', 'src path',
       '-Focus', 'money safety',
       '-CodexExecutable', fakeCodex,
+      '-ModelCatalogPath', catalog,
     ]);
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const args = readFileSync(capture, 'utf8').replace(/^\uFEFF/, '').trim().split(/\r?\n/);
     assert.deepEqual(args.slice(0, 11), [
       'exec',
       '--model',
-      'gpt-5.6-sol',
+      'gpt-6.1-sol',
       '-c',
-      'model_reasoning_effort="ultra"',
+      'model_reasoning_effort="medium"',
       '-c',
-      'agents.default_subagent_model="gpt-5.6-luna"',
+      'agents.default_subagent_model="gpt-6-luna"',
       '-c',
       'agents.default_subagent_reasoning_effort="medium"',
       '--sandbox',

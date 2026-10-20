@@ -7,9 +7,18 @@
 [![Validate](https://github.com/rhein1/fable5-codex/actions/workflows/validate.yml/badge.svg)](https://github.com/rhein1/fable5-codex/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
-## Make Codex show its evidence, authority, and verification—not just its answer.
+## Before I merge, show what the coding agent actually finished.
 
-**Fable-5 is an evidence-first Codex plugin from Agoragentic.** It packages six reusable engineering workflows for audits, deep reviews, fact checks, codebase understanding, design options, and repository-wide changes.
+**Fable-5 is a completion-verification plugin for Codex from Agoragentic.** Start with `$fable-verify`: map acceptance criteria to exact source, observed tests and remaining unknowns. Quick and deep modes produce a readable report and versioned JSON artifact. The six existing audit, review, fact-check, understanding, design and sweep workflows remain available.
+
+Working example from this source checkout (Node 18+, Git):
+
+```sh
+node examples/completion-verification/demo.mjs
+```
+
+It runs a real local assertion in a disposable synthetic repository and correctly
+leaves deployment unverified. It does not install a plugin or prove effectiveness.
 
 Each workflow is designed to record:
 
@@ -20,31 +29,52 @@ Each workflow is designed to record:
 - whether real subagents were used;
 - a truthful final Workflow Trace.
 
+To use the new skill from this tested source checkout (back up an existing copy
+first; see the upgrade guide):
+
 ```powershell
-npx github:rhein1/fable5-codex#v0.4.0-alpha.2
+node bin/install.mjs --no-codex-add
 codex plugin add fable5-codex@personal
 ```
 
 Then start a new Codex thread:
 
 ```text
-Use $fable-audit.
-Scope: this repository.
-Focus: correctness, security, data, operations, tests, and docs-vs-reality.
-Include a Workflow Trace.
+Use $fable-verify in quick mode.
+Task: implement the acceptance criteria in issue #123.
+Target: this branch. What is verified, incomplete or unverified before merge?
+Return requirement-to-evidence JSON, a readable report and a compact handoff.
 ```
 
 <p>
   <a href="#install"><strong>Install</strong></a>
   ·
-  <a href="#six-workflows"><strong>See the workflows</strong></a>
+  <a href="#primary-verification-and-six-existing-workflows"><strong>See the workflows</strong></a>
   ·
   <a href="#examples-gallery"><strong>Read sample outputs</strong></a>
   ·
   <a href="#benchmark-snapshot"><strong>Inspect benchmark evidence</strong></a>
 </p>
 
-> **Release status:** `v0.4.0-alpha.2` is the latest public tagged release. `main` contains the `0.4.0-alpha.3` release candidate. Do not cite alpha.3 as published until a signed tag and GitHub prerelease exist.
+> **Release status:** `v0.4.0-alpha.2` remains the latest public tagged release. Main was inspected at `0.4.0-alpha.3`; this completion-verification upgrade is unreleased source `0.5.0-alpha.1`. The tagged release does not contain the new primary skill. Test/install this checkout to use it; source, installed, activated, released and published are separate states.
+
+## Completion verification
+
+Each criterion records its originating requirement, explicit/assumed status,
+source changes, exact head and working-tree/index snapshot, evidence method,
+observed command/result/context, conclusion, open work and smallest next action.
+PR head, base and merge-test commits stay distinct. Green CI never substitutes
+for requirement coverage. Skipped/pending/inaccessible checks are not passes;
+mocks do not establish live execution or deployment.
+
+Saved reports are untrusted records. Structure validation and hashes prove no
+semantic correctness; rendering a saved artifact leads with unverified until
+observations and judgments are freshly checked. Verification never silently
+repairs, merges or deploys. Handoffs require revalidation and grant no authority.
+
+See [artifact/API details](plugins/fable5-codex/references/completion-verification.md),
+[model support](plugins/fable5-codex/references/model-support.md) and
+[upgrade/rollback and privacy](docs/completion-upgrade.md).
 
 ## What Fable-5 changes
 
@@ -68,7 +98,7 @@ user goal
 → Workflow Trace + unknowns
 ```
 
-Fable-5 improves workflow discipline. It does not make every finding correct, replace local verification, or turn model output into an audit opinion or security certification.
+Fable-5 provides workflow discipline. It does not make every finding correct, replace local verification, or turn model output into an audit opinion or security certification.
 
 ## Install
 
@@ -113,10 +143,11 @@ npx fable5-codex
 
 Do not represent that npm command as currently published unless the registry confirms it.
 
-## Six workflows
+## Primary verification and six existing workflows
 
 | Skill | Use it for |
 |---|---|
+| `$fable-verify` | Requirement-mapped completion verification, quick/deep evidence, stale-state checks and handoff |
 | `$fable-audit` | Ranked bugs, risks, integration gaps, and docs-vs-reality findings |
 | `$fable-deep-review` | PR or branch review with verification passes and actionable findings |
 | `$fable-fact-check` | Claim-by-claim verification against repository or runtime evidence |
@@ -144,36 +175,29 @@ Question: What are the main execution paths, trust boundaries, and unresolved un
 Cite exact files and include an UNKNOWNS section.
 ```
 
-## Sol Ultra coordinator with Luna workers
+## Configurable Codex model profiles
 
-<p align="center">
-  <img src="assets/brand/fable5-sol-ultra.png" alt="Fable-5 configured for GPT-5.6 Sol Ultra multi-agent workflows" width="920">
-</p>
-
-The repository includes a cost-aware multi-agent profile for large or high-risk work: `gpt-5.6-sol` with `ultra` reasoning coordinates, while bounded workers default to `gpt-5.6-luna` with `medium` reasoning. The coordinator retains synthesis and final verification. Interactive use must select the coordinator profile before the run; Workflow Traces record requested and actual coordinator and worker profiles. The packaged wrappers enforce the repository's declared minimum Codex CLI version before launch.
+Balanced and deep profiles prefer `gpt-6.1-sol` with medium/max reasoning; economical work prefers `gpt-6-luna`. Preferences live in one versioned config. Wrappers discover the selected client's catalog, validate model-specific efforts and explicitly report supported fallbacks. An older npm shim and a desktop native executable may expose different catalogs. Catalog presence does not prove account access or that a model ran. Interactive sessions retain their selected parent; explicit overrides win.
 
 Use the ready-to-copy template:
 
 ```text
-plugins/fable5-codex/templates/sol-ultra.config.toml
+plugins/fable5-codex/config/model-profiles.json
 ```
 
 Or run the PowerShell wrapper:
 
 ```powershell
-.\plugins\fable5-codex\scripts\fable5-codex.ps1 \
-  -Mode audit \
-  -Scope . \
-  -Subagents
+.\plugins\fable5-codex\scripts\fable5-codex.ps1 -Mode verify -Profile balanced -Scope . -DryRun
 ```
 
 Override coordinator or worker settings when a task needs a different cost/capability balance. The model/runtime configuration does not weaken Fable-5's evidence, authority, and truthful-reporting requirements.
 
-See [Sol Ultra setup and behavior](docs/sol-ultra.md).
+See [current model/client support](plugins/fable5-codex/references/model-support.md). Codex Ultra orchestration is not a portable API reasoning effort. Historical benchmark models/results below remain unchanged.
 
 ## Subagents without fake parallelism
 
-Fable-5 requests real Codex subagents for suitable large or high-risk work when the runtime exposes a subagent tool and the user has not opted out. It requests Luna medium for each worker and records the requested and actual worker model plus any fallback.
+Fable-5 requests real Codex subagents for useful large or high-risk work when supported and not opted out. Quick verification avoids unnecessary delegation. Workers use the resolved supported profile and reports retain requested/actual settings and fallbacks.
 
 Large/high-risk includes work such as:
 
