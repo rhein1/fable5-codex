@@ -1,5 +1,5 @@
 {
-  "version": "fable-completion-cases/1",
+  "version": "fable-completion-cases/2",
   "cases": [
     {
       "id": "missing-budget", "repository": "fixture-routing", "family": "budget-validation", "split": "evolve",
@@ -17,12 +17,12 @@
       ]
     },
     {
-      "id": "complete-bounded", "repository": "fixture-configuration", "family": "bounded-correctness", "split": "heldout",
-      "prompt": "Assess the explicit exported configuration and validation requirements using current source and observed tests, without inventing installation or release requirements.",
+      "id": "complete-normalization", "repository": "fixture-labels", "family": "string-normalization", "split": "heldout",
+      "prompt": "Assess the exported locale and text canonicalization contract using current source and observed tests, without inventing installation or release requirements.",
       "files": {
-        "TASK.md": "R1: Export timeoutMs as at least 1000.\nR2: Accept only finite positive budgets.\n",
-        "feature.mjs": "export const timeoutMs = 1000;\nexport function acceptBudget(value) { return Number.isFinite(value) && value > 0; }\n",
-        "test.mjs": "import assert from 'node:assert/strict'; import { timeoutMs, acceptBudget } from './feature.mjs'; assert.ok(timeoutMs >= 1000); for (const value of [0,-1,NaN,Infinity]) assert.equal(acceptBudget(value),false); assert.equal(acceptBudget(1),true);\n"
+        "TASK.md": "R1: Export defaultLocale as en.\nR2: Normalize string labels by trimming outer whitespace and lowercasing; reject nonstrings.\n",
+        "feature.mjs": "export const defaultLocale = 'en';\nexport function normalizeLabel(value) { if (typeof value !== 'string') throw new TypeError('label'); return value.trim().toLowerCase(); }\n",
+        "test.mjs": "import assert from 'node:assert/strict'; import { defaultLocale, normalizeLabel } from './feature.mjs'; assert.equal(defaultLocale,'en'); assert.equal(normalizeLabel('  Hello  '),'hello'); for (const value of [null,0,{}]) assert.throws(()=>normalizeLabel(value),TypeError);\n"
       },
       "expected": [
         {"id":"R1","status":"verified","path":"feature.mjs","line":1},

@@ -38,6 +38,12 @@ unqualified, and effectiveness/promotion remain false. `frozen-protocol.json`,
 per-trial diagnostics, `runs.json` and `summary.json` preserve the attempted run.
 Historical records and the legacy runner below retain their original models.
 
+Corpus v2 separates budget validation, string normalization and production-proof
+fidelity into different repository/family splits. Family assignment needs semantic
+review, not just different labels. The exploratory v1 corpus put two budget cases
+in different splits; retain those raw records as confounded, not heldout evidence.
+Freeze a new protocol and rerun all slots after corpus or grading changes.
+
 ## Historical lexical harness
 
 This benchmark compares the same Codex model and reasoning effort in two modes. The runner now defaults to the Fable-5 v0.4 profile:
