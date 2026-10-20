@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { configureEvaluationPermissions, isolatedEnvironment, install, packageDigest, prepareMarketplace, privateRuntime, restrictDirectory, run, runTrial } from './fable-runtime.mjs';
 import { discoverModels, resolveModels } from '../plugins/fable5-codex/scripts/model-support.mjs';
+import { freezeComparisonSources, validateComparisonBootstrap } from './comparison-snapshot.mjs';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const digest = (value) => createHash('sha256').update(value).digest('hex');
@@ -40,14 +41,25 @@ export function validateFrozenGrader(frozen) {
 export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol', effort = 'medium', timeoutMs = 120000, python = 'python' }) {
   if (!isAbsolute(codex) || !isAbsolute(authFile) || !isAbsolute(output) || existsSync(output)
     || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 300000) throw new Error('explicit_paths_or_deadline_invalid');
+  const head = run('git', ['rev-parse', 'HEAD'], repo, process.env).trim();
+  const upstream = run('git', ['rev-parse', 'origin/main'], repo, process.env).trim();
+  const baseline = run('git', ['merge-base', upstream, head], repo, process.env).trim();
+  if (head === baseline) throw new Error('commit_candidate_before_comparison');
+  if (run('git', ['status', '--porcelain', '--untracked-files=all', '--', 'plugins/fable5-codex', 'scripts', 'evals/completion-verification'], repo, process.env).trim()) throw new Error('candidate_comparison_sources_dirty');
+  const runtime = privateRuntime('fable-comparison-source-');
+  try {
+    const snapshot = freezeComparisonSources(repo, head, join(runtime.root, 'source'));
+    validateComparisonBootstrap(repo, snapshot);
+    const frozen = await import(pathToFileURL(join(snapshot.root, 'scripts/run-completion-comparison.mjs')).href);
+    return await frozen.executeFrozenComparison({ codex, authFile, output, model, effort, timeoutMs, python }, { head, baseline, upstream });
+  } finally { runtime.cleanup(); }
+}
+
+export async function executeFrozenComparison({ codex, authFile, output, model, effort, timeoutMs, python }, { head, baseline, upstream }) {
   const source = realpathSync(join(repo, 'plugins/fable5-codex'));
   const casesFile = join(repo, 'evals/completion-verification/cases.json');
   const dataset = JSON.parse(readFileSync(casesFile, 'utf8'));
   const pluginDigest = packageDigest(source);
-  const head = run('git', ['rev-parse', 'HEAD'], repo, process.env).trim();
-  const baseline = run('git', ['merge-base', 'origin/main', 'HEAD'], repo, process.env).trim();
-  if (head === baseline) throw new Error('commit_candidate_before_comparison');
-  if (run('git', ['status', '--porcelain', '--untracked-files=all', '--', 'plugins/fable5-codex', 'scripts', 'evals/completion-verification'], repo, process.env).trim()) throw new Error('candidate_comparison_sources_dirty');
   const selection = resolveModels(await discoverModels(codex), { model, effort });
   mkdirSync(output);
   restrictDirectory(output);
@@ -56,6 +68,7 @@ export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol
   const frozenGrader = freezeComparisonGrader(runtime.root);
   const schema = join(runtime.root, 'response-schema.json'); writeFileSync(schema, JSON.stringify(responseSchema));
   const packet = { version: 'fable-completion-runs/1', model, effort, timeoutMs, baselineCommit: baseline, candidateCommit: head,
+    sourceBinding: 'exact_git_object_export', upstreamCommit: upstream,
     pluginDigest, graderDigest: frozenGrader.graderDigest, graderDependencyDigest: frozenGrader.graderDependencyDigest,
     runnerDigest: digest(readFileSync(fileURLToPath(import.meta.url))), runtimeHelperDigest: digest(readFileSync(join(repo, 'scripts/fable-runtime.mjs'))),
     codexExecutableDigest: digest(readFileSync(realpathSync(codex))),

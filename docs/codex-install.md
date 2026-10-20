@@ -104,6 +104,11 @@ Use the [shared model support policy](../plugins/fable5-codex/references/model-s
 
 The Luna worker-default keys require Codex CLI `0.152.0` or newer. The wrappers check the selected executable before launching Codex and fail with an upgrade message when it is too old.
 
+Both wrappers default to `codex` and resolve one absolute launcher for version,
+catalog and execution. Windows npm launchers are supported without `cmd /c` or an
+execution-policy change; explicit native executable overrides remain exact.
+See the shared model policy for launcher selection and unsupported batch files.
+
 The compatibility-named deep template illustrates preferences; check support before applying any configuration. Wrappers resolve profiles without overwriting user settings:
 
 ```toml

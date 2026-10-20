@@ -10,9 +10,7 @@ model="${FABLE5_MODEL:-}"
 reasoning="${FABLE5_REASONING_EFFORT:-}"
 subagent_model="${FABLE5_SUBAGENT_MODEL:-}"
 subagent_reasoning="${FABLE5_SUBAGENT_REASONING_EFFORT:-}"
-default_codex=codex
-if [[ "${OS:-}" == "Windows_NT" ]]; then default_codex=codex.exe; fi
-codex_executable="${FABLE5_CODEX_EXECUTABLE:-$default_codex}"
+codex_executable="${FABLE5_CODEX_EXECUTABLE:-codex}"
 catalog=""
 depth="quick"
 minimum_worker_defaults_cli_version="0.152.0"
@@ -67,15 +65,17 @@ esac
 
 if [[ "$mode" == verify && -n "$write" ]]; then echo 'Verification is read-only; request repairs separately.' >&2; exit 2; fi
 if [[ "$depth" != quick && "$depth" != deep ]]; then echo 'Unknown verification depth.' >&2; exit 2; fi
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+launcher_script="$script_dir/codex-launcher.mjs"
+resolver_args=(--profile "$profile" --format lines)
 if [[ -z "$dry_run" ]]; then
-  if ! command -v "$codex_executable" >/dev/null 2>&1; then echo "Codex executable not found: $codex_executable" >&2; exit 1; fi
-  version_output="$("$codex_executable" --version 2>&1)" || { echo 'Could not determine Codex CLI version.' >&2; exit 1; }
+  launcher_token="$(node "$launcher_script" resolve-base64 "$codex_executable")" || exit 1
+  resolver_args+=(--launcher-base64 "$launcher_token")
+  version_output="$(node "$launcher_script" run-base64 "$launcher_token" --version 2>&1)" || { echo 'Could not determine Codex CLI version.' >&2; exit 1; }
   if [[ ! "$version_output" =~ (^|[[:space:]])codex-cli[[:space:]]+v?([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z][0-9A-Za-z.-]*)?([[:space:]]|$) ]]; then echo 'Could not parse Codex CLI version.' >&2; exit 1; fi
   installed_major=$((10#${BASH_REMATCH[2]})); installed_minor=$((10#${BASH_REMATCH[3]})); installed_patch=$((10#${BASH_REMATCH[4]}))
   if (( installed_major == 0 && installed_minor < 152 )); then echo "Fable worker defaults require Codex CLI $minimum_worker_defaults_cli_version or newer; executable reports $installed_major.$installed_minor.$installed_patch." >&2; exit 1; fi
 fi
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-resolver_args=(--profile "$profile" --codex-executable "$codex_executable" --format lines)
 [[ -z "$model" ]] || resolver_args+=(--model "$model")
 [[ -z "$reasoning" ]] || resolver_args+=(--effort "$reasoning")
 [[ -z "$subagent_model" ]] || resolver_args+=(--worker-model "$subagent_model")
@@ -111,7 +111,7 @@ if [[ -n "$dry_run" ]]; then
   exit 0
 fi
 
-"$codex_executable" exec \
+node "$launcher_script" run-base64 "$launcher_token" exec \
   --model "$model" \
   -c "model_reasoning_effort=\"$reasoning\"" \
   -c "agents.default_subagent_model=\"$subagent_model\"" \

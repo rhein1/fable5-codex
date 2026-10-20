@@ -12,6 +12,16 @@ authorized existing auth-file path and a new absolute private output directory:
 node scripts/run-completion-comparison.mjs --codex '<native-codex.exe>' --auth-file '<authorized-auth.json>' --output '<new-private-output-directory>' --model gpt-6.1-sol --effort medium --timeout-ms 120000
 ```
 
+Candidate execution inputs are materialized from bounded Git blob objects at the
+captured commit, including the plugin, runner, runtime helpers, dataset, grader and
+evaluator dependency. The runner re-imports that exported code before discovery or
+model trials, so hidden assume-unchanged/skip-worktree edits cannot masquerade as
+the labeled commit. Bootstrap changes fail closed (Windows checkout CRLF is allowed
+only for bootstrap comparison); exported execution bytes remain exact Git objects.
+Symlinks/submodules and unsupported paths/modes are rejected. Clean status is an
+additional guard, not the source-identity proof. The upstream reference is captured
+once and the merge-base uses the captured candidate SHA.
+
 Both arms use fresh isolated homes, the same fixture bytes, requested model and
 effort, read-only permission profile, no shell network, no subagents, no retries,
 equal deadlines, counterbalanced ordering and the same structured output rubric.
@@ -35,6 +45,10 @@ unique IDs and typed statuses/citations. Extra, duplicate or malformed entries
 fail the whole trial closed: zero quality, a failed safety guard and an
 `invalidResponses` count, without removing its expected slot. The reused RRSI
 `completed` counter includes terminal failed trials; it is not a success count.
+Any requirement-level false completion claim independently fails the unsupported-
+claims guard; any fabricated or wrong oracle citation independently fails evidence
+fidelity, even when deployment/test-observation booleans are truthful. These guards
+cannot be compensated by a high quality score.
 Retain frozen results under their original grader digest. Regrading retained
 outputs is a separately labeled analysis, never a new model run or current-build
 effectiveness qualification.

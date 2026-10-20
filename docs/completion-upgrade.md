@@ -54,8 +54,13 @@ Record pre-update hashes and preserve unrelated plugins, credentials and memory.
 
 Compare existing files to the prior package before overwriting. Preserve private
 customizations; do not export them to the public repository or submission ZIP.
-The sync script replaces only the named Fable directory and does not itself back
-it up. Invoke it only after backup and source/target verification:
+The sync script rejects reparse/link components and linked source/target entries,
+stages a complete content/path-verified copy beside the target, and retains the old
+installation as a named sibling backup before promotion. A failed promotion restores
+the backup if the target is absent; an occupied target is never recursively removed
+for rollback. Inspect the printed target/stage/backup paths after any failure.
+Keep the separate configuration backup: the script does not back up registration
+or cache metadata. Invoke it only after source/target verification:
 
 ```powershell
 .\scripts\sync-personal-plugin.ps1 -CanonicalPlugin '<tested-source-plugin>' -PersonalPlugin '<verified-existing-personal-plugin>'
@@ -73,6 +78,14 @@ and run `Use $fable-verify in quick mode on a small explicit acceptance criterio
 If a fresh native CLI smoke succeeds, that proves that CLI session loaded it;
 it does not reload an already-open desktop chat. Report activation pending for
 any surface not exercised.
+
+The sync checks assume no concurrent local process replaces path components during
+the transaction. They reject observed links rather than following junctions and
+are not handle-relative isolation against a hostile process racing filesystem
+operations. Verification covers content, relative paths and file/directory types,
+not a portable equivalence claim about every filesystem attribute or Unix mode.
+Failed staging copies are retained for inspection; no recursive cleanup of an
+unrecognized tree is attempted automatically.
 
 ## Rollback
 
