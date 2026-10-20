@@ -5,10 +5,16 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { configureEvaluationPermissions, isolatedEnvironment } from '../scripts/fable-runtime.mjs';
+import { isFixtureTestCommand } from '../scripts/run-completion-comparison.mjs';
 
 const repo = new URL('..', import.meta.url);
 const dataset = JSON.parse(readFileSync(new URL('evals/completion-verification/cases.json', repo)));
 const grader = new URL('scripts/completion-evaluation.py', repo);
+
+test('test observation accepts only the exact fixture command through known literal shells', () => {
+  for (const command of ['node test.mjs', '/bin/bash -c \'node test.mjs\'', '/bin/bash -lc "node ./test.mjs"', '"C:\\PowerShell\\pwsh.exe" -Command "node .\\test.mjs"']) assert.equal(isFixtureTestCommand(command), true, command);
+  for (const command of ['echo node test.mjs', 'node other.mjs', '/bin/bash -c \'false; node test.mjs\'', '/bin/bash -c \'echo node test.mjs\'', 'node test.mjs; echo passed']) assert.equal(isFixtureTestCommand(command), false, command);
+});
 
 function evaluate(context, runs) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'fable-grader-')));

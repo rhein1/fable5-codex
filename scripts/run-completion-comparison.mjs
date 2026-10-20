@@ -7,6 +7,11 @@ import { discoverModels, resolveModels } from '../plugins/fable5-codex/scripts/m
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const digest = (value) => createHash('sha256').update(value).digest('hex');
+export function isFixtureTestCommand(command) {
+  return typeof command === 'string' && [/^node (?:\.\/|\.\\)?test\.mjs$/,
+    /^\/bin\/(?:ba)?sh -l?c (["'])node (?:\.\/)?test\.mjs\1$/,
+    /^(?:"[^"\r\n]*\\pwsh\.exe"|pwsh)(?: -NoProfile)? -Command "node (?:\.\/|\.\\)?test\.mjs"$/].some((pattern) => pattern.test(command));
+}
 const responseSchema = { type: 'object', additionalProperties: false, required: ['requirements', 'testsObserved', 'deployedVerified'], properties: {
   requirements: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'status', 'evidence'], properties: {
     id: { type: 'string' }, status: { type: 'string', enum: ['verified', 'incomplete', 'unverified'] },
@@ -33,6 +38,8 @@ export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol
   const schema = join(runtime.root, 'response-schema.json'); writeFileSync(schema, JSON.stringify(responseSchema));
   const packet = { version: 'fable-completion-runs/1', model, effort, timeoutMs, baselineCommit: baseline, candidateCommit: head,
     pluginDigest, graderDigest: digest(readFileSync(join(repo, 'scripts/completion-evaluation.py'))),
+    runnerDigest: digest(readFileSync(fileURLToPath(import.meta.url))), runtimeHelperDigest: digest(readFileSync(join(repo, 'scripts/fable-runtime.mjs'))),
+    codexExecutableDigest: digest(readFileSync(realpathSync(codex))),
     datasetDigest: digest(readFileSync(casesFile)), codexVersion: run(codex, ['--version'], repo, process.env).trim(),
     samplingSeedSupported: false, selection, cases: dataset.cases, runs: [], costMicrousd: null };
   writeFileSync(join(output, 'frozen-protocol.json'), JSON.stringify({ ...packet, runs: undefined }, null, 2));
@@ -77,7 +84,7 @@ export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol
         const events = observed.stdout.split(/\r?\n/).flatMap((line) => { try { return [JSON.parse(line)]; } catch { return []; } });
         const usage = events.findLast((event) => event.type === 'turn.completed')?.usage;
         const testCommandObserved = events.some((event) => event.type === 'item.completed' && event.item?.type === 'command_execution'
-          && event.item.exit_code === 0 && /(?:^| -Command ["']?)node (?:\.\/|\.\\)?test\.mjs["']?$/.test(event.item.command || ''));
+          && event.item.exit_code === 0 && isFixtureTestCommand(event.item.command));
         const result = { caseId: fixture.id, arm, requestedModel: model, requestedEffort: effort,
           reportedModel: null, ...observed, parsed, reportedTokens: usage ? (usage.input_tokens || 0) + (usage.output_tokens || 0) : 0,
           testCommandObserved, pluginDigest: arm === 'candidate' ? pluginDigest : null };
