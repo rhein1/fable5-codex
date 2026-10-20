@@ -193,7 +193,7 @@ test('PR head, base, checkout head and merge-test identity stay separate', (cont
 test('Windows Git-expanded short root aliases identify the actual repository root', (context) => {
   if (process.platform !== 'win32') return context.skip('Windows short-path alias behavior');
   const { cwd } = fixture(context);
-  const query = spawnSync('cmd.exe', ['/d', '/c', `for %I in ("${cwd}") do @echo %~sI`], { encoding: 'utf8', shell: false });
+  const query = spawnSync('cmd.exe', ['/d', '/c', `for %I in ("${cwd}") do @echo %~sI`], { encoding: 'utf8', shell: false, windowsVerbatimArguments: true });
   assert.equal(query.status, 0);
   const short = query.stdout.trim();
   if (short.toLowerCase() === cwd.toLowerCase()) return context.skip('Filesystem does not expose an 8.3 alias');
