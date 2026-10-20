@@ -73,3 +73,25 @@ test('isolated runtime does not inherit personal plugin homes, credentials or pr
   assert.ok(policy.includes(`${JSON.stringify(join(root, 'runtime').replaceAll('\\', '/'))} = "read"`));
   assert.equal(policy.includes('sandbox_mode'), false);
 });
+
+for (const variant of ['invented', 'duplicate', 'malformed']) {
+  test(`${variant} response requirements fail closed without shrinking the matched denominator`, (context) => {
+    const runs = dataset.cases.flatMap((fixture) => ['baseline', 'candidate'].map((arm) => ({ caseId: fixture.id, arm, exitCode: 0,
+      durationMs: 100, reportedTokens: 100, testCommandObserved: false, parsed: { requirements: fixture.expected.map(({ id, status, path, line }) => ({ id, status, evidence: { path, line } })), testsObserved: false, deployedVerified: false } })));
+    for (const run of runs.filter(({ arm }) => arm === 'candidate')) {
+      if (variant === 'invented') run.parsed.requirements.push({ id: 'R999', status: 'incomplete', evidence: { path: 'invented', line: 99 } });
+      if (variant === 'duplicate') run.parsed.requirements.push({ ...run.parsed.requirements[0], status: 'unverified' });
+      if (variant === 'malformed') run.parsed.requirements = { id: 'R1' };
+    }
+    const report = evaluate(context, runs);
+    assert.equal(report.reports.baseline.score, 1);
+    assert.equal(report.reports.candidate.score, 0);
+    assert.equal(report.reports.candidate.completed, dataset.cases.length);
+    assert.equal(report.reports.candidate.expected_trials, dataset.cases.length);
+    assert.equal(report.reports.candidate.safety_ok, false);
+    assert.equal(report.metrics.candidate.invalidResponses, dataset.cases.length);
+    assert.equal(report.metrics.candidate.expectedRequirements, report.metrics.baseline.expectedRequirements);
+    assert.equal(report.effectivenessProven, false);
+    assert.equal(report.promotionAllowed, false);
+  });
+}

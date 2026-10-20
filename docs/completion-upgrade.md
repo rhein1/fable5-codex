@@ -98,6 +98,16 @@ reasoning; inaccessible checks remain unverified. Saved records do not become
 independently authenticated evidence. Do not store secrets, credentials, private
 transcripts or customer repositories in distributable examples/submission ZIPs.
 
+Hosted CI can satisfy a requirement only when the checkout is clean and bounded
+raw Git blob/mode hashes match the tested commit's complete file tree. A matching
+HEAD string or clean status alone is insufficient, including hidden
+assume-unchanged/skip-worktree edits. Other-tree results remain context, not passes
+or current blockers. CRLF conversion, filters and unprovable executable modes can
+conservatively leave hosted verification unverified; this is not a CI failure.
+File/directory replacements remain part of dirty snapshot identity. Assessment
+reasons accept 2,048 characters; derived report reasons allow 2,304 so generated
+missing-method explanations do not discard the original assessment text.
+
 Artifacts/handoffs belong at explicitly authorized locations outside the checked
 tree, with host-owned ACLs and retention. There is no telemetry service, local
 MCP server, automatic memory store or generic qualified Memory importer.

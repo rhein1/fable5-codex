@@ -18,7 +18,7 @@ function bindingDigest(binding) {
   return digest(JSON.stringify(['runId', 'scopeId', 'revision', 'policyDigest', 'planDigest'].map((key) => binding[key])));
 }
 
-function readSources(cwd, sourceFiles) {
+function readSources(cwd, sourceFiles, gitBlobs = false) {
   need(typeof cwd === 'string' && isAbsolute(cwd) && realpathSync(cwd) === cwd
     && lstatSync(cwd).isDirectory(), 'source_root_not_canonical');
   need(Array.isArray(sourceFiles) && sourceFiles.length > 0 && sourceFiles.length <= 1024
@@ -41,6 +41,7 @@ function readSources(cwd, sourceFiles) {
       need(opened.isFile() && opened.nlink === 1 && opened.dev === before.dev && opened.ino === before.ino
         && opened.size === before.size, 'source_changed_during_read');
       const hash = createHash('sha256');
+      const blobHash = gitBlobs ? createHash('sha1').update(`blob ${opened.size}\0`) : null;
       const buffer = Buffer.alloc(65536);
       let length = 0;
       while (true) {
@@ -49,12 +50,14 @@ function readSources(cwd, sourceFiles) {
         length += count;
         need(totalBytes + length <= MAX_SOURCE_BYTES, 'source_too_large');
         hash.update(buffer.subarray(0, count));
+        blobHash?.update(buffer.subarray(0, count));
       }
       const after = fstatSync(descriptor);
       need(length === opened.size && opened.size === after.size && opened.mode === after.mode
         && opened.mtimeMs === after.mtimeMs && opened.ctimeMs === after.ctimeMs, 'source_changed_during_read');
       totalBytes += length;
-      files.push([name, opened.mode, length, hash.digest('hex')]);
+      files.push(gitBlobs ? [name, opened.mode & 0o111 ? '100755' : '100644', blobHash.digest('hex')]
+        : [name, opened.mode, length, hash.digest('hex')]);
     } finally {
       closeSync(descriptor);
     }
@@ -69,6 +72,10 @@ export function fingerprintSources(cwd, sourceFiles) {
     if (error?.code) throw new Error('source_unreadable');
     throw error;
   }
+}
+
+export function fingerprintGitSources(cwd, sourceFiles) {
+  return readSources(cwd, sourceFiles, true);
 }
 
 function runNode(spec) {

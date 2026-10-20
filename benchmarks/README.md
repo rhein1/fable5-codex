@@ -30,6 +30,15 @@ mismatches, not headings. Original fixture files are checked again after each ru
 Auxiliary error counters include missing responses as failures, not just completed
 responses. A sampling seed is not available; slot seeds only identify matched pairs.
 
+Every parsed response must map one-to-one to the expected requirement IDs, with
+unique IDs and typed statuses/citations. Extra, duplicate or malformed entries
+fail the whole trial closed: zero quality, a failed safety guard and an
+`invalidResponses` count, without removing its expected slot. The reused RRSI
+`completed` counter includes terminal failed trials; it is not a success count.
+Retain frozen results under their original grader digest. Regrading retained
+outputs is a separately labeled analysis, never a new model run or current-build
+effectiveness qualification.
+
 These public synthetic cases are not a representative private holdout, and one
 pair per case cannot establish superior effectiveness. Exact oracle citations can
 penalize other valid citations. Actual routed model/effort remain unverified unless

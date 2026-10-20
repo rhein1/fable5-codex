@@ -41,6 +41,119 @@ async function observeFixture(session, cwd, method = 'local') {
   return executeNodeCheck(session, spec, fingerprintCheck(spec), method);
 }
 
+function hostedFixture(cwd, options = {}, conclusion = 'success') {
+  const script = `
+    import childProcess from 'node:child_process';
+    import { syncBuiltinESMExports } from 'node:module';
+    const original = childProcess.spawnSync;
+    let testedSha;
+    childProcess.spawnSync = (command, args, ...rest) => command === 'gh'
+      ? { status: 0, stdout: JSON.stringify({ id: 1, head_sha: testedSha, name: 'Release gate', app: { id: 15368 }, status: 'completed', conclusion: ${JSON.stringify(conclusion)} }) }
+      : original(command, args, ...rest);
+    syncBuiltinESMExports();
+    const core = await import(${JSON.stringify(new URL('../plugins/fable5-codex/lib/completion-verification.mjs', import.meta.url).href)});
+    const session = core.createVerification(${JSON.stringify(cwd)}, { taskRef: 'user:hosted', requirements: [{ id: 'disabled', text: 'Checked tree passes.', origin: 'explicit', sourceRef: 'user:task', methods: ['hosted'], hostedChecks: [{ name: 'Release gate', appId: 15368 }] }] }, { repository: 'fixture/project', mode: 'quick', ...${JSON.stringify(options)} });
+    testedSha = session.identity.prHead || session.identity.head;
+    const observed = core.observeGitHubCheck(session, { checkRunId: '1', revisionKind: session.identity.prHead ? 'prHead' : 'head', expectedName: 'Release gate', expectedAppId: 15368 });
+    const report = core.finishVerification(session, [{ ...${JSON.stringify(assessment([]))}, evidence: [observed] }]);
+    process.stdout.write(JSON.stringify(report));
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-'], { input: script, encoding: 'utf8', shell: false });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
+}
+
+test('hosted evidence verifies only the exact current tree, not dirty or hidden modified bytes', (context) => {
+  const { cwd } = fixture(context);
+  assert.equal(hostedFixture(cwd).overall, 'verified');
+  writeFileSync(join(cwd, 'feature.mjs'), 'export const enabled = true;\n');
+  const dirty = hostedFixture(cwd);
+  assert.equal(dirty.overall, 'unverified');
+  assert.equal(dirty.evidence[0].context.snapshotMatchesTestedTree, false);
+  dirty.overall = 'verified'; dirty.requirements[0].status = 'verified';
+  dirty.evidence[0].context.snapshotMatchesTestedTree = true;
+  assert.throws(() => validateArtifact(dirty), /hosted_policy_not_satisfied/);
+  for (const flag of ['--assume-unchanged', '--skip-worktree']) {
+    git(cwd, ['update-index', flag, '--', 'feature.mjs']);
+    const hidden = hostedFixture(cwd);
+    assert.equal(hidden.identity.dirty, false);
+    assert.equal(hidden.evidence[0].context.snapshotMatchesTestedTree, false);
+    assert.equal(hidden.overall, 'unverified');
+    git(cwd, ['update-index', flag === '--assume-unchanged' ? '--no-assume-unchanged' : '--no-skip-worktree', '--', 'feature.mjs']);
+  }
+});
+
+test('other-revision hosted checks stay context unless their complete tree matches', (context) => {
+  const { cwd } = fixture(context);
+  const prHead = git(cwd, ['rev-parse', 'HEAD']);
+  git(cwd, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgSign=false', 'commit', '--allow-empty', '-qm', 'same tree']);
+  assert.equal(hostedFixture(cwd, { prHead }).overall, 'verified');
+  writeFileSync(join(cwd, 'feature.mjs'), 'export const enabled = true;\n');
+  git(cwd, ['add', '--', 'feature.mjs']);
+  git(cwd, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgSign=false', 'commit', '-qm', 'different tree']);
+  for (const conclusion of ['success', 'failure']) {
+    const report = hostedFixture(cwd, { prHead }, conclusion);
+    assert.equal(report.identity.dirty, false);
+    assert.equal(report.evidence[0].context.snapshotMatchesTestedTree, false);
+    assert.equal(report.overall, 'unverified');
+  }
+  git(cwd, ['mv', 'feature.mjs', 'renamed.mjs']);
+  git(cwd, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgSign=false', 'commit', '-qm', 'renamed tree']);
+  const renamed = hostedFixture(cwd, { prHead });
+  assert.equal(renamed.evidence[0].context.snapshotMatchesTestedTree, false);
+  assert.equal(renamed.overall, 'unverified');
+});
+
+test('tracked file and directory replacements remain snapshot-bound', (context) => {
+  const { cwd, options, session } = fixture(context, ['source']);
+  rmSync(join(cwd, 'feature.mjs'));
+  const deleted = snapshotRepository(cwd, options);
+  const deletedSession = createVerification(cwd, { taskRef: 'user:deletion', requirements: [] }, options);
+  const deletedReport = finishVerification(deletedSession);
+  mkdirSync(join(cwd, 'feature.mjs'));
+  assert.notEqual(snapshotRepository(cwd, options).snapshotDigest, deleted.snapshotDigest);
+  assert.equal(revalidateArtifact(deletedReport, cwd, options).stale, true);
+  writeFileSync(join(cwd, 'feature.mjs/child.mjs'), 'export const child = true;\n');
+  const replaced = snapshotRepository(cwd, options);
+  assert.equal(replaced.dirty, true);
+  assert.notEqual(replaced.snapshotDigest, session.identity.snapshotDigest);
+  git(cwd, ['add', '--all']);
+  git(cwd, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgSign=false', 'commit', '-qm', 'directory']);
+  rmSync(join(cwd, 'feature.mjs/child.mjs'));
+  rmSync(join(cwd, 'feature.mjs'), { recursive: true });
+  writeFileSync(join(cwd, 'feature.mjs'), 'export const enabled = false;\n');
+  const reverse = snapshotRepository(cwd, options);
+  assert.equal(reverse.dirty, true);
+  assert.notEqual(reverse.snapshotDigest, replaced.snapshotDigest);
+});
+
+test('draft requirements and assessment arrays cannot mutate live acceptance criteria', (context) => {
+  const { session, cwd, options, request } = fixture(context);
+  const source = inspectSource(session, { path: 'feature.mjs', startLine: 1, endLine: 1 });
+  const input = assessment([source]);
+  const draft = finishVerification(session, [input]);
+  draft.requirements[0].methods.pop();
+  input.changes.push('other.mjs:1');
+  assert.deepEqual(draft.requirements[0].changes, ['feature.mjs:1']);
+  assert.equal(finishVerification(session, [assessment([source])]).overall, 'unverified');
+  request.requirements[0].hostedChecks = [{ name: 'Release gate', appId: 15368 }];
+  const hostedSession = createVerification(cwd, request, options);
+  const first = finishVerification(hostedSession);
+  first.requirements[0].hostedChecks[0].appId = 1;
+  assert.equal(finishVerification(hostedSession).requirements[0].hostedChecks[0].appId, 15368);
+});
+
+test('maximum accepted assessment reason preserves its text and generated missing-method suffix', (context) => {
+  const { session } = fixture(context);
+  const reason = 'a'.repeat(2048);
+  const report = finishVerification(session, [{ ...assessment([]), reason }]);
+  assert.equal(report.overall, 'unverified');
+  assert.ok(report.requirements[0].reason.startsWith(reason));
+  assert.match(report.requirements[0].reason, /Missing observed methods: source, local\.$/);
+  assert.ok(report.requirements[0].reason.length <= 2304);
+  assert.equal(validateArtifact(report).structureValid, true);
+});
+
 test('legitimately complete work has evidence for every explicit requirement without false blockers', async (context) => {
   const { cwd, session } = fixture(context);
   const source = inspectSource(session, { path: 'feature.mjs', startLine: 1, endLine: 1 });

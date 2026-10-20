@@ -55,6 +55,11 @@ criterion as unverified. It changes no installed plugin or reviewed project.
    the existing authenticated `gh` CLI and verifies name, publisher app, tested
    SHA and terminal result. Supply `head`, `prHead` or `mergeTest` deliberately.
    Unrelated successful checks cannot satisfy the pinned requirement policy.
+   A hosted pass satisfies the current snapshot only if the checkout is clean
+   and bounded raw blob/mode hashes match the tested commit's complete file tree.
+   This detects index-hidden edits too. Different-tree checks remain context,
+   not passes or current blockers. CRLF/filter conversion or unprovable native
+   executable modes can conservatively leave tree equivalence unverified.
    This read requires network/GitHub access; denial remains unverified.
 5. `observeInstallation(session, { sourceDirectory, installationDirectory })`
    compares complete bounded regular-file inventories. Installation is separate
@@ -68,6 +73,9 @@ criterion as unverified. It changes no installed plugin or reviewed project.
    coordinator owns semantic judgment. A satisfied judgment requires all explicit
    methods to have current observed passes; failures cannot be overridden, mocks
    cannot satisfy production and missing methods remain unverified.
+   Assessment reasons allow 2,048 characters; derived report reasons allow 2,304
+   to preserve that text plus the generated missing-method explanation. Reports
+   copy nested requirements and change arrays, never exposing live session state.
 
 Repository labels and PR/base/merge role associations are caller-supplied. The
 library verifies the physical root, actual checkout HEAD and local availability

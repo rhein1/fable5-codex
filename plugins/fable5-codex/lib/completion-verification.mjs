@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createLedger, planDigest } from '../scripts/run-closeout.mjs';
-import { appendObservedCheck, fingerprintCheck, fingerprintSources, observeNodeCheck } from '../scripts/observe-check.mjs';
+import { appendObservedCheck, fingerprintCheck, fingerprintGitSources, fingerprintSources, observeNodeCheck } from '../scripts/observe-check.mjs';
 
 export const VERSION = 'fable-completion-verification/1';
 export const METHODS = ['source', 'local', 'mock', 'hosted', 'installed', 'deployed', 'production'];
@@ -68,12 +68,14 @@ export function snapshotRepository(root, { repository, prHead = null, base = nul
   need(paths.length <= 1024 && paths.every((path) => !/(^|\/)\.git(\/|$)/.test(path)), 'snapshot_scope_exceeded');
   const present = [];
   const deleted = [];
+  const replacedDirectories = [];
   for (const path of paths) {
     try {
-      lstatSync(resolve(canonical, path));
-      present.push(path);
+      const entry = lstatSync(resolve(canonical, path));
+      if (entry.isDirectory()) replacedDirectories.push(path);
+      else present.push(path);
     } catch (error) {
-      need(error.code === 'ENOENT', 'snapshot_file_unavailable');
+      need(['ENOENT', 'ENOTDIR'].includes(error.code), 'snapshot_file_unavailable');
       deleted.push(path);
     }
   }
@@ -81,7 +83,7 @@ export function snapshotRepository(root, { repository, prHead = null, base = nul
   const dirty = git(canonical, ['status', '--porcelain=v1', '--untracked-files=all']).length > 0;
   return Object.freeze({
     repository, rootDigest: hash(canonical), head, prHead, base, mergeTest,
-    snapshotDigest: hash({ files: source.digest, deleted, stages }), dirty,
+    snapshotDigest: hash({ files: source.digest, deleted, replacedDirectories, stages }), dirty,
     scope: 'tracked_and_nonignored_untracked', fileCount: paths.length,
     repositoryProvenance: 'caller_label_and_observed_root', referenceProvenance: 'local_object_availability_only',
   });
@@ -119,7 +121,7 @@ export function createVerification(root, request, options) {
   need(options && ['quick', 'deep'].includes(options.mode), 'mode_required');
   const identity = snapshotRepository(root, options);
   const session = Object.freeze({ version: VERSION, identity });
-  sessions.set(session, { root: realpathSync(root), request: copy(request), options: copy(options), identity, evidence: [] });
+  sessions.set(session, { root: realpathSync(root), request: freeze(copy(request)), options: freeze(copy(options)), identity, evidence: [] });
   return session;
 }
 
@@ -186,6 +188,27 @@ export function suppliedEvidence(session, { method, outcome, ref, context = {} }
   return addObservation(session, { method, outcome, provenance: 'supplied_unverified', ref, context: copy(context) });
 }
 
+function snapshotMatchesTree(state, revision) {
+  if (state.identity.dirty) return false;
+  const entries = git(state.root, ['ls-tree', '-r', '-z', '--full-tree', revision]).split('\0').filter(Boolean);
+  if (entries.length !== state.identity.fileCount || entries.length > 1024) return false;
+  const files = [];
+  for (const entry of entries) {
+    const match = /^(100644|100755) blob ([0-9a-f]{40})\t(.+)$/.exec(entry);
+    if (!match) return false;
+    files.push([match[3], match[1], match[2]]);
+  }
+  files.sort((left, right) => left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0);
+  try {
+    return files.length ? fingerprintGitSources(state.root, files.map(([path]) => path)).digest === hash(files)
+      : state.identity.fileCount === 0;
+  } catch { return false; }
+}
+
+function hostedMatchesSnapshot(item, identity) {
+  return !identity.dirty && item.context.snapshotMatchesTestedTree === true && sameIdentity(item.binding, identity);
+}
+
 export function observeGitHubCheck(session, { checkRunId, revisionKind = 'prHead', expectedName, expectedAppId }) {
   const state = current(session);
   need(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(state.identity.repository)
@@ -204,11 +227,13 @@ export function observeGitHubCheck(session, { checkRunId, revisionKind = 'prHead
   const outcome = check.status !== 'completed' ? 'pending'
     : check.conclusion === 'success' ? 'passed' : check.conclusion === 'skipped' ? 'skipped'
       : check.conclusion === 'cancelled' ? 'cancelled' : ['failure', 'timed_out', 'action_required'].includes(check.conclusion) ? 'failed' : 'unavailable';
+  const snapshotMatchesTestedTree = snapshotMatchesTree(state, check.head_sha);
+  current(session);
   return addObservation(session, {
     method: 'hosted', outcome, provenance: 'host_observed',
     ref: `https://github.com/${state.identity.repository}/runs/${checkRunId}`,
     context: { provider: 'github', checkRunId, name: check.name, appId: check.app.id, revisionKind, testedSha: check.head_sha,
-      status: check.status, conclusion: check.conclusion, observedAt: new Date().toISOString() },
+      status: check.status, conclusion: check.conclusion, snapshotMatchesTestedTree, observedAt: new Date().toISOString() },
   });
 }
 
@@ -267,17 +292,19 @@ export function finishVerification(session, assessments = []) {
     const evidence = assessment?.evidence || [];
     const missing = requirement.methods.filter((method) => method === 'hosted'
       ? !requirement.hostedChecks?.length || !requirement.hostedChecks.every((check) => evidence.some((item) => item.method === method
-        && item.outcome === 'passed' && item.provenance === 'host_observed' && item.context.name === check.name && item.context.appId === check.appId))
+        && item.outcome === 'passed' && item.provenance === 'host_observed' && hostedMatchesSnapshot(item, state.identity)
+        && item.context.name === check.name && item.context.appId === check.appId))
       : !evidence.some((item) => item.method === method && item.outcome === 'passed'
         && item.provenance === 'host_observed' && sameIdentity(item.binding, state.identity)));
-    const failed = evidence.some((item) => requirement.methods.includes(item.method) && item.outcome === 'failed');
+    const failed = evidence.some((item) => requirement.methods.includes(item.method) && item.outcome === 'failed'
+      && (item.method !== 'hosted' || hostedMatchesSnapshot(item, state.identity)));
     const status = assessment?.decision === 'incomplete' || failed ? 'incomplete'
       : assessment?.decision === 'satisfied' && requirement.origin === 'explicit' && missing.length === 0 ? 'verified' : 'unverified';
     return {
-      ...requirement, status,
+      ...copy(requirement), status,
       reason: !assessment ? 'No assessment or evidence was supplied.'
         : status === 'unverified' ? `${assessment.reason} Missing observed methods: ${missing.join(', ') || 'explicit acceptance criteria or satisfied judgment'}.` : assessment.reason,
-      evidenceIds: evidence.map((item) => item.id), changes: assessment?.changes || [],
+      evidenceIds: evidence.map((item) => item.id), changes: [...(assessment?.changes || [])],
       remainingWork: assessment?.remainingWork || 'Obtain requirements and current evidence.',
       nextAction: assessment?.nextAction || 'Inspect the requirement and collect the narrowest missing evidence.',
       semanticJudgment: assessment ? 'coordinator_reasoned_not_machine_proved' : 'unavailable',
@@ -353,7 +380,7 @@ export function validateArtifact(artifact) {
     list(requirement.evidenceIds, 'references_invalid');
     need(new Set(requirement.evidenceIds).size === requirement.evidenceIds.length
       && requirement.evidenceIds.every((id) => evidenceIds.has(id)), 'evidence_reference_missing');
-    for (const key of ['reason', 'remainingWork', 'nextAction']) text(requirement[key], `result_${key}`);
+    for (const key of ['reason', 'remainingWork', 'nextAction']) text(requirement[key], `result_${key}`, key === 'reason' ? 2304 : 2048);
     list(requirement.changes, 'changes_invalid');
     requirement.changes.forEach((change) => text(change, 'change_reference'));
     need(['coordinator_reasoned_not_machine_proved', 'unavailable'].includes(requirement.semanticJudgment), 'judgment_invalid');
@@ -362,10 +389,12 @@ export function validateArtifact(artifact) {
       const linked = artifact.evidence.filter((item) => requirement.evidenceIds.includes(item.id));
       need(requirement.methods.every((method) => linked.some((item) => item.method === method
         && item.outcome === 'passed' && item.provenance === 'host_observed'))
-        && !linked.some((item) => requirement.methods.includes(item.method) && item.outcome === 'failed'), 'verified_without_observed_evidence');
+        && !linked.some((item) => requirement.methods.includes(item.method) && item.outcome === 'failed'
+          && (item.method !== 'hosted' || hostedMatchesSnapshot(item, artifact.identity))), 'verified_without_observed_evidence');
       if (requirement.methods.includes('hosted')) need(requirement.hostedChecks?.length > 0
         && requirement.hostedChecks.every((check) => linked.some((item) => item.method === 'hosted' && item.outcome === 'passed'
-          && item.provenance === 'host_observed' && item.context.name === check.name && item.context.appId === check.appId)), 'hosted_policy_not_satisfied');
+          && item.provenance === 'host_observed' && hostedMatchesSnapshot(item, artifact.identity)
+          && item.context.name === check.name && item.context.appId === check.appId)), 'hosted_policy_not_satisfied');
     }
   }
   const expected = artifact.requirements.some((requirement) => requirement.status === 'incomplete') ? 'incomplete'
