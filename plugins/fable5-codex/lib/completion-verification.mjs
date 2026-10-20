@@ -49,6 +49,10 @@ function git(root, args) {
   return result.stdout;
 }
 
+function snapshotPaths(root) {
+  return [...new Set(git(root, ['ls-files', '--cached', '--others', '--exclude-standard', '-z']).split('\0').filter(Boolean))].sort();
+}
+
 export function snapshotRepository(root, { repository, prHead = null, base = null, mergeTest = null } = {}) {
   text(repository, 'repository_required', 256);
   const canonical = realpathSync(root);
@@ -64,20 +68,26 @@ export function snapshotRepository(root, { repository, prHead = null, base = nul
   }
   const stages = git(canonical, ['ls-files', '--stage', '-z']).split('\0').filter(Boolean);
   need(stages.every((entry) => !/^(?:120000|160000) /.test(entry) && /^[0-9]+ [0-9a-f]+ 0\t/.test(entry)), 'unsupported_link_submodule_or_conflict');
-  const paths = [...new Set(git(canonical, ['ls-files', '--cached', '--others', '--exclude-standard', '-z']).split('\0').filter(Boolean))].sort();
+  const tracked = new Set(stages.map((entry) => entry.slice(entry.indexOf('\t') + 1)));
+  const paths = snapshotPaths(canonical);
   need(paths.length <= 1024 && paths.every((path) => !/(^|\/)\.git(\/|$)/.test(path)), 'snapshot_scope_exceeded');
   const present = [];
   const deleted = [];
   const replacedDirectories = [];
   for (const path of paths) {
+    let entry;
     try {
-      const entry = lstatSync(resolve(canonical, path));
-      if (entry.isDirectory()) replacedDirectories.push(path);
-      else present.push(path);
+      entry = lstatSync(resolve(canonical, path));
     } catch (error) {
       need(['ENOENT', 'ENOTDIR'].includes(error.code), 'snapshot_file_unavailable');
       deleted.push(path);
+      continue;
     }
+    if (entry.isDirectory()) {
+      need(tracked.has(path), 'opaque_untracked_directory');
+      replacedDirectories.push(path);
+    }
+    else present.push(path);
   }
   const source = present.length ? fingerprintSources(canonical, present) : { digest: hash([]) };
   const dirty = git(canonical, ['status', '--porcelain=v1', '--untracked-files=all']).length > 0;
@@ -121,7 +131,8 @@ export function createVerification(root, request, options) {
   need(options && ['quick', 'deep'].includes(options.mode), 'mode_required');
   const identity = snapshotRepository(root, options);
   const session = Object.freeze({ version: VERSION, identity });
-  sessions.set(session, { root: realpathSync(root), request: freeze(copy(request)), options: freeze(copy(options)), identity, evidence: [] });
+  sessions.set(session, { root: realpathSync(root), request: freeze(copy(request)), options: freeze(copy(options)),
+    identity, sourcePaths: new Set(snapshotPaths(realpathSync(root))), evidence: [] });
   return session;
 }
 
@@ -142,6 +153,7 @@ function addObservation(session, value) {
 
 export function inspectSource(session, { path, startLine, endLine }) {
   const state = current(session);
+  need(state.sourcePaths.has(path), 'source_outside_snapshot');
   need(Number.isSafeInteger(startLine) && Number.isSafeInteger(endLine)
     && startLine > 0 && endLine >= startLine && endLine - startLine < 200, 'source_range_invalid');
   const source = fingerprintSources(state.root, [path]);
@@ -160,10 +172,11 @@ export async function executeNodeCheck(session, spec, expectedSpecDigest, method
   const state = current(session);
   need(['local', 'mock'].includes(method), 'local_or_mock_only');
   need(realpathSync(spec.cwd) === state.root, 'check_root_mismatch');
+  need(Array.isArray(spec.sourceFiles) && spec.sourceFiles.every((path) => state.sourcePaths.has(path)), 'source_outside_snapshot');
   const plan = {
-    goals: [{ id: 'verify', title: 'Observe one reviewed command', dependsOn: [], checkIds: [spec.checkId] }],
+    goals: [{ id: spec.checkId === 'verify' ? 'verify_goal' : 'verify', title: 'Observe one reviewed command', dependsOn: [], checkIds: [spec.checkId] }],
     checks: [{ id: spec.checkId, title: 'Explicitly reviewed Node check', kind: 'command', required: true }],
-    coverage: [{ id: 'review', title: 'Semantic review remains separate', required: true }],
+    coverage: [{ id: spec.checkId === 'review' ? 'review_coverage' : 'review', title: 'Semantic review remains separate', required: true }],
   };
   const binding = {
     runId: hash(state.identity).slice(0, 32), scopeId: state.identity.repository,
@@ -261,6 +274,7 @@ export function observeInstallation(session, { sourceDirectory, installationDire
   const installedRoot = realpathSync(installationDirectory);
   need(realpathSync(sourceRoot) === sourceRoot && installedRoot !== sourceRoot, 'distinct_canonical_installation_required');
   const sourceFiles = directoryFiles(sourceRoot);
+  need(sourceFiles.every((path) => state.sourcePaths.has(`${sourceDirectory}/${path}`)), 'source_outside_snapshot');
   const installedFiles = directoryFiles(installedRoot);
   const source = fingerprintSources(sourceRoot, sourceFiles);
   const installed = fingerprintSources(installedRoot, installedFiles);

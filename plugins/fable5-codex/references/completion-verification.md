@@ -39,6 +39,9 @@ criterion as unverified. It changes no installed plugin or reviewed project.
    tracked/nonignored-untracked bytes, modes, deletions and index entries, even
    if Git index flags hide changes. Ignored files and external dependency trees
    are not included. Unsupported paths/links/submodules/conflicts fail closed.
+   Opaque untracked directories, including embedded repositories, are rejected;
+   source citations, command source files and installation source files must be
+   within the bound snapshot. Ignored files cannot become unstaled evidence.
    The bound scope is limited to 1,024 files/32 MiB; larger repositories need a
    separately reviewed scoped snapshot strategy, not an invented full-coverage claim.
 3. Collect source with `inspectSource(session, { path, startLine, endLine })`.

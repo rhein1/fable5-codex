@@ -47,6 +47,13 @@ unqualified, and effectiveness/promotion remain false. `frozen-protocol.json`,
 per-trial diagnostics, `runs.json` and `summary.json` preserve the attempted run.
 Historical records and the legacy runner below retain their original models.
 
+The completion runner preserves exact grader and evaluator-dependency bytes in
+its private runtime before trials, records both digests and executes only that
+mirrored copy. It rechecks both frozen files before and after grading, before
+writing a summary; changing the repository grader mid-trial cannot change the
+grader attributed to the run. The restrictive candidate profile grants no access
+to that private copy; stronger isolation still requires separate qualification.
+
 Corpus v2 separates budget validation, string normalization and production-proof
 fidelity into different repository/family splits. Family assignment needs semantic
 review, not just different labels. The exploratory v1 corpus put two budget cases

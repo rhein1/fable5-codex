@@ -154,6 +154,33 @@ test('maximum accepted assessment reason preserves its text and generated missin
   assert.equal(validateArtifact(report).structureValid, true);
 });
 
+test('opaque untracked repositories and ignored source cannot create unstaled evidence', async (context) => {
+  const { cwd, options, request } = fixture(context, ['source']);
+  mkdirSync(join(cwd, 'nested'));
+  git(join(cwd, 'nested'), ['init', '-q']);
+  writeFileSync(join(cwd, 'nested/feature.mjs'), 'export const feature = true;\n');
+  assert.throws(() => snapshotRepository(cwd, options), /opaque_untracked_directory/);
+  writeFileSync(join(cwd, '.gitignore'), 'nested/\nignored/\n');
+  mkdirSync(join(cwd, 'ignored'));
+  writeFileSync(join(cwd, 'ignored/check.mjs'), 'export const ignored = true;\n');
+  const session = createVerification(cwd, request, options);
+  for (const path of ['nested/feature.mjs', 'ignored/check.mjs']) {
+    assert.throws(() => inspectSource(session, { path, startLine: 1, endLine: 1 }), /source_outside_snapshot/);
+  }
+  const spec = { checkId: 'ignored', cwd, args: ['ignored/check.mjs'], sourceFiles: ['ignored/check.mjs'], timeoutMs: 5000, maxOutputBytes: 4096 };
+  await assert.rejects(executeNodeCheck(session, spec, fingerprintCheck(spec)), /source_outside_snapshot/);
+  assert.throws(() => observeInstallation(session, { sourceDirectory: 'ignored', installationDirectory: join(cwd, 'nested') }), /source_outside_snapshot/);
+});
+
+test('caller check IDs cannot collide with generated goal or coverage IDs', async (context) => {
+  const { cwd, session } = fixture(context, ['local']);
+  for (const checkId of ['verify', 'review', 'verify_goal', 'review_coverage', 'a'.repeat(64)]) {
+    const spec = { checkId, cwd, args: ['check.mjs'], sourceFiles: ['check.mjs', 'feature.mjs'], timeoutMs: 5000, maxOutputBytes: 4096 };
+    const observed = await executeNodeCheck(session, spec, fingerprintCheck(spec));
+    assert.equal(observed.outcome, 'passed', checkId);
+  }
+});
+
 test('legitimately complete work has evidence for every explicit requirement without false blockers', async (context) => {
   const { cwd, session } = fixture(context);
   const source = inspectSource(session, { path: 'feature.mjs', startLine: 1, endLine: 1 });

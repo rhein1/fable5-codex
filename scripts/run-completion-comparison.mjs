@@ -19,6 +19,24 @@ const responseSchema = { type: 'object', additionalProperties: false, required: 
   } } }, testsObserved: { type: 'boolean' }, deployedVerified: { type: 'boolean' },
 } };
 
+export function freezeComparisonGrader(root, { graderFile = join(repo, 'scripts/completion-evaluation.py'),
+  evaluatorFile = join(repo, 'plugins/fable5-codex/experiments/rrsi/evaluator.py') } = {}) {
+  const grader = readFileSync(graderFile);
+  const evaluator = readFileSync(evaluatorFile);
+  const graderPath = join(root, 'frozen-grader/scripts/completion-evaluation.py');
+  const evaluatorPath = join(root, 'frozen-grader/plugins/fable5-codex/experiments/rrsi/evaluator.py');
+  mkdirSync(dirname(graderPath), { recursive: true });
+  mkdirSync(dirname(evaluatorPath), { recursive: true });
+  writeFileSync(graderPath, grader, { flag: 'wx' });
+  writeFileSync(evaluatorPath, evaluator, { flag: 'wx' });
+  return Object.freeze({ graderPath, evaluatorPath, graderDigest: digest(grader), graderDependencyDigest: digest(evaluator) });
+}
+
+export function validateFrozenGrader(frozen) {
+  if (digest(readFileSync(frozen.graderPath)) !== frozen.graderDigest
+    || digest(readFileSync(frozen.evaluatorPath)) !== frozen.graderDependencyDigest) throw new Error('frozen_grader_changed');
+}
+
 export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol', effort = 'medium', timeoutMs = 120000, python = 'python' }) {
   if (!isAbsolute(codex) || !isAbsolute(authFile) || !isAbsolute(output) || existsSync(output)
     || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 300000) throw new Error('explicit_paths_or_deadline_invalid');
@@ -35,9 +53,10 @@ export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol
   restrictDirectory(output);
   const runtime = privateRuntime('fable-comparison-');
   try {
+  const frozenGrader = freezeComparisonGrader(runtime.root);
   const schema = join(runtime.root, 'response-schema.json'); writeFileSync(schema, JSON.stringify(responseSchema));
   const packet = { version: 'fable-completion-runs/1', model, effort, timeoutMs, baselineCommit: baseline, candidateCommit: head,
-    pluginDigest, graderDigest: digest(readFileSync(join(repo, 'scripts/completion-evaluation.py'))),
+    pluginDigest, graderDigest: frozenGrader.graderDigest, graderDependencyDigest: frozenGrader.graderDependencyDigest,
     runnerDigest: digest(readFileSync(fileURLToPath(import.meta.url))), runtimeHelperDigest: digest(readFileSync(join(repo, 'scripts/fable-runtime.mjs'))),
     codexExecutableDigest: digest(readFileSync(realpathSync(codex))),
     datasetDigest: digest(readFileSync(casesFile)), codexVersion: run(codex, ['--version'], repo, process.env).trim(),
@@ -96,7 +115,9 @@ export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol
     }
     if (packageDigest(source) !== pluginDigest) throw new Error('candidate_source_changed');
     const packetFile = join(output, 'runs.json'); writeFileSync(packetFile, JSON.stringify(packet, null, 2));
-    const evaluated = JSON.parse(run(python, ['-I', '-B', join(repo, 'scripts/completion-evaluation.py'), packetFile], repo, process.env));
+    validateFrozenGrader(frozenGrader);
+    const evaluated = JSON.parse(run(python, ['-I', '-B', frozenGrader.graderPath, packetFile], repo, process.env));
+    validateFrozenGrader(frozenGrader);
     writeFileSync(join(output, 'summary.json'), JSON.stringify(evaluated, null, 2));
     return { output, executedTrials: packet.runs.length, expectedTrials: dataset.cases.length * 2,
       completedTrials: packet.runs.filter((trial) => trial.exitCode === 0 && trial.parsed).length, summary: evaluated };

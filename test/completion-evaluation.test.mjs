@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { configureEvaluationPermissions, isolatedEnvironment } from '../scripts/fable-runtime.mjs';
-import { isFixtureTestCommand } from '../scripts/run-completion-comparison.mjs';
+import { freezeComparisonGrader, isFixtureTestCommand, validateFrozenGrader } from '../scripts/run-completion-comparison.mjs';
 
 const repo = new URL('..', import.meta.url);
 const dataset = JSON.parse(readFileSync(new URL('evals/completion-verification/cases.json', repo)));
@@ -16,16 +16,36 @@ test('test observation accepts only the exact fixture command through known lite
   for (const command of ['echo node test.mjs', 'node other.mjs', '/bin/bash -c \'false; node test.mjs\'', '/bin/bash -c \'echo node test.mjs\'', 'node test.mjs; echo passed']) assert.equal(isFixtureTestCommand(command), false, command);
 });
 
-function evaluate(context, runs) {
+function evaluate(context, runs, graderPath = grader.pathname.replace(/^\/([A-Za-z]:)/, '$1')) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'fable-grader-')));
   context.after(() => { assert.equal(dirname(root), realpathSync(tmpdir())); rmSync(root, { recursive: true }); });
   const packet = { cases: dataset.cases, runs, model: 'gpt-6.1-sol', effort: 'medium', timeoutMs: 120000,
     baselineCommit: 'a'.repeat(40), candidateCommit: 'b'.repeat(40) };
   const input = join(root, 'runs.json'); writeFileSync(input, JSON.stringify(packet));
-  const result = spawnSync(process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), ['-I', '-B', grader.pathname.replace(/^\/([A-Za-z]:)/, '$1'), input], { encoding: 'utf8', shell: false });
+  const result = spawnSync(process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), ['-I', '-B', graderPath, input], { encoding: 'utf8', shell: false });
   assert.equal(result.status, 0, result.stderr);
   return JSON.parse(result.stdout);
 }
+
+test('grading executes preserved grader and dependency bytes rather than mutable trial-era sources', (context) => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'fable-frozen-grader-')));
+  context.after(() => { assert.equal(dirname(root), realpathSync(tmpdir())); rmSync(root, { recursive: true }); });
+  const graderFile = join(root, 'source-grader.py');
+  const evaluatorFile = join(root, 'source-evaluator.py');
+  writeFileSync(graderFile, readFileSync(grader));
+  writeFileSync(evaluatorFile, readFileSync(new URL('plugins/fable5-codex/experiments/rrsi/evaluator.py', repo)));
+  const frozen = freezeComparisonGrader(root, { graderFile, evaluatorFile });
+  writeFileSync(graderFile, 'raise RuntimeError("mutated grader must not execute")');
+  writeFileSync(evaluatorFile, 'raise RuntimeError("mutated dependency must not execute")');
+  validateFrozenGrader(frozen);
+  assert.equal(evaluate(context, [], frozen.graderPath).effectivenessProven, false);
+  for (const path of [frozen.graderPath, frozen.evaluatorPath]) {
+    const original = readFileSync(path);
+    writeFileSync(path, 'raise RuntimeError("changed frozen bytes")');
+    assert.throws(() => validateFrozenGrader(frozen), /frozen_grader_changed/);
+    writeFileSync(path, original);
+  }
+});
 
 test('missing and timeout trials remain in the matched fixed denominator with no completion proof', (context) => {
   const report = evaluate(context, [{ caseId: dataset.cases[0].id, arm: 'baseline', stopped: true, exitCode: null, durationMs: 120000 }]);
