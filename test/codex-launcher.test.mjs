@@ -109,3 +109,16 @@ test('customized npm batch launchers are not silently bypassed', { skip: process
   writeFileSync(path, readFileSync(path, 'utf8').replace('%*', '--sandbox read-only %*'));
   assert.throws(() => resolveCodexLauncher(path), /unsupported_codex_batch_launcher/);
 });
+
+test('default npm-only Windows launcher does not require PowerShell 7', { skip: process.platform !== 'win32' }, (context) => {
+  const data = fixture(context);
+  const env = { ...data.env, PATH: [data.npm, dirname(process.execPath)].join(delimiter) };
+  const resolved = spawnSync(process.execPath, [resolver, 'resolve-base64', 'codex'], { env, encoding: 'utf8', shell: false });
+  assert.equal(resolved.status, 0, resolved.stderr);
+  const launcher = JSON.parse(Buffer.from(resolved.stdout.trim(), 'base64').toString('utf8'));
+  assert.equal(launcher.path, join(data.npm, 'codex.cmd'));
+  assert.deepEqual(launcher.prefixArgs, [data.entrypoint]);
+  const result = spawnSync(process.execPath, [resolver, 'run-base64', resolved.stdout.trim(), '--version'], { env, encoding: 'utf8', shell: false });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /codex-cli 0.152.0/);
+});

@@ -10,7 +10,7 @@ const npmCmdShim = ['@ECHO off', 'GOTO start', ':find_dp0', 'SET dp0=%~dp0', 'EX
 function findExecutable(requested) {
   const explicit = isAbsolute(requested) || /[/\\]/.test(requested);
   const names = process.platform === 'win32' && !extname(requested)
-    ? ['.ps1', '.cmd', '.exe', '.com', ''].map((suffix) => `${requested}${suffix}`) : [requested];
+    ? ['.cmd', '.ps1', '.exe', '.com', ''].map((suffix) => `${requested}${suffix}`) : [requested];
   const candidates = explicit ? [resolve(requested)] : (process.env.PATH || process.env.Path || '').split(delimiter)
     .filter(Boolean).flatMap((directory) => names.map((name) => resolve(directory, name)));
   for (const candidate of candidates) {

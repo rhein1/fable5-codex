@@ -36,8 +36,10 @@ inspect the exact executable's version and login status. An npm shim and the
 desktop-bundled native executable can be different clients with different model
 catalogs. Both wrappers default to `codex` and resolve it once in PATH-directory
 order, preserving an explicit `-CodexExecutable` or `--codex-executable=` override.
-On Windows each directory is searched for `.ps1`, `.cmd`, `.exe`, `.com`, then the
+On Windows each directory is searched for `.cmd`, `.ps1`, `.exe`, `.com`, then the
 extensionless name; a later desktop executable never replaces an earlier npm shim.
+Standard npm `.cmd` installs do not require PowerShell 7. Selecting a `.ps1`
+explicitly requires `pwsh` and preserves that script's behavior.
 The same absolute launcher descriptor supplies version, catalog and execution.
 Recognized standard `@openai/codex` npm `.cmd` shims dispatch their own adjacent
 package's declared JavaScript entrypoint through Node with literal arguments.
