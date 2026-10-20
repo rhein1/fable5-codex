@@ -10,6 +10,7 @@ const repo = fileURLToPath(new URL('..', import.meta.url));
 
 export async function discoverInstallation(codex, env, cwd, marketplace) {
   const child = spawn(codex, ['app-server'], { cwd, env, windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] });
+  const closed = new Promise((resolveClosed) => child.once('close', resolveClosed));
   const pending = new Map(); let nextId = 0;
   const lines = createInterface({ input: child.stdout });
   const fail = () => { for (const request of pending.values()) request.reject(new Error('installation_discovery_closed')); };
@@ -38,7 +39,11 @@ export async function discoverInstallation(codex, env, cwd, marketplace) {
     assert.ok(plugin.skills.some((skill) => skill.name === 'fable5-codex:fable-verify'));
     assert.ok(discovered.includes('fable5-codex:fable-verify'));
     return { primarySkillDiscovered: true, modelTurnExecuted: false, discoveryErrors: skills.data.flatMap((entry) => entry.errors || []) };
-  } finally { lines.close(); child.stdin.destroy(); child.stdout.destroy(); child.kill(); child.unref(); }
+  } finally {
+    lines.close(); child.stdin.end();
+    const deadline = setTimeout(() => child.kill(), 2000);
+    await closed; clearTimeout(deadline); child.stdout.destroy(); child.unref();
+  }
 }
 
 export async function smoke(codex, previousSource) {

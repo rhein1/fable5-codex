@@ -22,7 +22,7 @@ export function privateRuntime(prefix) {
   restrictDirectory(root);
   return { root, cleanup() {
     if (dirname(realpathSync(root)) !== parent || !root.split(/[\\/]/).at(-1).startsWith(prefix)) throw new Error('runtime_cleanup_refused');
-    rmSync(root, { recursive: true, force: true });
+    rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   } };
 }
 
