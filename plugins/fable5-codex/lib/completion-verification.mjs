@@ -52,7 +52,10 @@ function git(root, args) {
 export function snapshotRepository(root, { repository, prHead = null, base = null, mergeTest = null } = {}) {
   text(repository, 'repository_required', 256);
   const canonical = realpathSync(root);
-  need(realpathSync(git(canonical, ['rev-parse', '--show-toplevel']).trim()) === canonical, 'repository_root_required');
+  const gitRoot = git(canonical, ['rev-parse', '--show-toplevel']).trim();
+  need(process.platform === 'win32'
+    ? realpathSync.native(gitRoot).toLowerCase() === realpathSync.native(canonical).toLowerCase()
+    : realpathSync(gitRoot) === canonical, 'repository_root_required');
   for (const revision of [prHead, base, mergeTest]) need(revision === null || /^[0-9a-f]{40}$/.test(revision), 'exact_revision_required');
   const head = git(canonical, ['rev-parse', '--verify', 'HEAD^{commit}']).trim();
   need(/^[0-9a-f]{40}$/.test(head), 'exact_head_required');

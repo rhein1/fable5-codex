@@ -58,7 +58,7 @@ export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol
           const inventory = JSON.parse(run(codex, ['plugin', 'list', '--json'], work, env));
           if (inventory.installed?.some((entry) => entry.name === 'fable5-codex')) throw new Error('baseline_has_fable');
         }
-        configureEvaluationPermissions(home, authFile, installedRoot);
+        configureEvaluationPermissions(home, authFile, installedRoot, dirname(realpathSync(codex)));
         const permissions = ['-c', 'default_permissions="fable-evaluation"'];
         run(codex, [...permissions, 'plugin', 'list', '--json'], work, env);
         cpSync(authFile, join(home, 'auth.json'), { errorOnExist: true, force: false });

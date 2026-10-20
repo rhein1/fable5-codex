@@ -190,6 +190,18 @@ test('PR head, base, checkout head and merge-test identity stay separate', (cont
   assert.equal(identity.mergeTest, head);
 });
 
+test('Windows Git-expanded short root aliases identify the actual repository root', (context) => {
+  if (process.platform !== 'win32') return context.skip('Windows short-path alias behavior');
+  const { cwd } = fixture(context);
+  const query = spawnSync('cmd.exe', ['/d', '/c', `for %I in ("${cwd}") do @echo %~sI`], { encoding: 'utf8', shell: false });
+  assert.equal(query.status, 0);
+  const short = query.stdout.trim();
+  if (short.toLowerCase() === cwd.toLowerCase()) return context.skip('Filesystem does not expose an 8.3 alias');
+  const identity = snapshotRepository(short, { repository: 'fixture/project' });
+  assert.equal(identity.head, git(cwd, ['rev-parse', 'HEAD']));
+  assert.equal(identity.snapshotDigest, snapshotRepository(cwd, { repository: 'fixture/project' }).snapshotDigest);
+});
+
 test('installation is a separate file observation and never proves activation', (context) => {
   const { cwd } = fixture(context);
   mkdirSync(join(cwd, 'plugin'));

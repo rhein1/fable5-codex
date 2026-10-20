@@ -36,9 +36,9 @@ export function isolatedEnvironment(home) {
   return env;
 }
 
-export function configureEvaluationPermissions(home, originalAuth, installedRoot) {
+export function configureEvaluationPermissions(home, originalAuth, installedRoot, runtimeDirectory) {
   const quoted = (value) => JSON.stringify(value.replaceAll('\\', '/'));
-  appendFileSync(join(home, 'config.toml'), `\n[permissions.fable-evaluation.filesystem]\n":root" = "deny"\n":minimal" = "read"\n${quoted(join(home, 'auth.json'))} = "deny"\n${quoted(originalAuth)} = "deny"\n${installedRoot ? `${quoted(installedRoot)} = "read"\n` : ''}[permissions.fable-evaluation.filesystem.":workspace_roots"]\n"." = "read"\n[permissions.fable-evaluation.network]\nenabled = false\n`);
+  appendFileSync(join(home, 'config.toml'), `\n[permissions.fable-evaluation.filesystem]\n":root" = "deny"\n":minimal" = "read"\n${quoted(join(home, 'auth.json'))} = "deny"\n${quoted(originalAuth)} = "deny"\n${installedRoot ? `${quoted(installedRoot)} = "read"\n` : ''}${runtimeDirectory ? `${quoted(runtimeDirectory)} = "read"\n` : ''}[permissions.fable-evaluation.filesystem.":workspace_roots"]\n"." = "read"\n[permissions.fable-evaluation.network]\nenabled = false\n`);
 }
 
 export function run(command, args, cwd, env, input) {

@@ -16,7 +16,8 @@ Both arms use fresh isolated homes, the same fixture bytes, requested model and
 effort, read-only permission profile, no shell network, no subagents, no retries,
 equal deadlines, counterbalanced ordering and the same structured output rubric.
 Only the candidate installs this exact plugin and invokes `$fable-verify`.
-The profile permits minimal runtime/workspace reads and denies both auth-file
+The profile permits minimal runtime/workspace reads plus the explicitly selected
+native executable's directory, and denies both auth-file
 paths. It fails closed on unsupported permission profiles; never retry unsandboxed.
 Temporary auth copies are private and removed after use. Raw model events are
 private diagnostic artifacts, not package contents or public benchmark output.

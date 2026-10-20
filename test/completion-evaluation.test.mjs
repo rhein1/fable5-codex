@@ -59,10 +59,11 @@ test('isolated runtime does not inherit personal plugin homes, credentials or pr
   assert.equal(env.APPDATA, join(root, 'home/AppData/Roaming'));
   assert.equal(env.OPENAI_API_KEY, undefined);
   assert.equal(env.HTTPS_PROXY, undefined);
-  configureEvaluationPermissions(env.CODEX_HOME, join(root, 'original/auth.json'), join(root, 'plugin'));
+  configureEvaluationPermissions(env.CODEX_HOME, join(root, 'original/auth.json'), join(root, 'plugin'), join(root, 'runtime'));
   const policy = readFileSync(join(env.CODEX_HOME, 'config.toml'), 'utf8');
   assert.match(policy, /":root" = "deny"/);
   assert.match(policy, /auth\.json" = "deny"/);
   assert.match(policy, /enabled = false/);
+  assert.ok(policy.includes(`${JSON.stringify(join(root, 'runtime').replaceAll('\\', '/'))} = "read"`));
   assert.equal(policy.includes('sandbox_mode'), false);
 });
