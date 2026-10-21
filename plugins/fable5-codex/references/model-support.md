@@ -34,11 +34,20 @@ not live discovery. No API key or separate paid API is required by the resolver.
 Use `Get-Command codex -All` on Windows or `command -v codex` on POSIX, then
 inspect the exact executable's version and login status. An npm shim and the
 desktop-bundled native executable can be different clients with different model
-catalogs. On Windows the wrappers prefer `codex.exe` to avoid launching a shim
-through a command shell; pass `-CodexExecutable` or `--codex-executable=` to pick
-a particular client. Explicit PowerShell script executables are dispatched with
-literal arguments through PowerShell for catalog discovery; no command string is
-assembled. Reports must identify the client and actual requested/resolved models.
+catalogs. Both wrappers default to `codex` and resolve it once in PATH-directory
+order, preserving an explicit `-CodexExecutable` or `--codex-executable=` override.
+On Windows each directory is searched for `.cmd`, `.ps1`, `.exe`, `.com`, then the
+extensionless name; a later desktop executable never replaces an earlier npm shim.
+Standard npm `.cmd` installs do not require PowerShell 7. Selecting a `.ps1`
+explicitly requires `pwsh` and preserves that script's behavior.
+The same absolute launcher descriptor supplies version, catalog and execution.
+Recognized standard `@openai/codex` npm `.cmd` shims dispatch their own adjacent
+package's declared JavaScript entrypoint through Node with literal arguments.
+PowerShell scripts use `pwsh -NoProfile -File` without bypassing custom environment
+or argument behavior; customized/unknown batch files fail with an actionable error
+rather than using `cmd /c`. No command string or execution-policy override is assembled.
+Dry runs do not resolve or invoke Codex. Reports must identify the client and actual
+requested/resolved models.
 
 Observed during local preparation on 2026-10-20: the npm CLI 0.152.0 catalog
 contained GPT-5.6 Sol/Terra/Luna; the desktop native 0.163.0-alpha.10.2 catalog

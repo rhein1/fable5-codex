@@ -1,8 +1,9 @@
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { extname, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readJsonFile } from './run-closeout.mjs';
+import { decodeLauncher, resolveCodexLauncher, validateLauncher } from './codex-launcher.mjs';
 
 export const modelProfiles = JSON.parse(readFileSync(new URL('../config/model-profiles.json', import.meta.url), 'utf8'));
 const efforts = ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'];
@@ -41,14 +42,8 @@ export function resolveModels(catalog, options = {}) {
 
 export function discoverModels(executable = 'codex', prefixArgs = []) {
   return new Promise((resolveCatalog, reject) => {
-    let command = executable;
-    let prefix = [...prefixArgs];
-    if (process.platform === 'win32') {
-      if (executable === 'codex') command = 'codex.exe';
-      else if (extname(executable).toLowerCase() === '.ps1') { command = 'pwsh'; prefix = ['-NoProfile', '-File', executable]; }
-      else if (existsSync(executable) && !['.exe', '.com'].includes(extname(executable).toLowerCase())) { command = 'bash'; prefix = [executable]; }
-    }
-    const child = spawn(command, [...prefix, 'app-server'], { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] });
+    const launcher = typeof executable === 'string' ? resolveCodexLauncher(executable) : validateLauncher(executable);
+    const child = spawn(launcher.command, [...launcher.prefixArgs, ...prefixArgs, 'app-server'], { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] });
     let pending = '';
     let totalBytes = 0;
     let settled = false;
@@ -108,9 +103,10 @@ export async function main(args = process.argv.slice(2)) {
     const flag = args[index];
     need(!seen.has(flag), 'duplicate_argument'); seen.add(flag);
     if (flag === '--dry-run') { dryRun = true; continue; }
-    need(Object.hasOwn(names, flag) || ['--codex-executable', '--catalog', '--format'].includes(flag), 'invalid_arguments');
+    need(Object.hasOwn(names, flag) || ['--codex-executable', '--launcher-base64', '--catalog', '--format'].includes(flag), 'invalid_arguments');
     const value = args[++index]; need(typeof value === 'string' && value && !value.startsWith('--'), 'invalid_arguments');
     if (flag === '--codex-executable') executable = value;
+    else if (flag === '--launcher-base64') executable = decodeLauncher(value);
     else if (flag === '--catalog') catalogPath = value;
     else if (flag === '--format') format = value;
     else options[names[flag]] = value;

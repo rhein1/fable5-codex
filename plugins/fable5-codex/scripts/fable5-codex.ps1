@@ -10,7 +10,7 @@ param(
   [string]$SubagentReasoningEffort = "",
   [string]$ModelCatalogPath = "",
   [ValidateSet("quick", "deep")][string]$VerificationDepth = "quick",
-  [string]$CodexExecutable = $(if ($env:OS -eq 'Windows_NT') { 'codex.exe' } else { 'codex' }),
+  [string]$CodexExecutable = 'codex',
   [switch]$Write,
   [switch]$Ecf,
   [switch]$Subagents,
@@ -21,16 +21,19 @@ $ErrorActionPreference = "Stop"
 $minimumWorkerDefaultsCliVersion = [version]"0.152.0"
 
 if ($Mode -eq 'verify' -and $Write) { throw 'Verification is read-only; request a separate repair workflow.' }
+$launcherScript = Join-Path $PSScriptRoot 'codex-launcher.mjs'
+$resolverArgs = @('--profile', $Profile)
 if (-not $DryRun) {
-  if (-not (Get-Command $CodexExecutable -ErrorAction SilentlyContinue)) { throw "Codex executable not found: $CodexExecutable" }
-  $versionOutput = (& $CodexExecutable --version 2>&1 | Out-String).Trim()
+  $launcherToken = & node $launcherScript resolve-base64 $CodexExecutable
+  if ($LASTEXITCODE -ne 0) { throw "Codex executable not found or unsupported: $CodexExecutable" }
+  $resolverArgs += @('--launcher-base64', ($launcherToken | Out-String).Trim())
+  $versionOutput = (& node $launcherScript run-base64 $launcherToken --version 2>&1 | Out-String).Trim()
   $versionExitCode = $LASTEXITCODE
   $versionMatch = [regex]::Match($versionOutput, '(?im)^\s*codex-cli\s+v?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?(?=\s|$)')
   if ($versionExitCode -ne 0 -or -not $versionMatch.Success) { throw 'Could not determine Codex CLI version.' }
   $installedCliVersion = [version]$versionMatch.Groups[1].Value
   if ($installedCliVersion -lt $minimumWorkerDefaultsCliVersion) { throw "Fable worker defaults require Codex CLI $minimumWorkerDefaultsCliVersion or newer; executable reports $installedCliVersion." }
 }
-$resolverArgs = @('--profile', $Profile, '--codex-executable', $CodexExecutable)
 foreach ($entry in @(@('--model', $Model), @('--effort', $ReasoningEffort), @('--worker-model', $SubagentModel), @('--worker-effort', $SubagentReasoningEffort))) {
   if ($entry[1]) { $resolverArgs += $entry }
 }
@@ -97,5 +100,5 @@ if ($DryRun) {
   return
 }
 
-& $CodexExecutable @codexArgs
+& node $launcherScript run-base64 $launcherToken @codexArgs
 exit $LASTEXITCODE

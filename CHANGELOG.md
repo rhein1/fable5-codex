@@ -16,6 +16,13 @@
 - Historical benchmark outputs remain unchanged. The RRSI evaluator stays synthetic-only; live authenticated imports, representative private evaluation and owner promotion remain separately qualified.
 - This source version is unreleased. Installation, activation, release, listing approval, publication, deployment and production are separate evidence states.
 
+### Fixed
+
+- Both wrappers bind version, model discovery and execution to one launcher, including npm-only Windows installations and explicit overrides.
+- Requirement-level false completion claims and fabricated/wrong citations independently fail evaluation safety guards without dropping matched slots.
+- Completion comparisons execute exact-commit Git-object exports instead of trusting clean status to exclude hidden working edits.
+- Personal sync rejects observed path links, verifies a staged copy, retains the previous installation and restores it after an unambiguous failed promotion.
+
 ## 0.4.0-alpha.3 - Unreleased
 
 ### Added
