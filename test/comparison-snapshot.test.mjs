@@ -56,3 +56,29 @@ test('snapshot rejects Git symlinks without creating filesystem links or escapin
   git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgSign=false', 'commit', '-qm', 'Unsupported tree');
   assert.throws(() => freezeComparisonSources(repository, git('rev-parse', 'HEAD'), join(root, 'export')), /unsupported_comparison_tree_entry/);
 });
+
+test('replacement blob refs cannot change exported plugin bytes beneath a clean commit label', (context) => {
+  const { root, repository, paths, git, commit } = fixture(context);
+  const path = paths.find((entry) => entry.endsWith('model-support.mjs'));
+  const original = git('rev-parse', `HEAD:${path}`);
+  const altered = spawnSync('git', ['hash-object', '-w', '--stdin'], { cwd: repository, input: 'replacement bytes\n', encoding: 'utf8', shell: false });
+  assert.equal(altered.status, 0, altered.stderr);
+  git('replace', original, altered.stdout.trim());
+  assert.equal(git('status', '--porcelain'), '');
+  assert.equal(git('cat-file', 'blob', original), 'replacement bytes');
+  const snapshot = freezeComparisonSources(repository, commit, join(root, 'export'));
+  assert.equal(readFileSync(join(snapshot.root, path), 'utf8'), `committed ${path}\n`);
+  validateComparisonBootstrap(repository, snapshot);
+});
+
+test('replacement commit refs cannot change the tree exported for a captured commit', (context) => {
+  const { root, repository, paths, git, commit } = fixture(context);
+  const path = paths.find((entry) => entry.endsWith('model-support.mjs'));
+  writeFileSync(join(repository, path), 'replacement tree bytes\n');
+  git('add', '--', path);
+  git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgSign=false', 'commit', '-qm', 'Different tree');
+  const replacement = git('rev-parse', 'HEAD');
+  git('replace', commit, replacement);
+  const snapshot = freezeComparisonSources(repository, commit, join(root, 'export'));
+  assert.equal(readFileSync(join(snapshot.root, path), 'utf8'), `committed ${path}\n`);
+});

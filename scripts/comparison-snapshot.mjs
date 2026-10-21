@@ -5,7 +5,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 const scopes = ['package.json', 'plugins/fable5-codex', 'scripts', 'evals/completion-verification'];
 
 function gitBytes(repository, args, limit = 8 * 1024 * 1024) {
-  const result = spawnSync('git', args, { cwd: repository, shell: false, windowsHide: true, timeout: 60000, maxBuffer: limit });
+  const result = spawnSync('git', ['--no-replace-objects', ...args], { cwd: repository, shell: false, windowsHide: true, timeout: 60000, maxBuffer: limit });
   if (result.error || result.status !== 0) throw new Error('comparison_git_object_unavailable');
   return result.stdout;
 }

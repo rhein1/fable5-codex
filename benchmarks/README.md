@@ -21,6 +21,8 @@ only for bootstrap comparison); exported execution bytes remain exact Git object
 Symlinks/submodules and unsupported paths/modes are rejected. Clean status is an
 additional guard, not the source-identity proof. The upstream reference is captured
 once and the merge-base uses the captured candidate SHA.
+Commit, tree and blob reads explicitly disable Git replacement refs, so a local
+replacement cannot substitute another object beneath an unchanged commit label.
 
 Both arms use fresh isolated homes, the same fixture bytes, requested model and
 effort, read-only permission profile, no shell network, no subagents, no retries,

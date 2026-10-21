@@ -41,11 +41,11 @@ export function validateFrozenGrader(frozen) {
 export async function comparison({ codex, authFile, output, model = 'gpt-6.1-sol', effort = 'medium', timeoutMs = 120000, python = 'python' }) {
   if (!isAbsolute(codex) || !isAbsolute(authFile) || !isAbsolute(output) || existsSync(output)
     || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 300000) throw new Error('explicit_paths_or_deadline_invalid');
-  const head = run('git', ['rev-parse', 'HEAD'], repo, process.env).trim();
-  const upstream = run('git', ['rev-parse', 'origin/main'], repo, process.env).trim();
-  const baseline = run('git', ['merge-base', upstream, head], repo, process.env).trim();
+  const head = run('git', ['--no-replace-objects', 'rev-parse', 'HEAD'], repo, process.env).trim();
+  const upstream = run('git', ['--no-replace-objects', 'rev-parse', 'origin/main'], repo, process.env).trim();
+  const baseline = run('git', ['--no-replace-objects', 'merge-base', upstream, head], repo, process.env).trim();
   if (head === baseline) throw new Error('commit_candidate_before_comparison');
-  if (run('git', ['status', '--porcelain', '--untracked-files=all', '--', 'plugins/fable5-codex', 'scripts', 'evals/completion-verification'], repo, process.env).trim()) throw new Error('candidate_comparison_sources_dirty');
+  if (run('git', ['--no-replace-objects', 'status', '--porcelain', '--untracked-files=all', '--', 'plugins/fable5-codex', 'scripts', 'evals/completion-verification'], repo, process.env).trim()) throw new Error('candidate_comparison_sources_dirty');
   const runtime = privateRuntime('fable-comparison-source-');
   try {
     const snapshot = freezeComparisonSources(repo, head, join(runtime.root, 'source'));
