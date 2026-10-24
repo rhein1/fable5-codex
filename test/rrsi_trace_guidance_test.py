@@ -267,6 +267,38 @@ class TraceSessionTests(unittest.TestCase):
         with self.assertRaises(g.GuidanceDenied):
             g.verify_archive(raw(archive), expected_tip=archive["tip"])
 
+    def test_numeric_bool_substitutions_cannot_retain_original_tip(self):
+        original = self.session.export_archive()
+        for field, value in (("accepted", 0), ("promotion_allowed", 0),
+                             ("sequence", True), ("sequence", 1.0)):
+            changed = json.loads(original)
+            changed["records"][-1][field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(g.GuidanceDenied):
+                g.verify_archive(raw(changed), expected_tip=self.session.archive_tip)
+        changed = json.loads(original)
+        changed["records"][-1]["authority_boundary"]["execution"] = 0
+        with self.assertRaises(g.GuidanceDenied):
+            g.verify_archive(raw(changed), expected_tip=self.session.archive_tip)
+        # Whitespace and object-key order do not change canonical data.
+        self.assertTrue(g.verify_archive(json.dumps(json.loads(original), indent=2).encode(),
+                                         expected_tip=self.session.archive_tip))
+
+    def test_rehashing_mistyped_envelope_cannot_make_it_valid(self):
+        for field, value in (("accepted", 0), ("promotion_allowed", 0), ("sequence", True), ("sequence", 1.0)):
+            changed = json.loads(self.session.export_archive())
+            record = changed["records"][-1]; record[field] = value
+            record["digest"] = e.digest({key: item for key, item in record.items() if key != "digest"})
+            changed["tip"] = record["digest"]
+            with self.subTest(field=field, value=value), self.assertRaises(g.GuidanceDenied):
+                g.verify_archive(raw(changed), expected_tip=changed["tip"])
+
+    def test_nested_numeric_value_changes_are_bound_to_received_record_digest(self):
+        archive = json.loads(self.session.export_archive())
+        record = archive["records"][-1]
+        record["body"]["context_token_upper_bound"] = float(record["body"]["context_token_upper_bound"])
+        with self.assertRaises(g.GuidanceDenied):
+            g.verify_archive(raw(archive), expected_tip=self.session.archive_tip)
+
     def test_archive_capacity_refuses_further_work(self):
         for _ in range(g.MAX_RECORDS - 2): self.session.replay(self.request())
         tip = self.session.archive_tip

@@ -138,10 +138,15 @@ def verify_archive(raw, *, expected_tip):
     for index, record in enumerate(records):
         _fields(record, ("schema", "kind", "sequence", "previous", "body", "authority_boundary",
                          "accepted", "promotion_allowed", "evidence_class", "digest"))
+        # Python equality treats False == 0 and True == 1. Recompute from the
+        # received fields first, then compare canonical encodings, so neither
+        # envelope substitutions nor numeric type changes retain an old tip.
+        received_digest = e.digest({key: value for key, value in record.items() if key != "digest"})
         if (record["kind"] not in ("binding", "candidate", "replay")
                 or (index == 0) != (record["kind"] == "binding")
                 or type(record["body"]) is not dict
-                or record != _envelope(record["kind"], record["body"], previous, index)):
+                or record["digest"] != received_digest
+                or encode(record) != encode(_envelope(record["kind"], record["body"], previous, index))):
             raise GuidanceDenied("archive record or chain mismatch")
         previous = record["digest"]
     if previous != expected_tip:
