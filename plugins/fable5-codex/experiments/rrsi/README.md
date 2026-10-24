@@ -139,3 +139,64 @@ real Codex evaluation, host containment, Memory ingestion, owner promotion,
 installation, reload, rollback observation, merge or deployment is claimed.
 P2/P4 orchestration and Memory source contracts remain in the companion
 integrations workstream. OpenShell remains optional and independently gated.
+
+## Declarative trace guidance (offline, opt-in)
+
+`trace_guidance.py` adds `TraceSession` beside the existing frozen evaluator.
+It does not invoke a model/provider, run generated code, install guidance, or
+select a promotion. It defaults off. An explicitly enabled **synthetic** session
+freezes the baseline commit, snapshot, evaluator source, guidance source, task
+splits, model/runtime configuration and common arm budgets before proposals.
+These hashes bind fixture inputs; they do not authenticate a live observation.
+
+`propose()` accepts bounded JSON bytes containing development task IDs, finite
+failure codes and output digests. It maps these codes to the existing host-owned
+`OPTIONS` text. Arbitrary instructions, executable hooks, extra authority fields
+and held-out task IDs are rejected. A candidate has at most two context-only
+layers. Parent candidates must already exist in that session. Rendered guidance
+is returned separately; this module never changes governing instructions.
+
+`replay()` grades supplied structured results with the unchanged factual grader.
+It reports the unchanged baseline's first attempt, the final flat retry, the
+flat best-of-N **oracle**, and the final attempt under one fixed policy separately.
+The first-attempt baseline is not an equal-compute arm; the complete flat and
+policy lanes share the same attempt, estimated token/cost and wall-time limits.
+Every attempt is counted, including failures. Policy token estimates include a
+conservative UTF-8-byte context allowance, not a measured tokenizer count.
+Missing results, unsafe attempts, unknown/zero consumption estimates, deadline
+overruns, cancellation and excess budgets prevent a comparable fixture result.
+Per-task regressions and policy violations remain explicit; no winner is promoted.
+
+Held-out/OOD replay seals the selected candidate before grading, rejects further
+proposals or a different held-out policy, and charges a cumulative query cap even
+for unsuccessful admitted runs. Development traces never receive held-out results.
+Public fixtures labelled held-out test this separation mechanism; they are not a
+secret representative benchmark. A caller can fabricate fixture results, so the
+output always remains `synthetic_unverified`, with `accepted` and
+`promotion_allowed` false. A higher fixture score cannot demonstrate real benefit.
+
+Inputs are limited to 256 KiB, 8,192 nodes, depth 12, bounded strings/collections,
+20 traces, 16 suite tasks and 20 archive records. Context is capped at 4,096 bytes;
+replay deadlines are at most five seconds and no larger than the frozen runtime
+deadline. `cancel()` permanently stops the session and can be called by the host
+from another thread. Checkpoints bound cooperative work; this is not an OS quota.
+
+The archive holds canonical immutable byte records in memory, with versioned
+candidate/evidence hashes, provenance and a hash chain. Exports contain finite
+guidance and recomputed summaries, never raw traces, task prompts or answers.
+`verify_archive(bytes, expected_tip=host_tip)` requires a separately retained tip;
+a caller-supplied self-hash is not authentication. Actual offline grading latency
+and zero provider tokens/cost are separate from fixture **estimates**. Recreating
+a session resets its cap. Durable global accounting, cross-process isolation,
+authenticated observation import and production promotion remain separate work.
+
+```sh
+python -I -B test/rrsi_trace_guidance_test.py -v
+python -I -B examples/rrsi-trace-guidance-fixture.py
+```
+
+This clean implementation is informed by the bounded trace/archive and comparison
+ideas in [Meta^n](https://arxiv.org/html/2608.24735v1) (Kim, Lee, Jwa and Kang) and
+the [MIT-licensed reference project at b708184](https://github.com/minnesotanlp/meta-n/tree/b7081843d3c7b0e0f418ca10aaf2ccbff856e7f8).
+No upstream code, paper text or figures are copied. Its generated executable
+preprocessing design is excluded. Its benchmark results are not our results.

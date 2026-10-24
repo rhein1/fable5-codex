@@ -11,7 +11,8 @@ const python = [['python3'], ['python'], ['py', '-3']].find(([command, ...args])
     'import sys;sys.exit(0 if sys.version_info >= (3,10) else 1)'],
   { timeout: 10000, stdio: 'ignore', shell: false }).status === 0);
 
-for (const file of ['rrsi_source_test.py', 'rrsi_evaluator_test.py', '../examples/rrsi-synthetic-comparison.py']) {
+for (const file of ['rrsi_source_test.py', 'rrsi_evaluator_test.py', 'rrsi_trace_guidance_test.py',
+  '../examples/rrsi-synthetic-comparison.py', '../examples/rrsi-trace-guidance-fixture.py']) {
   test(`RRSI offline ${file}`, (t) => {
     assert.ok(python, 'Python 3.10+ is required for RRSI checks; coverage must not silently skip');
     const [command, ...args] = python;
