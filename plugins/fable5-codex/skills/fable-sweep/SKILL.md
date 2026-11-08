@@ -1,6 +1,6 @@
 ---
 name: fable-sweep
-description: Repo-wide implementation workflow for renames, migrations, consistency updates, generated-surface sync, docs/tests updates, and cross-cutting cleanup. Use when the user asks for a Fable-5 sweep, broad rename, consistency pass, migration, or "find every place and update it" task.
+description: Implement renames, migrations, generated-surface sync, cross-cutting cleanup and connected-workflow repairs. Select automatically for complex Agoragentic repairs, including repeated integration failures, multi-process launchers, generated/hash-bound packages and timed reviewer or installation handoffs, even when the user does not name Fable. Diagnose and qualify locally before an attended or paid attempt. Routine isolated edits do not need the full workflow; review-only requests use fable-deep-review or fable-verify.
 ---
 
 # Fable Sweep
@@ -40,6 +40,28 @@ Stop and ask before irreversible changes, external publishing, deploys, credenti
 For write-enabled parallel sweeps, assign each worker a disjoint write scope and tell workers they are not alone in the codebase. The main agent owns final integration, conflict resolution, validation, staging, commits, pushes, and external side effects.
 
 When requested, include a compact `Workflow Trace` with mode, ECF contract status, lenses covered, spawned agents or no-subagent reason, verification method, and coverage gaps.
+
+## Automatic complex-repair routing
+
+When an authorized repair concerns Agoragentic (including Agent Marketplace,
+Triptych OS / Agent OS, Interchange and Fable) and has repeated integration
+failures, spans process/reviewer boundaries, changes generated/hash-bound packages,
+or couples live/attended actions to timed handoffs, select this workflow without
+requiring the user to name Fable or repeat the procedure. Also use it for equivalent
+connected-workflow repairs in other projects when this skill is selected. Read
+[Repair and qualify a connected workflow](../../references/complex-workflow-qualification.md).
+Measure the selected route, repair its producers, and qualify the assembled
+package locally before an attended or paid attempt. Apply only relevant stages and
+reuse unchanged evidence. A routine typo or isolated low-risk edit does not trigger
+the full procedure. Review-only requests stay with `fable-deep-review` or
+`fable-verify`; they do not become repair authorization.
+
+Automatic selection means choosing guidance within the current task, not starting
+background work or adding authority. Honor current instructions, paused goals and
+the designated repair owner. Do not resume Interchange or compete with another
+operator merely because these instructions match; do not solicit MFA or restart
+approval while it is paused. Complete local preparation
+before asking for MFA or proposing another paid run.
 
 ## Optional development playbooks
 

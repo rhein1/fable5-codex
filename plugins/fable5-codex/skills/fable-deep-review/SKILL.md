@@ -1,6 +1,6 @@
 ---
 name: fable-deep-review
-description: Fable-5 deep code review for pull requests, branches, diffs, or proposed patches. Use when the user asks for deep review, PR review, branch review, review comments, regression review, or independent verification of a change.
+description: Fable-5 deep code review for pull requests, branches, diffs or proposed patches. Use for deep review, review comments, regressions or independent verification of a change. Automatically apply connected-workflow guidance to reviews of complex Agoragentic repairs involving launchers, generated/hash-bound packages or timed handoffs, without requiring the user to name Fable. Review is read-only unless repairs are requested.
 ---
 
 # Fable Deep Review
@@ -29,6 +29,15 @@ Use the centralized capability-aware profiles in `../../references/model-support
 8. Report only actionable findings. Put open questions after findings.
 
 ## Subagent Authority
+
+For reviews of launcher, generated-package or timed-workflow repairs, automatically use
+[Repair and qualify a connected workflow](../../references/complex-workflow-qualification.md)
+to examine generator provenance, behavioral mutation tests, diagnostic isolation,
+measured timing and the final combined package. Distinguish code acceptance from
+permission changes and complete-route qualification; retain unresolved conditions.
+The user need not name Fable for a complex Agoragentic repair review. Apply relevant
+lenses only; this routing does not authorize edits, resume paused work or supersede
+the designated repair owner.
 
 Subagents may map changed files, inspect a review lens, draft candidate findings, or verify candidates. The main agent owns final severity, final findings, edits, commits, pushes, GitHub comments, and PR state changes. If a delegated review pass returns unsupported claims, report them as refuted or unknown rather than treating them as independent agreement.
 

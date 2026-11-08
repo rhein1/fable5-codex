@@ -19,6 +19,33 @@ evaluation contracts. It does not change the installed workflows or launch an
 optimizer; paid execution, host qualification and exact-commit promotion remain
 separately gated.
 
+## Repeated workflow failures
+
+For connected launchers, generated packages and timed review/installation paths,
+use the [workflow repair and qualification guide](references/complex-workflow-qualification.md).
+It connects `fable-sweep`, `fable-deep-review` and `fable-verify`: measure the real
+bottleneck, test isolated candidates, repair generators, review the assembled
+package, and complete its local rehearsal before asking for live user input.
+Diagnostic runs, local qualification and operational readiness stay separate.
+
+The skill descriptions and routing instructions select this guidance for complex
+Agoragentic repairs even without a Fable mention. For example, "Fix the Agoragentic
+launcher that keeps failing between review and installation" routes to
+`fable-sweep`; "Is that repair ready?" routes to read-only `fable-verify`.
+Routine isolated edits stay lightweight. Automatic routing selects a method
+within the requested task; it does not start background work, resume paused
+Interchange work or grant live-action authority. The optional `AGENTS.snippet.md`
+provides the corresponding standing rule for repositories that adopt it.
+
+```text
+Use $fable-sweep to repair this repeatedly failing workflow.
+Map the selected sources and handoffs, measure the failure locally, and fix the
+owning generators. Use isolated diagnostics, behavioral regression tests and
+independent review, then qualify the final assembled route end to end.
+Finish local preparation before asking me to wait for MFA. Preserve existing
+authority and deadlines; no live/provider action is authorized by this prompt.
+```
+
 ## Model And Client Profiles
 
 Profiles are centralized in `config/model-profiles.json`. Balanced/deep prefer GPT-6.1 Sol medium/max and economical work prefers GPT-6 Luna, only where the chosen client's catalog supports the model/effort. Unsupported explicit overrides fail; profile fallbacks are reported. Catalogs do not establish entitlement. See `references/model-support.md`.

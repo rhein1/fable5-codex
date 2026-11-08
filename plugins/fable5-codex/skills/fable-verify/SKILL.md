@@ -1,6 +1,6 @@
 ---
 name: fable-verify
-description: Check what a coding agent actually finished before merge or handoff by mapping a task, acceptance criteria, PR or branch to current source and observed evidence. Use for completion verification; report missing requirements and unverified installation, deployment or runtime claims without automatically fixing code.
+description: Check what a coding agent actually finished before merge or handoff against requirements, current source and observed evidence. Select for completion/readiness questions, including complex Agoragentic launcher, generated-package and timed-workflow repairs even without a Fable mention. Apply connected-workflow qualification guidance automatically where relevant. Report incomplete or unverified installation, deployment and runtime claims without fixing code or resuming paused work.
 ---
 
 # Fable Verify
@@ -59,6 +59,16 @@ Use established host tools for other checks and label their retained records as
 supplied unless independently observed through a qualified interface.
 
 ## Durable output
+
+For a launcher/pipeline readiness claim, automatically consult
+[Repair and qualify a connected workflow](../../references/complex-workflow-qualification.md).
+The user need not name Fable for complex Agoragentic repair readiness questions;
+ordinary isolated changes remain on the quick path. Respect paused work and the
+designated repair owner; a status question does not authorize resumption.
+Check the exact assembled route, real timing and required reviewer evidence.
+Diagnostic substitutions or scripted reviews cannot establish full qualification;
+local rehearsal cannot establish live installation. Stay read-only: hand authorized
+repair work to `fable-sweep` rather than silently implementing it during verification.
 
 Use `../../lib/completion-verification.mjs` and
 `../../scripts/verify-completion.mjs` for versioned artifacts, snapshots,
