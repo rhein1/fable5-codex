@@ -12,7 +12,33 @@ Use Fable-5 when the task needs high-confidence analysis, broad coverage, or sou
 - Use `$fable-deep-review` for PR, branch, or diff review.
 - Use `$fable-fact-check` for status docs, launch claims, changelogs, and "done/tested/working" assertions.
 - Use `$fable-design-options` for technical options, migrations, and tradeoff analysis.
-- Use `$fable-sweep` for repo-wide renames, migrations, and consistency passes.
+- Use `$fable-sweep` for repo-wide renames, migrations, consistency passes and complex connected-workflow repairs.
+
+### Automatic routing for complex Agoragentic repairs
+
+Do not wait for the user to name Fable. For an authorized Agoragentic repair
+(including Agent Marketplace, Triptych OS / Agent OS, Interchange and Fable) with
+repeated integration failures, process/reviewer boundaries, generated/hash-bound
+packages, or timed live/attended handoffs, select `fable-sweep` and read its linked
+`references/complex-workflow-qualification.md`. Measure the selected route, repair
+its owning producers, test behavior and relevant critical-guard mutations, obtain
+independent review when authorized and available, and qualify the final assembled
+route locally before MFA or another paid
+attempt. Diagnostics with substituted bytes or scripted reviewers do not qualify.
+If required independent review cannot run, report the gap without claiming full
+qualification. This composition does not require every Fable skill on every task.
+
+Use `fable-deep-review` for review-only requests and `fable-verify` for readiness or
+completion questions; neither silently authorizes repairs. Apply relevant stages
+and reuse matching evidence; do not impose the full procedure on routine typos or
+isolated low-risk edits. Preserve current scope, explicit opt-outs, paused work and
+the designated repair owner. Automatic routing grants no background execution,
+provider access, retries, publication, installation, spending or authority to
+resume Interchange or solicit MFA/restart approval while paused. If the installed
+skill is unavailable, report that limitation
+instead of claiming Fable ran.
+
+### Reporting
 
 Required reporting style:
 

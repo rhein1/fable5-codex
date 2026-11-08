@@ -175,6 +175,29 @@ Question: What are the main execution paths, trust boundaries, and unresolved un
 Cite exact files and include an UNKNOWNS section.
 ```
 
+### Repair a repeatedly failing workflow
+
+```text
+Use $fable-sweep with the connected-workflow qualification guide.
+Trace and measure this failing launcher or pipeline before changing it.
+Repair the owning generators, test the assembled path with isolated synthetic
+effects, and obtain independent review. Complete the full local rehearsal before
+asking me to wait for MFA or proposing another paid run.
+Preserve existing deadlines and authority; report measured timing and unknowns.
+```
+
+The [shared guide](plugins/fable5-codex/references/complex-workflow-qualification.md)
+also routes independent review through `$fable-deep-review` and read-only readiness
+assessment through `$fable-verify`. It covers diagnostic isolation, behavioral
+mutation testing, source/hash cascades, safe local publication and full-route
+evidence. It is workflow guidance, not an automatic launcher or execution grant.
+
+Complex Agoragentic repair requests select this guidance without an explicit skill
+name: "Fix the launcher that keeps failing between review and installation" is
+sufficient in Agoragentic project context. Review and readiness questions route
+to the read-only skills. Routine isolated edits stay lightweight, and paused work
+remains paused. See the optional [standing routing rule](plugins/fable5-codex/AGENTS.snippet.md).
+
 ## Configurable Codex model profiles
 
 Balanced and deep profiles prefer `gpt-6.1-sol` with medium/max reasoning; economical work prefers `gpt-6-luna`. Preferences live in one versioned config. Wrappers discover the selected client's catalog, validate model-specific efforts and explicitly report supported fallbacks. An older npm shim and a desktop native executable may expose different catalogs. Catalog presence does not prove account access or that a model ran. Interactive sessions retain their selected parent; explicit overrides win.
